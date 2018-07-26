@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO.msgflow"
+    nsPrefix="com_oab_reversal_inward_Reversal_Inward_Response_To_CBO.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_GRP_HEADER_INFO" name="REVI_GRP_HEADER_INFO" defaultValueLiteral="REVI_GRP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_TXN_INFO" name="REVI_TXN_INFO" defaultValueLiteral="REVI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_NAME" name="SCHEMA_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ACH_CONFIG_VALUES" name="ACH_CONFIG_VALUES" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CBOACH" name="CBOACH" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="Reversal_Inward_Response_To_CBO" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/Reversal_Inward_Response_To_CBO.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/Reversal_Inward_Response_To_CBO.gif"/>
+    <longDescription xmi:type="utility:ConstantString" string="This Flow is about:&#xD;&#xA;1. Retrieving from database for all transactions whose CBS response is FIN and NON FIN.&#xD;&#xA;2. Forming ISO message and sending to CBO&#xD;&#xA;3. Also updating database with appropriate status code after sending to CBO"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="408,206" queueName="CBO_ACH_IO_Q_REQ_RES">
+        <translation xmi:type="utility:ConstantString" string="CBO_ACH_IO_Q_REQ_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="271,205" dataSource="CBOACH" computeExpression="esql://routine/com.oab.reversal.inward#CBO_RES_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="ProcessISORes"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="128,231" queueName="CBO_REVI_TRIG">
+        <translation xmi:type="utility:ConstantString" string="CBO_REVI_TRIG"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_GRP_HEADER_INFO">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_GRP_HEADER_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_TXN_INFO">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_TXN_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_NAME">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_NAME" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ACH_CONFIG_VALUES">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.ACH_CONFIG_VALUES" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CBOACH">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.CBOACH" bundleName="com/oab/reversal/inward/Reversal_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

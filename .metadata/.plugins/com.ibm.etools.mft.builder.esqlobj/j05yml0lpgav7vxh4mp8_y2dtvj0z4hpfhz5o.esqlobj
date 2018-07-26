@@ -1,0 +1,11 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '26' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET STATUS = 'CANI_CBS_SUCCESS_CBO_SEND',DESCRIPTION = 'Transaction for crediting account of OAB was success at CBS',CBS_PAY_REF = Environment.payRef WHERE J.CBS_TRAN_REF = Environment.txnRef;
+		ELSEIF Environment.dbQueryCount = '27' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET STATUS = 'CANI_CBS_FAILED_CBO_SEND',DESCRIPTION = Environment.cbsFail,CBS_PAY_REF = Environment.payRef,FAULT_STRING = Environment.faultString,FAULT_CODE = Environment.faultCode WHERE J.CBS_TRAN_REF = Environment.txnRef;
+			
+		END IF;
+		RETURN TRUE;
+	END;
+

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg.msgflow"
+    nsPrefix="com_oab_jmsfail_orginaltranstatus_rollback_jms_fail_msg.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCO_TXN_INFO" name="DCO_TXN_INFO" defaultValueLiteral="DCO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCO_HEADER_INFO" name="DCO_HEADER_INFO" defaultValueLiteral="DCO_GROUP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCH_NAME" name="SCH_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDO_TXN_INFO" name="DDO_TXN_INFO" defaultValueLiteral="DDO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANO_REVO_RETO_TXN_INFO" name="CANO_REVO_RETO_TXN_INFO" defaultValueLiteral="CANO_REVO_RETO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_TXN_TABLE" name="DC_TXN_TABLE" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DD_TXN_TABLE" name="DD_TXN_TABLE" defaultValueLiteral="DDI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.PRI_TXN_INFO" name="PRI_TXN_INFO" defaultValueLiteral="PRI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_TXN_INFO" name="REVI_TXN_INFO" defaultValueLiteral="REVI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_TXN_INFO" name="CANI_TXN_INFO" defaultValueLiteral="CANI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="jms_fail_msg" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/jms_fail_msg.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/jms_fail_msg.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="64,168" queueName="JMS_FAIL_ORIGINAL_TRAN_STATUS_UPDATE" messageDomainProperty="XMLNSC" browse="true" resetBrowseTimeout="1000">
+        <translation xmi:type="utility:ConstantString" string="Jms_Fail_Orginal_Tran_Status_Update"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="361,168" dataSource="CBOACH" computeExpression="esql://routine/com.oab.jmsfail.orginaltranstatus.rollback#jms_fail_msg_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="ProcessRollBackStatus"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="521,271" queueName="CBO_ACH_IO_Q_REQ_RES">
+        <translation xmi:type="utility:ConstantString" string="CBO_ACH_IO_Q_REQ_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="570,168" queueName="JMS_FAIL_ORIGINAL_TRAN_STATUS_UPDATE" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="BROWSE_ORIGINAL_MSG"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="335,81" computeExpression="esql://routine/com.oab.jmsfail.orginaltranstatus.rollback#jms_fail_msg_Compute1.Main">
+        <translation xmi:type="utility:ConstantString" string="Checking DBException"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCO_TXN_INFO">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.DCO_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCO_HEADER_INFO">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.DCO_HEADER_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCH_NAME">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.SCH_NAME" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDO_TXN_INFO">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.DDO_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANO_REVO_RETO_TXN_INFO">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.CANO_REVO_RETO_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_TXN_TABLE">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.DC_TXN_TABLE" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DD_TXN_TABLE">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DD_TXN_TABLE" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.PRI_TXN_INFO">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.PRI_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_TXN_INFO">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_TXN_INFO">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_TXN_INFO" bundleName="com/oab/jmsfail/orginaltranstatus/rollback/jms_fail_msg" pluginId="ACH_Connector_Project"/>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

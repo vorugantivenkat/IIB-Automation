@@ -1,0 +1,14 @@
+CREATE DATABASE MODULE DirectDebit_Inward_Response_From_CBS_Database
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE DD_TXN_TABLE EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_CBS_DBT_OC_SUCCESS',CBS_PAY_REF = Environment.payRef, DESCRIPTION = 'Transaction was Successful for debiting the  Debtor Account at CBS' WHERE R.CBS_TRAN_REF = Environment.payment_ref;
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_CBS_DBT_OC_FAILED',FAULT_CODE = Environment.faultCode, FAULT_STRING = Environment.faultString,DESCRIPTION = 'Transaction was Failed for debiting the Debtor Account at CBS' WHERE R.CBS_TRAN_REF = Environment.payment_ref;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

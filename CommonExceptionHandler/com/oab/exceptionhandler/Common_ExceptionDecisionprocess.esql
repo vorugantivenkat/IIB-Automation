@@ -1,0 +1,164 @@
+BROKER SCHEMA com.oab.exceptionhandler
+
+CREATE COMPUTE MODULE Common_ExceptionDecisionprocess
+	DECLARE rc BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER ;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+
+
+		DECLARE inref REFERENCE TO InputRoot;
+		DECLARE Exc_desc CHARACTER;
+		DECLARE ccsid INTEGER InputRoot.Properties.CodedCharSetId;
+		SET Exc_desc = getExceptionDesc(InputRoot,OutputRoot,InputExceptionList);
+		SET ccsid = COALESCE(ccsid,'1208');
+
+		CALL originalMsg(ccsid,inref);
+
+		CALL writeToLogFile(flowName, 'EXC_INFO', 'INFO',' -----------START--------') INTO rc;
+		CALL writeToLogFile(flowName, 'EXC_INFO', 'INFO','DESCRIPTION') INTO rc;
+		CALL writeToLogFile(flowName, 'EXC_INFO', 'INFO',Exc_desc) INTO rc;
+		CALL writeToLogFile(flowName, 'EXC_INFO', 'INFO',' -----------END--------') INTO rc;
+
+		SET OutputRoot.XMLNSC.MSG.ExceptionDetails = '';
+		DECLARE OutRef REFERENCE TO OutputRoot.XMLNSC.MSG.ExceptionDetails;
+		SET OutRef.ExceptionName = SUBSTRING(CAST(Exc_desc AS CHARACTER) BEFORE ':');
+		SET OutRef.Description = SUBSTRING(CAST(Exc_desc AS CHARACTER) AFTER ':');
+		SET OutRef.OrgMsg = Environment.Variables.TraceFileExc.originalMessage;
+		SET OutRef.TimeStamp = CURRENT_TIMESTAMP;
+		SET OutRef.FlowName = flowName;
+		SET OutRef.dbQueryCount = Environment.dbQueryCount;
+		SET OutRef.filename = COALESCE(Environment.InputFileName,'NA');
+	
+		
+		
+		IF CONTAINS(OutRef.ExceptionName, 'DatabaseException') THEN
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = Environment.RetryQueue;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[2].queueName = 'EXC_MSG_Q_MPO';
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[3].queueName = 'EMAIL.IN.Q';
+		ELSE
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'EXC_MSG_Q_MPO';
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[2].queueName = 'EMAIL.IN.Q';
+		END IF;
+
+	END;
+	CREATE PROCEDURE originalMsg (IN ccsid INTEGER, IN InputRoot REFERENCE)
+	BEGIN
+		--If error occurs capture the original message
+		DECLARE domainFldName CHARACTER FIELDNAME(InputBody);
+
+		IF domainFldName = 'DFDL' THEN
+			SET Environment.Variables.TraceFileExc.originalMessage = ASBITSTREAM(InputRoot.DFDL.* CCSID InputRoot.Properties.CodedCharSetId ENCODING InputRoot.Properties.Encoding);
+		ELSEIF domainFldName = 'XMLNSC' THEN
+			SET Environment.Variables.TraceFileExc.originalMessage = CAST(ASBITSTREAM(InputRoot.XMLNSC CCSID InputRoot.Properties.CodedCharSetId ENCODING InputRoot.Properties.Encoding)AS CHARACTER CCSID 1208);
+		ELSEIF domainFldName = 'SOAP' THEN
+			SET Environment.Variables.TraceFileExc.originalMessage = ASBITSTREAM(InputRoot.SOAP.* CCSID InputRoot.Properties.CodedCharSetId ENCODING InputRoot.Properties.Encoding);
+		ELSEIF domainFldName = 'BLOB' THEN
+			SET Environment.Variables.TraceFileExc.originalMessage = InputRoot.BLOB.BLOB;
+		END IF;
+	END;
+	CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+
+	CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+	IN LOGGER_NAME CHARACTER,
+	IN LEVEL CHARACTER,
+	IN TEXT CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";
+END MODULE;
+CREATE PROCEDURE getExceptionDesc (in inputroot REFERENCE,in outputroot REFERENCE, IN InputExceptionList REFERENCE)
+RETURNS CHARACTER
+BEGIN
+	--Copy the exception description
+	DECLARE continueLoop BOOLEAN TRUE;
+	DECLARE exceptionData CHAR;
+	DECLARE messageText CHARACTER '';
+	DECLARE inRef2 REFERENCE TO InputExceptionList.*[1];
+	DECLARE inRef3 REFERENCE TO InputExceptionList.*[1];
+
+	DECLARE insertRef REFERENCE TO InputExceptionList.*[1];
+	DECLARE exceptionName CHARACTER;
+	SET continueLoop = TRUE;
+	MOVE inRef2 TO InputExceptionList;
+	IF CARDINALITY(inRef2.RecoverableException[]) = 0 THEN
+		SET continueLoop = FALSE;
+	END IF;
+
+	WHILE lastmove(inRef3) AND continueLoop DO
+		IF inRef3.Number is not null THEN
+			SET exceptionName = FIELDNAME(inRef3);
+			IF stringValidation(inRef3.Text) THEN
+				SET messageText = messageText||' '||inRef3.Text;
+			END IF;
+			MOVE insertRef TO inRef3.Insert[>];
+			WHILE LASTMOVE(insertRef) AND FIELDNAME(insertRef) = 'Insert' DO --- fetch description from Insert[]
+				IF NOT LENGTH(insertRef.Text) = 1 AND
+					stringValidation(insertRef.Text)THEN
+					SET messageText = messageText||' '||insertRef.Text;
+
+				END IF;
+				MOVE insertRef NEXTSIBLING;
+			END WHILE;
+		END IF;
+		MOVE inRef3 LASTCHILD;
+	END WHILE;
+	SET exceptionData = exceptionName||':'||messageText;
+	RETURN exceptionData;
+END;
+
+CREATE PROCEDURE stringValidation (IN text CHARACTER)
+RETURNS BOOLEAN
+BEGIN
+	IF NOT CONTAINS(text, 'Node throwing exception') AND
+		NOT CONTAINS(text, 'Caught exception and rethrowing') AND
+		NOT CONTAINS(text, 'Error detected, rethrowing') AND
+		NOT CONTAINS(text, 'Error occured in procedure') AND
+		NOT LENGTH(text) = 1 THEN
+
+		RETURN TRUE;
+	ELSE
+		RETURN FALSE;
+	END IF;
+
+END;
+CREATE PROCEDURE DBInsertion(IN LOG4JPATH CHARACTER,IN InputRoot REFERENCE, IN InputExceptionList REFERENCE,IN Environment REFERENCE,
+IN OutputRoot REFERENCE)BEGIN
+IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+	SET Environment.variables.count = 3;
+	PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+ELSE
+	IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+		--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+		SET Environment.variables.count = Environment.variables.count -1;
+		PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+	END IF;
+
+END IF;
+END;

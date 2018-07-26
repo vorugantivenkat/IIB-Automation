@@ -1,0 +1,38 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '4' THEN
+			SET Environment.val.DB[] = SELECT A.MA_REFERENCE FROM Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS A WHERE A.MA_REFERENCE = Environment.hdrId;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			SET Environment.val.DD[] = SELECT B.MI_REFERENCE,B.MT_STATUS FROM Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS B WHERE B.MI_REFERENCE = Environment.refId;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS A SET
+			MND_GP_HDP_MSGID = Environment.MND_GP_HDP_MSGID,
+			MND_GP_HDR_CRE_DT_TM = Environment.MND_GP_HDR_CRE_DT_TM,
+			MA_REFERENCE = Environment.hdrId,
+			LCLINSTRMT_CD = 'POS',
+			RECURRINGFREQUENCY = Environment.XMLNSC.inBody.RecurringFrequency,
+			FREQUENCY = Environment.XMLNSC.inBody.Frequency,
+			FROMDATE = Environment.XMLNSC.inBody.FromDate,
+			TODATE = Environment.XMLNSC.inBody.ToDate,
+			COLLECTIONAMT = Environment.colAMT,
+			MAXIMUMAMT = Environment.maxAMT,
+			MA_REASON = Environment.XMLNSC.inBody.Reason,
+			CDTR_NAME = Environment.XMLNSC.inBody.Creditor.Name,
+			CDTR_ID = Environment.XMLNSC.inBody.Creditor.Id,
+			CDTR_IDTYPE = Environment.XMLNSC.inBody.Creditor.IdType,
+			CDTR_ACCOUNT = Environment.XMLNSC.inBody.Creditor.Account,
+			CDTR_BICFI = Environment.XMLNSC.inBody.Creditor.Bank,
+			DBTR_NAME = Environment.XMLNSC.inBody.Debtor.Name,
+			DBTR_ID = Environment.XMLNSC.inBody.Debtor.Id,
+			DBTR_IDTYPE = Environment.XMLNSC.inBody.Debtor.IdType,
+			DBTR_ACCOUNT = Environment.XMLNSC.inBody.Debtor.Account,
+			DBTR_BICFI = Environment.XMLNSC.inBody.Debtor.Bank,
+			MA_STATUS = 'MNA_RCVD',
+			DESCRIPTION = 'Sending ISO request message to CBO' WHERE A.MI_REFERENCE = Environment.refId ;	
+			ELSEIF Environment.dbQueryCount = '7' THEN
+				UPDATE Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS A SET MA_STATUS = 'SENT_TO_CBO' WHERE A.MI_REFERENCE = Environment.refId;		
+				
+	END IF;
+		RETURN TRUE;
+	END;
+

@@ -1,0 +1,37 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.PM[] = SELECT J.ID FROM Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT} AS J WHERE J.ID = Environment.Assgnmt_id;
+			SET Environment.VALUES[] = SELECT J.BANK_PREFIX,J.DC_STLMNT_ACC,J.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			DECLARE SQL CHARACTER 'SELECT DISTINCT D.PMT_ID_TXN_ID,D.INTERBANK_SETTLE_AMT,D.CDTR_ACCT_ID_IBAN,D.CDTR_ACCT_OTHR_ID FROM '||SCHEMA_NAME||'.'||DCI_TXN_INFO||' D,'||SCHEMA_NAME||'.'||DCI_GP_HEADER_INFO||' X WHERE (X.MSG_ID = ? AND D.DCI_GP_HDR_ID_TXN_FK = X.DCI_GP_HEADER_ID AND D.STATUS = ?)';
+			SET Environment.data[] = PASSTHRU(SQL TO Database.{DSN} VALUES(Environment.ognlMsgID,'DCI_SUCCESS'));
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			DECLARE SQL CHARACTER 'SELECT DISTINCT D.PMT_ID_TXN_ID,D.INTERBANK_SETTLE_AMNT,D.DBTRACCT_ID_IBAN,D.DBTRACCT_ID_OTHR_ID FROM '||SCHEMA_NAME||'.'||DDI_TXN_INFO||' D,'||SCHEMA_NAME||'.'||DDI_GP_HEADER_INFO||' X WHERE (X.MSG_ID = ? AND D.DDI_GP_HDR_ID_TXN_FK = X.DDI_GP_HEADER_ID AND D.STATUS = ?)';
+			SET Environment.data[] = PASSTHRU(SQL TO Database.{DSN} VALUES(Environment.ognlMsgID,'DDI_SUCCESS'));
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			----used to generate msgid
+			INSERT INTO Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT}(ID,ASSGNR_AGT_FININSTID_BICFI,ASSGNE_AGT_FININSTNID_BICFI,CREATION_DATETIME)
+			VALUES (Environment.id,Environment.assignrBicfi,Environment.assigneBicfi,Environment.crtDateTime);
+			SET Environment.ID[] = SELECT GP.CANC_ASSIGNMENT_ID FROM Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT} AS GP WHERE GP.ID = Environment.id;
+			SET Environment.cancAssignmentId = Environment.ID.CANC_ASSIGNMENT_ID;
+			INSERT INTO Database.{SCHEMA_NAME}.{CANI_UNDERLYING} (CANC_ASSIGNMENT_ID_UNDRLYG_FK,ORG_GP_INF_AND_CANC_GP_CANC_ID,ORG_GP_INF_AND_CANC_ORG_MSG_ID,ORG_GP_INF_AND_CAN_ORG_MGNM_ID,ORG_GP_INF_AND_CANC_NO_OF_TXS,ORG_GP_INF_AND_CANC_GP_CANC)
+			VALUES (Environment.cancAssignmentId,Environment.uid,Environment.msgId,Environment.msgNmId,Environment.noTxns,Environment.grpcxl);
+
+--		ELSEIF Environment.dbQueryCount = '28' THEN
+--			SET Environment.ID[] = SELECT GP.CANC_ASSIGNMENT_ID FROM Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT} AS GP WHERE GP.ID = Environment.id;
+--			SET Environment.cancAssignmentId = Environment.ID.CANC_ASSIGNMENT_ID;
+--			INSERT INTO Database.{SCHEMA_NAME}.{CANI_UNDERLYING} (CANC_ASSIGNMENT_ID_UNDRLYG_FK,ORG_GP_INF_AND_CANC_GP_CANC_ID,ORG_GP_INF_AND_CANC_ORG_MSG_ID,ORG_GP_INF_AND_CAN_ORG_MGNM_ID,ORG_GP_INF_AND_CANC_NO_OF_TXS,ORG_GP_INF_AND_CANC_GP_CANC)
+--			VALUES (Environment.cancAssignmentId,Environment.uid,Environment.msgId,Environment.msgNmId,Environment.noTxns,Environment.grpcxl);
+		ELSEIF Environment.dbQueryCount = '29' THEN
+			SET Environment.SN[] = SELECT GP.CANC_UNDRLYG_ID FROM Database.{SCHEMA_NAME}.{CANI_UNDERLYING} AS GP WHERE GP.ORG_GP_INF_AND_CANC_GP_CANC_ID = Environment.uid;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{CANI_UNDRLYG_CANC_RSN_INFO}(CANC_UNDRLYG_ID_CAN_RSN_INF_FK,CANC_RSN_INFO_RSN_PRTRY,CANC_RSN_INFO_ADDTL_INFO)
+			VALUES (Environment.cancUndrlygId,Environment.underPrty,Environment.underAddInfo);
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{CANI_SUPPLEMENTARY_DATA}(CANC_ASSIGNMENT_ID_SUPP_FK,PLACE_NAME,ENV_BATCH_SRC) VALUES (Environment.cancAssignmentId,Environment.plcNm,Environment.batchSource);
+
+		END IF;
+		RETURN TRUE;
+	END;
+

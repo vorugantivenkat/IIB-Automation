@@ -1,0 +1,32 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		 CALL CopyMessageHeaders();
+		 CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE getCustomerIDResRef REFERENCE TO InputRoot.XMLNSC.urn:Reply;
+
+		DECLARE activitystatus CHARACTER getCustomerIDResRef.urn:Header.urn:replyStatus;
+		DECLARE HTTPSTATUS INTEGER CAST(InputRoot.HTTPResponseHeader."X-Original-HTTP-Status-Code" AS INTEGER);
+		
+		IF FIELDNAME(InputExceptionList.[1]) = 'RecoverableException' THEN		
+			SET Environment.Status = 'MNI_FAILED';				
+		ELSEIF activitystatus = 'FIN' AND HTTPSTATUS = '200'THEN 			
+			SET Environment.Status = 'MNI_SUCCESS';					
+		ELSEIF activitystatus = 'ERR' THEN 
+			SET Environment.Status = 'MNI_FAILED';
+		END IF;
+		
+	END;

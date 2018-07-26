@@ -1,0 +1,91 @@
+BROKER SCHEMA com.oab.DirectCreditOutward
+
+CREATE DATABASE MODULE DirectCredit_Outward_Main_Database
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER; 
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER ;
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER ;
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER; 
+	DECLARE DSN_NAME EXTERNAL CHARACTER; 
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		
+		IF Environment.dbQueryCount = '1' THEN
+			DECLARE DB ROW;
+			SET DB.ID[] = SELECT J.CHL_BTCH_REF FROM Database.{SCH_NAME}.{DCO_TABLE1} AS J WHERE J.CHL_BTCH_REF = Environment.chlBchRef;
+			SET Environment.CHL_BTCH_REF = DB.ID.CHL_BTCH_REF;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			INSERT INTO Database.{DCO_TABLE1}(MSG_RCV_TIMESTAMP,CHANNEL,
+			PRIORITY1,
+			BATCH_REFERENCE,
+			ORDERING_CUSTOMER_ACCOUNT,
+			ORDERING_CUSTOMER_NAME,
+			ORDERING_CUSTOMER_ID,
+			ORDERING_CUSTOMER_ID_TYPE,
+			PURPOSE_OF_TRANSFER,
+			CURRENCY,
+			STATUS,
+			DESCRIPTION,
+			OPTIONAL_ID,
+			CHL_BTCH_REF,
+			MSG_CHANNEL_TO_ESB)
+			VALUES (Environment.groupcurrdate,Environment.XMLNSC.Header.Channel,Environment.XMLNSC.Header.Priority,Environment.XMLNSC.Header.BatchReference,Environment.XMLNSC.Header.OrderingCustomerAccount,Environment.XMLNSC.Header.OrderingCustomerName,Environment.XMLNSC.Header.OrderingCustomerId
+			,Environment.XMLNSC.Header.OrderingCustomerIdType,Environment.XMLNSC.Header.PurposeOfTransfer,Environment.XMLNSC.Header.Currency,'DCO_RCVD','Message has been received from OAB channel',Environment.identifier,Environment.XMLNSC.Header.Channel||Environment.XMLNSC.Header.BatchReference,Environment.srcMsg);
+			SET Environment.OrderingCustomerAccount = Environment.XMLNSC.Header.OrderingCustomerAccount;
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			DECLARE GH ROW;
+			DECLARE fk INTEGER;
+			SET GH.ID[] = SELECT GP.DCO_GRP_HEADER_ID FROM Database.{SCH_NAME}.{DCO_TABLE1} AS GP WHERE GP.CHL_BTCH_REF = Environment.chlBchRef;
+			SET fk = GH.ID.DCO_GRP_HEADER_ID;
+			SET Environment.foreginkey = fk;
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			INSERT INTO Database.{SCH_NAME}.{DCO_TABLE2}(
+			DCO_GRP_HDR_ID_TXN_INFO_FK,
+			TXN_REF,
+			END_TO_END_ID,
+			USER_REF,
+			AMOUNT,
+			BENEF_BANK,
+			BENEF_ACC ,
+			BENEF_NAME ,
+			BENEF_ID ,
+			BENEF_ID_TYPE,
+			PURP_OF_TRANSFER,
+			DETAILS_OF_PMTS ,
+			STATUS,
+			DESCRIPTION,
+			CBS_TRAN_REF,
+			CBS_PAY_REF,
+			EXEC_DESC)
+			VALUES (Environment.foreginkey,Environment.XMLNSC.Body.TransactionReference,Environment.ENDTOENDID,Environment.XMLNSC.Body.UserReference,Environment.XMLNSC.Body.Amount,Environment.XMLNSC.Body.BeneficiaryBank,Environment.XMLNSC.Body.BeneficiaryAccount,
+			Environment.XMLNSC.Body.BeneficiaryName,Environment.XMLNSC.Body.BeneficiaryId,Environment.XMLNSC.Body.BeneficiaryIdType,Environment.XMLNSC.Body.PurposeOfTransfer,Environment.XMLNSC.Body.DetailsOfPayments,
+			'DCO_RCVD','Current Transaction is received from the OAB channel','','','');
+--		ELSEIF Environment.dbQueryCount = '5' THEN
+--			DECLARE insertStatusQuery CHARACTER;
+--			DECLARE insertRes ROW;
+--			SET insertStatusQuery = 'INSERT INTO '||SCH_NAME||'.'||STATUS_TABLE_NAME||'(
+--			TXN_END_TO_END_ID,
+--			STATUS,
+--			STATUS_UPDATED_TIMESTAMP,
+--			TXN_TYPE
+--			) VALUES (?,?,?,?)';
+--			SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN_NAME} VALUES(Environment.ENDTOENDID,'DCO_RCVD',CURRENT_TIMESTAMP,'DCO'));
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET STATUS = 'DCO_SEND_TO_CBO_PT',DESCRIPTION = 'Batch Transactions need to be send to CBO as Passthru is set' WHERE B.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.foreginkey;
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SUCCESS_PT' WHERE R.CHL_BTCH_REF = Environment.chlBchRef;
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			SET Environment.TotalAmount = SELECT SUM(A.AMOUNT) FROM Database.{SCH_NAME}.{DCO_TABLE2} AS A WHERE A.STATUS = 'DCO_RCVD' AND A.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.foreginkey ;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			DECLARE test CHARACTER;
+			SET test ='DCO_CBS_DBT_OC_SENT';			
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = test,DESCRIPTION = 'Batch Transactions are sent to CBS for debit operation', CBS_TRAN_REF = Environment.txnRef WHERE R.STATUS = 'DCO_RCVD' AND R.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.foreginkey;
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET CBS_TRAN_REF = Environment.txnRef,STATUS = 'DCO_CBS_DBT_OC_SENT' WHERE R.CHL_BTCH_REF = Environment.chlBchRef;
+		ELSEIF Environment.dbQueryCount = 'C' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS K SET CBS_REQUEST_MESSAGE = Environment.CbsReqMessage WHERE K.CHL_BTCH_REF = Environment.chlBchRef;
+						
+		END IF;
+		RETURN TRUE;		
+	END;
+
+END MODULE;

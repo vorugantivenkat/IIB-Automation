@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmDatabase.msgnode="ComIbmDatabase.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmTryCatch.msgnode="ComIbmTryCatch.msgnode" xmlns:ComIbmValidate.msgnode="ComIbmValidate.msgnode" xmlns:com_oab_exceptionhandler_CommonExceptionHandle.subflow="com/oab/exceptionhandler/CommonExceptionHandle.subflow"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/DirectCreditOutward/DirectCredit_Outward_Main.msgflow"
+    nsPrefix="com_oab_DirectCreditOutward_DirectCredit_Outward_Main.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4J_CONF_FILE" name="LOG4J_CONF_FILE" defaultValueLiteral="Y:\OAB\IBM\logs4J\Log4jConfigurationFile.xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SETTLE_METHOD" name="SETTLE_METHOD" defaultValueLiteral="CLRG">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CLR_SYS_PRTRY" name="CLR_SYS_PRTRY" defaultValueLiteral="CBO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BANK_NUM_CODE" name="BANK_NUM_CODE" defaultValueLiteral="1111">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHARGE_BEARER" name="CHARGE_BEARER" defaultValueLiteral="SLEV">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCO_TABLE1" name="DCO_TABLE1" defaultValueLiteral="DCO_GROUP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCO_TABLE2" name="DCO_TABLE2" defaultValueLiteral="DCO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCO_TABLE3" name="DCO_TABLE3" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CBS_REQ_Q" name="CBS_REQ_Q" defaultValueLiteral="IB.REQUEST">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL" name="CHANNEL" defaultValueLiteral="ACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USER" name="USER" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WORKSTATION" name="WORKSTATION" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL_RESERVED" name="CHANNEL_RESERVED">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCH_NAME" name="SCH_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DSN_NAME" name="DSN_NAME" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_NAME" name="INTERFACE_NAME" defaultValueLiteral="DirectCreditOutward">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_CODE" name="INTERFACE_CODE" defaultValueLiteral="15">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CURRENCY" name="CURRENCY" defaultValueLiteral="OMR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="DirectCredit_Outward_Main" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/DirectCredit_Outward_Main.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/DirectCredit_Outward_Main.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="38,399" queueName="OAB_DCO_Q_REQ" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="OAB_DCO_Q_REQ"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="690,177" destinationMode="reply">
+        <translation xmi:type="utility:ConstantString" string="OAB_ACH_FAIL_Q_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="719,406" queueName="ESB.REQUEST" request="true" replyToQ="CBO.ACH.IN">
+        <translation xmi:type="utility:ConstantString" string="ESB.REQUEST"/>
+      </nodes>
+      <nodes xmi:type="ComIbmValidate.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_18" location="248,397" domain="XMLNSC" checkDomain="true" checkSet="true" checkType="true" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="Validate"/>
+      </nodes>
+      <nodes xmi:type="com_oab_exceptionhandler_CommonExceptionHandle.subflow:FCMComposite_1" xmi:id="FCMComposite_1_2" location="384,89">
+        <translation xmi:type="utility:ConstantString" string="CommonExceptionHandle"/>
+      </nodes>
+      <nodes xmi:type="ComIbmDatabase.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="709,515" dataSource="CBOACH" statement="esql://routine/com.oab.DirectCreditOutward#DirectCredit_Outward_Main_Database.Main">
+        <translation xmi:type="utility:ConstantString" string="Database"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="474,406" computeExpression="esql://routine/com.oab.DirectCreditOutward#Direct_Credit_Outward_GrpHeaderchk.Main" computeMode="all">
+        <translation xmi:type="utility:ConstantString" string="Business Validation"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="388,402">
+        <translation xmi:type="utility:ConstantString" string="Try Catch"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="239,311">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="333,319" computeExpression="esql://routine/com.oab.DirectCreditOutward#DirectCredit_Outward_Main_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="Compute"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="438,320" destinationMode="reply">
+        <translation xmi:type="utility:ConstantString" string="MQ Output"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_18" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_18" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_18" sourceTerminalName="OutTerminal.match" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_18" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4J_CONF_FILE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4J_CONF_FILE" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SETTLE_METHOD">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.SETTLE_METHOD" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CLR_SYS_PRTRY">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.CLR_SYS_PRTRY" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.BANK_NUM_CODE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.BANK_NUM_CODE" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHARGE_BEARER">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.CHARGE_BEARER" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCO_TABLE1">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.DCO_TABLE1" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCO_TABLE2">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DCO_TABLE2" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCO_TABLE3">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.DCO_TABLE3" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CBS_REQ_Q">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.CBS_REQ_Q" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.USER">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.USER" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WORKSTATION">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.WORKSTATION" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL_RESERVED">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL_RESERVED" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCH_NAME">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.SCH_NAME" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DSN_NAME">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.DSN_NAME" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_NAME">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_NAME" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_CODE">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_CODE" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CURRENCY">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.CURRENCY" bundleName="com/oab/DirectCreditOutward/DirectCredit_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

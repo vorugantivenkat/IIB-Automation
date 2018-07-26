@@ -1,0 +1,98 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '1' THEN
+
+			SET Environment.gpheaderpk.data[] = SELECT GP.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_GRPHDR_INFO} AS GP
+			WHERE GP.CHL_BTCH_REF = Environment.Variables.Chl_Btch_Ref;
+			/* ELSEIF Environment.dbQueryCount = '2' THEN
+			DECLARE TranRef REFERENCE TO Environment.XMLNSC.ns:ACHBatchCancelation.Transaction;
+			INSERT INTO Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} (
+			GRP_HDR_ID_TXN_INFO_FK, --1
+			TXN_RCVD_BY, --2
+			USER_REF, --3
+			TRAN_REF, --4
+			END_TO_END_ID, --5
+			TXN_REASON, --6
+			STATUS, --7
+			DESCRIPTION --8
+			)
+			VALUES (Environment.gpheaderpk.data.GRP_HEADER_ID,'Reversal Outward',TranRef.UserReference,
+			TranRef.TransactionReference,
+			Environment.Variables.EndtoEndID,TranRef.Reason,
+			'REVO_RCVD','Transaction received by Ach Connector from OAB Channel'); */
+			ELSEIF Environment.dbQueryCount = '3' THEN
+
+			SET Environment.DB2.ID[] = SELECT J.END_TO_END_ID FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J WHERE J.END_TO_END_ID = Environment.Variables.Origin_End_To_End_Id;
+
+		ELSEIF Environment.dbQueryCount = '4' THEN
+
+			SET Environment.Config.RECS[] = SELECT A.STML_MTHD,A.CLRSYS_PRPRTRY,A.INSTAGT_FN_BICFI,A.BANK_PREFIX
+			FROM Database.{SCHEMA_NAME}.{DC_CONFIG_VALUES} AS A;
+
+		ELSEIF Environment.dbQueryCount = '5' THEN
+
+			SET Environment.RECS[] = SELECT B.DCO_GRP_HDR_ID_TXN_INFO_FK,B.AMOUNT,B.STATUS,B.MSG_ID,B.TXN_ID,B.BENEF_BANK
+			FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS B WHERE B.END_TO_END_ID = Environment.Variables.Origin_End_To_End_Id;
+
+		ELSEIF Environment.dbQueryCount = '6' THEN
+
+			SET Environment.DB2.HeadInfo[] = SELECT J.OPTIONAL_ID,J.ORDERING_CUSTOMER_ACCOUNT FROM Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO}
+			AS J WHERE J.DCO_GRP_HEADER_ID = Environment.Variables.Grpfk;
+
+		ELSEIF Environment.dbQueryCount = '7' THEN
+
+			DECLARE estSeq CHARACTER Environment.Variables.estSeq;
+
+			SET Environment.DB.V[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS J WHERE J.MSG_ID LIKE estSeq||'%';
+
+
+		ELSEIF Environment.dbQueryCount = '8' THEN
+
+			SET Environment.Variables.maxId = SELECT MAX(GP.GRP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_GRPHDR_INFO} AS GP ;
+
+
+		ELSEIF Environment.dbQueryCount = '9' THEN
+
+			SET Environment.DB.NM[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS A WHERE A.GRP_HDR_ID_TXN_INFO_FK =Environment.GroupID ;
+
+		ELSEIF Environment.dbQueryCount = '10' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_CBO_SENT',DESCRIPTION = 'Transction SENT to CBO',
+			ORIGIN_END_TO_END_ID = Environment.Variables.Origin_End_To_End_Id,ORIG_MSG_ID = Environment.RECS.MSG_ID,ORIG_TXN_ID = Environment.RECS.TXN_ID,
+			TXN_FOUND = 'DirectCreditOutward',MSG_ID =Environment.Variables.bchId,TXN_ID = Environment.Variables.TXN_ID,
+			CREDITOR_ACC_NO = Environment.DB2.HeadInfo.ORDERING_CUSTOMER_ACCOUNT,TXN_AMOUNT = Environment.RECS.AMOUNT WHERE R.END_TO_END_ID = Environment.Variables.EndtoEndID ;
+
+		ELSEIF Environment.dbQueryCount = '11' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_ORGTXN_FAILED'
+			WHERE R.END_TO_END_ID= Environment.Variables.EndtoEndID ;
+
+		ELSEIF Environment.dbQueryCount = '12' THEN
+
+			SET Environment.RECS[] = SELECT J.PMT_ID_TXN_ID,J.DBTRACCT_ID_IBAN,J.INTERBANK_SETTLE_AMNT,J.STATUS,J.CGTRAGT_FIN_ID_BICFI,J.PMT_ID_TXN_ID,N.MSG_ID
+			FROM Database.{SCHEMA_NAME}.{DDI_TXN_INFO} AS J,Database.{SCHEMA_NAME}.{DDI_GP_HEADER_INFO} AS N WHERE J.PMT_ID_TXN_ID = Environment.Variables.Orginalbatchtran
+			AND J.DDI_GP_HDR_ID_TXN_FK = N.DDI_GP_HEADER_ID ;
+
+		ELSEIF Environment.dbQueryCount = '13' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_CBO_SENT',TXN_FOUND = 'DirectDebitInward',
+			CREDITOR_ACC_NO = Environment.RECS.DBTRACCT_ID_IBAN,TXN_AMOUNT = Environment.RECS.INTERBANK_SETTLE_AMNT ,TXN_ID = Environment.Variables.TXN_ID,
+			MSG_ID=Environment.Variables.bchId,ORIGIN_END_TO_END_ID = Environment.RECS.PMT_ID_TXN_ID,ORIG_MSG_ID = Environment.RECS.MSG_ID,
+			ORIG_TXN_ID = Environment.RECS.PMT_ID_TXN_ID,DESCRIPTION= 'Transaction sent to CBO' WHERE R.END_TO_END_ID = Environment.Variables.EndtoEndID ;
+
+		ELSEIF Environment.dbQueryCount = '14' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_ORGTXN_FAILED' WHERE R.END_TO_END_ID = Environment.Variables.EndtoEndID ;
+		ELSEIF Environment.dbQueryCount = '14A' THEN
+		SET Environment.GroupID = SELECT MAX(J.GRP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_GRPHDR_INFO} AS J WHERE J.MSG_ID IS NOT NULL;
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_GRPHDR_INFO};
+		ELSEIF Environment.dbQueryCount = '14B' THEN
+			SET Environment.DD.V[] = SELECT K.MSG_RCV_TIMESTAMP FROM Database.{SCHEMA_NAME}.{CANO_REVO_RETO_GRPHDR_INFO} AS K WHERE K.GRP_HEADER_ID = Environment.GroupID;
+
+		END IF;
+
+
+		RETURN TRUE;
+	END;
+

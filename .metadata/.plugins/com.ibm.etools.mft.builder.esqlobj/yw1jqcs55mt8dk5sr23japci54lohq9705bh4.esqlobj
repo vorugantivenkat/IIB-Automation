@@ -1,0 +1,453 @@
+CREATE COMPUTE MODULE Router_Reto_Revo_Cance_Compute
+	DECLARE START_TIME EXTERNAL CHARACTER;
+	DECLARE END_TIME EXTERNAL CHARACTER;
+	
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE Bool BOOLEAN;
+	DECLARE MODULE_VAL,retry CHARACTER;
+
+	DECLARE rc BOOLEAN;
+	DECLARE flowName,srcMsg CHARACTER MessageFlowLabel;
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE boolVal BOOLEAN;
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		SET boolVal = CopyEntireMessage();
+		RETURN boolVal;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+
+
+			CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '============START============') INTO rc;
+
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.variables.count = 3;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+
+			DECLARE headRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancellation;
+			SET MODULE_VAL = headRef.Module;
+
+
+			DECLARE chnlBatchId CHARACTER headRef.Channel || headRef.BatchReference;
+
+			SET Environment.ChnlBatchDCOOrg = headRef.Channel || headRef.OriginalReference;
+			
+			SET Environment.Variables.chnlBatchId = chnlBatchId;
+			DECLARE modeVal CHARACTER headRef.Mode;
+			SET Environment.Variables.BatchReference = headRef.BatchReference;
+
+			SET retry = InputRoot.MQRFH2.usr.Retry;
+
+			IF retry IS NULL THEN
+
+
+
+				SET Environment.dbQueryCount = '1'; --Selecting Records from Header Table For duplication Check
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Checking for Duplication ChlBatchID is :' || chnlBatchId) INTO rc;
+
+				IF Environment.DH.ID.GRP_BATCH_REF IS NOT NULL THEN
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					DECLARE canRef REFERENCE TO OutputRoot.XMLNSC;
+					CREATE LASTCHILD OF OutputRoot.XMLNSC AS canRef NAME 'AchBatchCancelation';
+					SET canRef.ResponseCode = 'ACH001';
+					SET canRef.ResponseString = 'Batch Duplicated, BatchId is :' || chnlBatchId;
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Duplicate Batch found and sending Acknolegment to OAB, ChlBatchID is :' || chnlBatchId) INTO rc;
+					PROPAGATE TO TERMINAL 'out1';
+				ELSE
+					/*========Inserting the header into the header table=======*/
+
+					SET Environment.Variables.Mode = headRef.Mode;
+					SET Environment.Variables.Channel = headRef.Channel;
+
+					SET Environment.Variables.OriginalReference = headRef.OriginalReference;
+					SET Environment.Variables.Reason = headRef.Reason;
+					SET Environment.groupcurrdate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd''T''HH:mm:ss.sss+hh:mm');
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Inserting Header details to Cano Heade Table') INTO rc;
+
+					SET Environment.dbQueryCount = '2'; --Inserting Records to Header Table
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Fetching Groupheader id value from Cano header table') INTO rc;
+					/*========== --Fetching Groupheader id from header table =========*/
+					SET Environment.dbQueryCount = '3';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					/*======Inserting the records in the transaction table.=======*/
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Inserting Transaction details to Cano Txn Table') INTO rc;
+
+					IF EXISTS(InputRoot.XMLNSC.*:AchBatchCancellation.Transaction[]) THEN
+						DECLARE InRef REFERENCE TO headRef.Transaction[>];
+						DECLARE InRefEnv REFERENCE TO Environment.XMLNSC;
+
+						WHILE LASTMOVE(InRef) DO
+							CREATE LASTCHILD OF Environment.XMLNSC AS InRefEnv NAME 'Transaction';
+							SET InRefEnv.TransactionReference= InRef.TransactionReference;
+							SET InRefEnv.OriginalTransactionReference=InRef.OriginalTransactionReference;
+							SET InRefEnv.UserReference=InRef.UserReference;
+							SET InRefEnv.Reason=InRef.Reason;
+							MOVE InRef NEXTSIBLING;
+						END WHILE;
+					ELSE
+
+						IF MODULE_VAL LIKE 'DC%' THEN
+							SET Environment.dbQueryCount = '11A';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+
+						ELSE
+							SET Environment.dbQueryCount = '11B';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+						END IF;
+
+
+						DECLARE InRef REFERENCE TO Environment.TxnDDDC.Details[>];
+
+						DECLARE InRefEnv REFERENCE TO Environment.XMLNSC;
+						DECLARE K INTEGER 1;
+						WHILE LASTMOVE(InRef) DO
+							CREATE LASTCHILD OF Environment.XMLNSC AS InRefEnv NAME 'Transaction';
+							SET InRefEnv.TransactionReference= K;
+							SET InRefEnv.OriginalTransactionReference=InRef.TXN_REF;
+							SET InRefEnv.UserReference=InRef.USER_REF;
+							SET InRefEnv.Reason=Environment.Variables.Reason;
+							SET K = K +1;
+							MOVE InRef NEXTSIBLING;
+						END WHILE;
+
+
+
+					END IF;
+
+
+					DECLARE txnRef REFERENCE TO Environment.XMLNSC.Transaction[>];
+
+					WHILE LASTMOVE(txnRef) DO
+						/*========== --Inserting Records to cano_txn_table Table=========*/
+
+						SET Environment.Variables.UserReference = txnRef.UserReference;
+						SET Environment.Variables.TransactionReference = txnRef.TransactionReference;
+						SET Environment.Variables.EndToEndId = headRef.Channel||headRef.BatchReference||CAST (txnRef.TransactionReference AS CHARACTER);
+						SET Environment.Variables.OrgEndToEndId = headRef.Channel||headRef.OriginalReference||CAST(txnRef.OriginalTransactionReference AS CHARACTER);
+						SET Environment.Variables.Reason = txnRef.Reason;
+
+						SET Environment.dbQueryCount = '4';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+
+						MOVE txnRef NEXTSIBLING;
+					END WHILE;
+				END IF;
+			END IF; --Retry
+			--Checking the mode is present or not
+			DECLARE txnRef1 REFERENCE TO Environment.XMLNSC.Transaction[>];
+			WHILE LASTMOVE(txnRef1) DO
+
+				SET Environment.tranRef = txnRef1.TransactionReference;
+				SET Environment.dbQueryCount = '10';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				
+				IF Environment.DBStatus.STATUS = 'CANCEL_INITIATED' THEN
+	
+				ELSE
+
+					SET OutputRoot.XMLNSC = NULL;
+					IF LENGTH(modeVal)> 0 THEN ------this block get executed when modeVal is set to RETURN or REVERSAL or CANCELATION
+						SET Environment.tranRef = txnRef1.TransactionReference;
+
+
+
+						IF modeVal = 'Return' THEN
+
+							DECLARE outHeaderRef,outTransRef REFERENCE TO OutputRoot.XMLNSC;
+							CREATE LASTCHILD OF OutputRoot.XMLNSC AS outHeaderRef NAMESPACE ns NAME 'AchBatchCancelation';
+							SET outHeaderRef.Mode = FIELDVALUE(headRef.Mode);
+							SET outHeaderRef.Channel = FIELDVALUE(headRef.Channel);
+							SET outHeaderRef.BatchReference = FIELDVALUE(headRef.BatchReference);
+							SET outHeaderRef.OriginalReference = FIELDVALUE(headRef.OriginalReference);
+							SET outHeaderRef.Reason = FIELDVALUE(headRef.Reason);
+
+							CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Routng the request to ReturnOutward App') INTO rc;
+							CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+							SET outTransRef = txnRef1;
+
+							SET Environment.dbQueryCount = '11';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+
+
+
+
+							SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_RETO_Q_REQ';
+							PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+						ELSEIF modeVal = 'Reverse' THEN
+
+							DECLARE outHeaderRef,outTransRef REFERENCE TO OutputRoot.XMLNSC;
+							CREATE LASTCHILD OF OutputRoot.XMLNSC AS outHeaderRef NAMESPACE ns NAME 'AchBatchCancelation';
+							SET outHeaderRef.Mode = FIELDVALUE(headRef.Mode);
+							SET outHeaderRef.Channel = FIELDVALUE(headRef.Channel);
+							SET outHeaderRef.BatchReference = FIELDVALUE(headRef.BatchReference);
+							SET outHeaderRef.OriginalReference = FIELDVALUE(headRef.OriginalReference);
+							SET outHeaderRef.Reason = FIELDVALUE(headRef.Reason);
+
+							CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Routng the request to ReturnOutward App') INTO rc;
+
+							CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+							SET outTransRef = txnRef1;
+
+
+
+							SET Environment.dbQueryCount = '11';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+
+							SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_REVO_Q_REQ';
+							PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+						ELSEIF modeVal = 'Cancel' THEN
+							--SET MODULE_VAL = headRef.Module;
+
+							CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Recieved request for cancellation,Module is:' || MODULE_VAL) INTO rc;
+
+							CALL cancelationSessionCheck(headRef,txnRef1) INTO Bool;
+						ELSE
+							SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+							SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+							DECLARE canRef REFERENCE TO OutputRoot.XMLNSC;
+							CREATE LASTCHILD OF OutputRoot.XMLNSC AS canRef NAME 'AchTransactionInformation';
+							SET canRef.ResponseCode = 'Invalid Mode';
+							SET canRef.ResponseString = 'Mode is not valid:'|| headRef.Mode ||'Message Batch reference:' ||headRef.BatchReference;
+
+							CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Sending Failure response to OAB as Mode value is invalid') INTO rc;
+							CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+
+							PROPAGATE TO TERMINAL 'out1';
+						END IF;
+					ELSE ----this gets executed when there is no modevalue
+
+						SET MODULE_VAL = headRef.Module;
+						CALL cancelationSessionCheck(headRef,txnRef1) INTO Bool;
+					END IF;
+				END IF;
+				MOVE txnRef1 NEXTSIBLING;
+			END WHILE;
+			RETURN FALSE;
+
+
+
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'RETO_REVO_CANO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE cancelationSessionCheck (IN headerRef1 REFERENCE,IN txnRef1 REFERENCE ) RETURNS BOOLEAN
+	BEGIN
+
+		DECLARE start_time TIME START_TIME;
+		DECLARE end_time TIME END_TIME;
+		DECLARE curr_time TIME CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+
+		DECLARE outHeaderRef,outTransRef REFERENCE TO OutputRoot.XMLNSC;
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS outHeaderRef NAMESPACE ns NAME 'AchBatchCancellation';
+		SET outHeaderRef.Mode = FIELDVALUE(headerRef1.Mode);
+		SET outHeaderRef.Channel = FIELDVALUE(headerRef1.Channel);
+		SET outHeaderRef.BatchReference = FIELDVALUE(headerRef1.BatchReference);
+		SET outHeaderRef.OriginalReference = FIELDVALUE(headerRef1.OriginalReference);
+		SET outHeaderRef.Reason = FIELDVALUE(headerRef1.Reason);
+
+		IF ( curr_time > start_time AND curr_time < end_time) THEN ---checking session is open or not
+
+			CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Propagating request for cancellation As request is within session') INTO rc;
+			CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+			SET outTransRef = txnRef1;
+			SET Environment.dbQueryCount = '11';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_CANO_Q_REQ';
+			PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+		ELSE ------if session is closed
+			-- Creating output message
+
+			SET Environment.ENDTOENDID = headerRef1.Channel || headerRef1.OriginalReference || txnRef1.OriginalTransactionReference;
+			DECLARE DCO,DDO ROW;
+			/*CHECKIING BASED ON THE MODULE VALUE IF DC(DIRECT CREDIT) OR DD(DIRECT DEBIT)*/
+			IF MODULE_VAL LIKE 'DC%' THEN
+
+				SET Environment.dbQueryCount = '5';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF Environment.DCO.dbValues.STATUS IS NOT NULL THEN
+					/*PROPAGATING REQUEST TO REVERSAL APPLICATION*/
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Propagating the request to Reversal As request is not in the session and found in DCO') INTO rc;
+					CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+					SET outTransRef = txnRef1;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_REVO_Q_REQ';
+
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+					PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+				ELSEIF Environment.DCI.dbValues.STATUS IS NOT NULL THEN
+					/*PROPAGATING REQUEST TO RETURN APPLICATION*/
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Propagating the request to Return As request is not in the session and found in DCI') INTO rc;
+					CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+					SET outTransRef = txnRef1;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_RETO_Q_REQ';
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+					PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+				ELSE
+					/*IF TRANSACTION NOT FOUND IN DCI AND DCO TABLE */
+
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					DECLARE canRef REFERENCE TO OutputRoot.XMLNSC;
+					CREATE LASTCHILD OF OutputRoot.XMLNSC AS canRef NAME 'AchBatchCancellation';
+					SET canRef.ResponseCode = 'ACH001';
+					SET canRef.ResponseString = 'transaction not found in DCI or DCO tables' || txnRef1.OriginalTransactionReference;
+
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Transaction ID didnot found in DCI,DCO tables,Sending failure acknowlegment') INTO rc;
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+					PROPAGATE TO TERMINAL 'out1';
+				END IF;
+
+			ELSEIF MODULE_VAL LIKE 'DD%' THEN
+
+				SET Environment.dbQueryCount = '6';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF Environment.DDO.dbValues.STATUS IS NOT NULL THEN
+					/*PROPAGATING REQUEST TO RETURN APPLICATION*/
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Propagating the request to Return As request is not in the session and found in DDO') INTO rc;
+					CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+					SET outTransRef = txnRef1;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_RETO_Q_REQ';
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+					PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+				ELSEIF Environment.DDI.dbValues.STATUS IS NOT NULL THEN
+					/*PROPAGATING REQUEST TO REVERSAL APPLICATION*/
+
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Propagating the request to Reversal As request is not in the session and found in DDI') INTO rc;
+					CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+					SET outTransRef = txnRef1;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_REVO_Q_REQ';
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+					PROPAGATE TO TERMINAL 'out' DELETE NONE;
+				ELSE
+					/*AS REQUEST DIDNOT FOUND IN DDI,DDO TABLE*/
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					DECLARE canRef REFERENCE TO OutputRoot.XMLNSC;
+					CREATE LASTCHILD OF OutputRoot.XMLNSC AS canRef NAME 'AchBatchCancellation';
+					SET canRef.ResponseCode = 'ACH001';
+					SET canRef.ResponseString = 'transaction not found in DDO or DDI tables' || txnRef1.OriginalTransactionReference;
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', 'Transaction ID didnot found in DDI,DDO tables,Sending failure acknowlegment') INTO rc;
+					CALL writeToLogFile(flowName, 'CAN_ROUTER_INFO', 'INFO', '==========END==========') INTO rc;
+
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				END IF;
+			END IF;
+		END IF;
+
+	END;
+END MODULE;

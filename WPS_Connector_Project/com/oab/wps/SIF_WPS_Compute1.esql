@@ -1,0 +1,204 @@
+
+/*
+Author : Ashoke
+Subsequent Modifications by : Atul
+Module Name : WPS
+Flow Name : WPS_SIF_ProcessingFrom_OAB_TO_CBO
+Purpose : Log header information and body information into database and send to CBO
+Dependency Module : NO
+Dependency Database : YES,WPS_SIF_RECORD_INFO,WPS_SIF_HEADER_INFO
+Dependency XSD(Request Message) : NO
+Dependency XSD(Response Message) : NO
+Dependency CBS : NO
+Description :
+1. Receive CSV input payload and validate it.
+2. if validation is success then insert header info and body info in database and send same csv record to CBO.
+3. if validation is failure then propagate it to exception handler.
+*/
+BROKER SCHEMA com.oab.wps
+DECLARE fbchId SHARED CHARACTER;
+DECLARE fbchSeq SHARED INTEGER;
+
+CREATE COMPUTE MODULE SIF_WPS_Compute1
+	DECLARE flowName CHARACTER MessageFlowLabel;
+--	DECLARE user EXTERNAL CHARACTER;
+--	DECLARE workstation EXTERNAL CHARACTER;
+--	DECLARE channelReserved EXTERNAL CHARACTER;
+--	DECLARE channel EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE wpsHeaderId INTEGER;
+	DECLARE chlFileName,originalFile CHARACTER;
+	DECLARE REF ROW;
+	DECLARE value BOOLEAN;
+	DECLARE Chal,Reference CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = checkingBatch();
+		RETURN bool;
+
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	CREATE PROCEDURE checkingBatch() RETURNS BOOLEAN BEGIN
+	IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.DFDL = InputRoot.DFDL;
+			SET originalFile = InputLocalEnvironment.File.Name;
+			SET Environment.InputFileName = originalFile;
+			SET Environment.chlFileName = SUBSTRING(InputLocalEnvironment.File.Name BEFORE '.csv');
+			SET Environment.dbQueryCount = '1';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			--SET Environment.values[] = SELECT T.EMPLOYEER_CRNO,T.PAYER_CRNO,T.ESB_STATUS,T.CBO_STATUS FROM Database.{SCH_NAME}.{WPS_TABLE1} AS T WHERE T.SIF_CHL_FILE_NAME = chlFileName ;
+		IF Environment.values.EMPLOYEER_CRNO IS NOT NULL THEN
+			IF Environment.values.CBO_STATUS = 'CBO_TECH_VAL_FAILED' THEN /*Changed accoding to when tech validation failes channel can send the same file again*/
+				SET Environment.dbQueryCount = '2';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				-- DELETE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS T WHERE T.SIF_CHL_FILE_NAME = chlFileName;
+				-- DELETE FROM Database.{SCH_NAME}.{WPS_TABLE2} AS T WHERE T.SIF_FILE_NAME = chlFileName;
+				SET value = CBOProcess();
+				RETURN FALSE;
+			END IF;
+		ELSE
+			SET value = CBOProcess();
+			RETURN FALSE;
+		END IF;
+
+	ELSE
+		IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+			SET OutputExceptionList = InputExceptionList;
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		ELSE
+			SET OutputRoot.Properties = Environment.Properties;
+			SET OutputRoot.DFDL= Environment.DFDL;
+			SET OutputExceptionList = InputExceptionList;
+			SET Environment.RetryQueue = 'WPS_RETRY_Q';
+			PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+			SET Environment.Exception = 'True';
+		END IF;
+	END IF;
+END;
+CREATE PROCEDURE CBOProcess( ) RETURNS BOOLEAN BEGIN
+	/*Generating the Filename*/
+	SET Environment.dbQueryCount = '3';
+	CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+	IF Environment.Exception = 'True' THEN
+		RETURN FALSE;
+	END IF;
+	-- SET Environment.wpsHeaderId = SELECT MAX(G.WPS_SIF_HEADER_INFO_ID) FROM Database.{SCH_NAME}.{WPS_TABLE1} AS G; ---We are getting the maximum WPS_SIF_HEADER_INFO_ID based upon these we reterive the recently insered filename from database
+	-- SET Environment.NM[] = SELECT A.SIF_CBO_FILE_NAME FROM Database.{SCH_NAME}.{WPS_TABLE1} AS A WHERE A.WPS_SIF_HEADER_INFO_ID = wpsHeaderId ;
+	DECLARE prevIdDateSeq,prevIdDate CHARACTER;
+	DECLARE prevSeq INTEGER;
+	SET prevIdDateSeq = SUBSTRING(SUBSTRING(SUBSTRING(Environment.NM.SIF_CBO_FILE_NAME AFTER '_') AFTER '_') AFTER '_');
+	SET prevIdDate = SUBSTRING(prevIdDateSeq BEFORE '_'); ---From here we getting the Date Of the prevoius file that we insert in Database
+	SET prevSeq = CAST(SUBSTRING(prevIdDateSeq AFTER '_') AS INTEGER); ---From here we get sequence of the fileb
+	DECLARE currDay CHARACTER;
+	SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyyMMdd');
+	IF LENGTH(fbchId) > 0 THEN ----We are checking fbchId(Shared Variable) ,,it contains any filename or not
+		IF prevIdDate = currDay THEN --- if it contains file name means ,,then we check currentdate is equal to previousfile inserted date
+			SET fbchSeq = fbchSeq + 1; ---- if condition also satisy means then we increment file sequence with 1.
+		ELSE
+			SET fbchSeq = 1; ---If not means ,,,then day starts newly file sequence also starts with 001.
+		END IF;
+	ELSEIF prevIdDate = currDay THEN --- if fchId doesnt contain any value means ,,the flow was redeployed,,then by checking currdate and previous date
+		SET fbchSeq = prevSeq+1; --- if satisy means we add prevseq with 1
+	ELSE
+		SET fbchSeq = 1; ---if not satisy means file starts with new sequence.
+	END IF;
+	DECLARE fileName CHARACTER;
+	SET fileName = 'SIF_'||InputRoot.DFDL.SIFFormatValidation.HeaderBody.EmployerID||'_'||InputRoot.DFDL.SIFFormatValidation.HeaderBody.PayerBankShortName||'_'||CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyyMMdd')||'_'||RIGHT('000'||CAST(fbchSeq AS CHARACTER),3);
+	SET OutputLocalEnvironment.Destination.File.Name = fileName || '.csv';
+	SET Environment.var.filename = fileName;
+	SET OutputRoot.MQRFH2.usr.camelFileName = fileName || '.csv';
+	SET fbchId = Environment.var.filename;
+	SET Chal = SUBSTRING(InputLocalEnvironment.File.Name BEFORE '_');
+	SET Reference = SUBSTRING(SUBSTRING(SUBSTRING(InputLocalEnvironment.File.Name AFTER '_') AFTER '_') BEFORE '.csv');
+	SET Environment.ChlRefernce = Chal || Reference;
+	DECLARE ref REFERENCE TO InputRoot.DFDL.SIFFormatValidation;
+	CALL writeToLogFile(flowName, 'WPS_INFO', 'INFO','Request From OAB Was Received and File Name Was Generated' || Environment.var.filename ) INTO rc;
+	SET Environment.dbQueryCount = '4';
+	SET Environment.inRefHeader = ref.HeaderBody;
+	CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+	IF Environment.Exception = 'True' THEN
+		RETURN FALSE;
+	END IF;
+	SET Environment.dbQueryCount = '5';
+	CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+	IF Environment.Exception = 'True' THEN
+		RETURN FALSE;
+	END IF;
+	DECLARE recordLength INTEGER;
+	DECLARE sifName,recordId CHARACTER;
+	DECLARE i INTEGER 1;
+	SET sifName = REPLACE(Environment.var.filename,'_','');
+	WHILE i <= (Environment.inRefHeader.NoOfRecords) DO
+		SET Environment.inRefBody = InputRoot.DFDL.SIFFormatValidation.RecordBody[i];
+		SET recordId = i;
+		SET recordLength = LENGTH(recordId);
+		SET recordId = ----- This used to generating different sequences to every record in the file
+		CASE recordLength
+		WHEN '6' THEN recordId
+		WHEN '5' THEN '0'||recordId
+		WHEN '4' THEN '00'||recordId
+		WHEN '3' THEN '000'||recordId
+		WHEN '2' THEN '0000'||recordId
+		WHEN '1' THEN '00000'||recordId
+		ELSE recordId
+		END;
+		SET Environment.recordId = recordId;
+		SET Environment.dbQueryCount = '6';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+		SET Environment.inRefBody = NULL;
+		SET i = i + 1;
+	END WHILE;
+	CALL writeToLogFile(flowName, 'WPS_INFO', 'INFO','inserted SIF header and record info into DB') INTO rc;
+	SET OutputRoot.DFDL = InputRoot.DFDL; --- we are sending the input file to CBO and also taking the file to BackUp.
+	SET Environment.dbQueryCount = '7';
+	CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+	IF Environment.Exception = 'True' THEN
+		RETURN FALSE;
+	END IF;
+	CALL writeToLogFile(flowName, 'WPS_INFO', 'INFO','updating header table with status SEND_TO_CBO ') INTO rc;
+	PROPAGATE TO TERMINAL 'out';
+END;
+END MODULE;
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";

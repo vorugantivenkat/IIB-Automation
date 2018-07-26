@@ -1,0 +1,19 @@
+BROKER SCHEMA com.oab.cancellation.outward
+
+
+
+CREATE DATABASE MODULE Cancellation_Outward_Response_From_CBS_Database
+	DECLARE CANO_TXN_INFO EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER ;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '16' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS J SET STATUS = 'CANO_DCO_CBS_CRDT_OC_SUCCESS',DESCRIPTION = 'Transaction for crediting account of OAB was success at CBS',CBS_PAY_REF = Environment.payRef WHERE J.CBS_TRAN_REF = Environment.txnRef;
+			
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS J SET STATUS = 'CANO_DCO_CBS_CRDT_OC_PENDING',DESCRIPTION = 'Transaction for crediting account of OAB was Failed at CBS',CBS_PAY_REF = Environment.payRef,CBS_FAULT_CODE = Environment.faultCode,CBS_FAULT_STRING = Environment.faultString WHERE J.CBS_TRAN_REF = Environment.txnRef;			
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

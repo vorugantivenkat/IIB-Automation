@@ -1,0 +1,35 @@
+CREATE FUNCTION MappReasonCodeWithDescription(IN ReasonCode CHARACTER) RETURNS CHARACTER
+	BEGIN
+		CASE ReasonCode
+		WHEN '1' THEN RETURN '-Account blocked/ frozen';
+		WHEN '2' THEN RETURN '-Account closed/ transferred';
+		WHEN '3' THEN RETURN '-Duplicate transaction';
+		WHEN '4' THEN RETURN '-Insufficient funds';
+		WHEN '5' THEN RETURN '-Invallid account';
+		WHEN '6' THEN RETURN '-Others';
+		WHEN '7' THEN RETURN '-Dormant account';
+		WHEN '8' THEN RETURN '-Beneficiary details inadequate';
+		WHEN '9' THEN RETURN '-Beneficiary reported deceased';
+		WHEN '10' THEN RETURN '-Return on payer request';
+		WHEN '11' THEN RETURN '-Unathorized payer';
+		WHEN '12' THEN RETURN '-Debit authority revoked by payer';
+		WHEN '13' THEN RETURN '-Exceed arrangement';
+		WHEN '14' THEN RETURN '-Payer details inadequated';
+		WHEN '15' THEN RETURN '-Payer reported deceased';
+		WHEN '1000' THEN RETURN '-Processed successfully';
+		WHEN '1001' THEN RETURN '-Technical error';
+		WHEN '1002' THEN RETURN '-Parsing error';
+		WHEN '1003' THEN RETURN '-Security error';
+		WHEN '1004' THEN RETURN '-Invalid ID format';
+		WHEN '1005' THEN RETURN '-Message type is not allowed';
+		WHEN '1006' THEN RETURN '-Message type is not allowed';
+		WHEN '1007' THEN RETURN '-Purpose is not allowed';
+		WHEN '1008' THEN RETURN '-Invalid reason';
+		WHEN '1009' THEN RETURN '-No session available';
+		WHEN '1010' THEN RETURN '-Auto replied';
+		WHEN '1011' THEN RETURN '-Session unwinded';
+		ELSE RETURN '-Others';
+		
+		END CASE;
+		
+	END;

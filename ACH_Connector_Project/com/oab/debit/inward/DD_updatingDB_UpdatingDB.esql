@@ -1,0 +1,113 @@
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.debit.inward
+/*Author : Adil
+Subsequent Modifications by : Lokesh
+Module Name : Direct_Debit_Inward
+Flow Name : DirectDebit_Response_From_CBS
+Purpose : Updating Database against CBS Response
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting,Http Response
+Dependency Database : Yes,DDI_GP_HEADER_INFO,DDI_TXN_INFO,DDI_SUPPLEMENTRY_DATA,DDI_TXN_CDTR_OTHER,DDI_TXN_DBTR_OTHER,DDI_TXN_REMIT_INFO,(TableName)
+Dependency XSD(REQUEST) : pacs.002.001.06.xsd
+Dependency XSD(RESPONSE) : pacs.003.001.05.xsd
+Dependency CBS : Yes, Simulator_CoreServices,Simulator_CBS_DoubleEntryPosting
+Description :1. CBS Response for individual Transaction is received as input
+2. Updating Database with appropriate status code if the response is FIN
+3. Also updating database with appropriate status code if the response is Non FIN
+*/
+
+CREATE COMPUTE MODULE DD_updatingDB_UpdatingDB
+	DECLARE EXC_TABLENAME EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE DD_TXN_TABLE EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE rc,bool BOOLEAN;
+	DECLARE txn_end_id CHARACTER;
+	DECLARE insertStatusQuery,srcMsg CHARACTER;
+	DECLARE insertRes ROW;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage() INTO bool;
+		
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+			
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+			SET Environment.payment_ref = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			SET Environment.reply_Status = InputRoot.XMLNSC.*:Reply.*:Header.*:replyStatus;
+			SET Environment.payRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			SET Environment.txn_end_id = SUBSTRING(Environment.payment_ref FROM 19);
+			--===========| Updating STATUS_CODE in DD_TXN_TABLE table based on CBS replyStatus |===========--
+			IF Environment.payment_ref LIKE '11%' THEN
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Response received from CBS with ref - ' || Environment.payment_ref) INTO rc;
+				IF Environment.reply_Status ='FIN' THEN
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Success Response received for debiting Ordering Customer Account with END_TO_END_ID - '||Environment.txn_end_id) INTO rc;
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Updating status as DDI_CBS_DBT_OC_SUCCESS in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '6';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+				ELSE
+					SET Environment.faultString = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+                    SET Environment.faultCode = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultCode;
+					--SET Environment.cbsfail = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Failure Response received for debiting Ordering Customer Account with END_TO_END_ID - '||Environment.txn_end_id) INTO rc;
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Updating status as DDI_CBS_DBT_OC_FAILED in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '7';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+				END IF;
+			END IF;
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'DDI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+END MODULE;

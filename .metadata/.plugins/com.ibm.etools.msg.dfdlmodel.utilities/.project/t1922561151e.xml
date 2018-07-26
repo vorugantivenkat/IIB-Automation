@@ -1,0 +1,1235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageBroker name="MMS_Connector_Project">
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Creditor;XSDElementDeclaration" name="Creditor"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Channel;XSDElementDeclaration=1"
+      name="Channel" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//AutoPostPayment;XSDElementDeclaration=2"
+      name="AutoPostPayment" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//NumberOfPayments;XSDElementDeclaration=3"
+      name="NumberOfPayments" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Type;XSDElementDeclaration=4" name="Type"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Bank;XSDElementDeclaration=5"
+      name="Bank" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Account;XSDElementDeclaration=6"
+      name="Account" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//IdType;XSDElementDeclaration=7"
+      name="IdType" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//FromDate;XSDElementDeclaration=8"
+      name="FromDate" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//RecurringFrequency;XSDElementDeclaration=9"
+      name="RecurringFrequency" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//MaximumAmount;XSDElementDeclaration=10" name="MaximumAmount"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//PresentEach;XSDElementDeclaration=11"
+      name="PresentEach" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Name;XSDElementDeclaration=12"
+      name="Name" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//AchMandateInitiation;XSDElementDeclaration=13" name="AchMandateInitiation"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Mandate;XSDElementDeclaration=14" name="Mandate"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//ToDate;XSDElementDeclaration=15"
+      name="ToDate" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Debtor;XSDElementDeclaration=16" name="Debtor"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Id;XSDElementDeclaration=17"
+      name="Id" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Reference;XSDElementDeclaration=18"
+      name="Reference" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Frequency;XSDElementDeclaration=19"
+      name="Frequency" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//CollectionAmount;XSDElementDeclaration=20"
+      name="CollectionAmount" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Currency;XSDElementDeclaration=21"
+      name="Currency" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateInitiationReq.xsd#//Reason;XSDElementDeclaration=22"
+      name="Reason" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd"
+    prefix="req" targetNamespace="www.oab.com/mandate_amendment">
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_attachment_filename;XSDElementDeclaration" name="SplmtryData_attachment_filename"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//source_sys_timestamp;XSDElementDeclaration=1"
+      name="source_sys_timestamp" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//other_info;XSDElementDeclaration=2" name="other_info"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_attachment_filetype;XSDElementDeclaration=3" name="SplmtryData_attachment_filetype"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtragt_brnchid;XSDElementDeclaration=4"
+      name="dbtragt_brnchid" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtragt_brnchid;XSDElementDeclaration=5"
+      name="cdtragt_brnchid" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//source_sys_code;XSDElementDeclaration=6"
+      name="source_sys_code" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//msg_header;XSDElementDeclaration=7" name="msg_header"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtr_acct_id_iban;XSDElementDeclaration=8" name="dbtr_acct_id_iban"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtr_nm;XSDElementDeclaration=9" name="dbtr_nm"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtr_id;XSDElementDeclaration=10" name="dbtr_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtr_id_prtry;XSDElementDeclaration=11"
+      name="cdtr_id_prtry" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//linstrm_code;XSDElementDeclaration=12"
+      name="linstrm_code" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//amd_rsn_prtry;XSDElementDeclaration=13"
+      name="amd_rsn_prtry" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//ocrncs_todt;XSDElementDeclaration=14"
+      name="ocrncs_todt" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_Envlp_Irrevocable;XSDElementDeclaration=15" name="SplmtryData_Envlp_Irrevocable"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtr_nm;XSDElementDeclaration=16" name="cdtr_nm"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//ocrncs_frdt;XSDElementDeclaration=17"
+      name="ocrncs_frdt" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//max_amt;XSDElementDeclaration=18"
+      name="max_amt" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_TxPurp;XSDElementDeclaration=19"
+      name="SplmtryData_TxPurp" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//interface_code;XSDElementDeclaration=20"
+      name="interface_code" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_attachment_filedata;XSDElementDeclaration=21" name="SplmtryData_attachment_filedata"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//orgnl_mndtid;XSDElementDeclaration=22" name="orgnl_mndtid"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//ocrncs_seqtp;XSDElementDeclaration=23" name="ocrncs_seqtp"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_PrsntEach;XSDElementDeclaration=24"
+      name="SplmtryData_PrsntEach" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_AutoPost;XSDElementDeclaration=25"
+      name="SplmtryData_AutoPost" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_attachment_filesize;XSDElementDeclaration=26"
+      name="SplmtryData_attachment_filesize" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}int"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtragt_bicfi;XSDElementDeclaration=27"
+      name="cdtragt_bicfi" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_InitBy;XSDElementDeclaration=28" name="SplmtryData_InitBy"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//rsn_prtry;XSDElementDeclaration=29"
+      name="rsn_prtry" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_attachment_filecomment;XSDElementDeclaration=30" name="SplmtryData_attachment_filecomment"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_NmbrOfPaymnts;XSDElementDeclaration=31" name="SplmtryData_NmbrOfPaymnts"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtr_id;XSDElementDeclaration=32" name="cdtr_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//mndtreq_id;XSDElementDeclaration=33" name="mndtreq_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtr_acct_id_iban;XSDElementDeclaration=34" name="cdtr_acct_id_iban"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtr_id_prtry;XSDElementDeclaration=35"
+      name="dbtr_id_prtry" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//msg;XSDElementDeclaration=36" name="msg"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//source_sys_id;XSDElementDeclaration=37"
+      name="source_sys_id" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtr_acct_id_othr_id;XSDElementDeclaration=38" name="dbtr_acct_id_othr_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//cdtr_acct_id_othr_id;XSDElementDeclaration=39" name="cdtr_acct_id_othr_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//SplmtryData_RcurFrqcy;XSDElementDeclaration=40" name="SplmtryData_RcurFrqcy"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//dbtragt_bicfi;XSDElementDeclaration=41"
+      name="dbtragt_bicfi" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//amd_addtinf;XSDElementDeclaration=42" name="amd_addtinf"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//msg_data;XSDElementDeclaration=43" name="msg_data"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Amendment_Request_WithNameSpace.xsd#//ocrncs_frqcy_tp;XSDElementDeclaration=44" name="ocrncs_frqcy_tp"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd"
+    prefix="req" targetNamespace="www.oab.com/mandate_termination">
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//source_sys_id;XSDElementDeclaration" name="source_sys_id"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//cxl_rsn_prtry;XSDElementDeclaration=1" name="cxl_rsn_prtry"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//source_sys_timestamp;XSDElementDeclaration=2"
+      name="source_sys_timestamp" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}dateTime"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//interface_code;XSDElementDeclaration=3" name="interface_code"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//source_sys_code;XSDElementDeclaration=4"
+      name="source_sys_code" type="mlib://MMS_Connector_Project#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//msg_header;XSDElementDeclaration=5" name="msg_header"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//orgnl_mndtid;XSDElementDeclaration=6" name="orgnl_mndtid"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//SplmtryData_attachment_filename;XSDElementDeclaration=7" name="SplmtryData_attachment_filename"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//SplmtryData_attachment_filesize;XSDElementDeclaration=8" name="SplmtryData_attachment_filesize"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//SplmtryData_attachment_filedata;XSDElementDeclaration=9" name="SplmtryData_attachment_filedata"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//SplmtryData_attachment_filetype;XSDElementDeclaration=10" name="SplmtryData_attachment_filetype"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//SplmtryData_attachment_filecomment;XSDElementDeclaration=11" name="SplmtryData_attachment_filecomment"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//msg_data;XSDElementDeclaration=12" name="msg_data"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//msg;XSDElementDeclaration=13" name="msg"/>
+    <element
+      href="platform:/resource/MMS_Connector_Project/Mandate_Termination.xsd#//cxl_addtlinf;XSDElementDeclaration=14" name="cxl_addtlinf"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/MandateAmendmentReq.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/MMS_Connector_Project/MandateAmendmentReq.xsd#//AchMandateAmendment;XSDElementDeclaration" name="AchMandateAmendment"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd"
+    prefix="" targetNamespace="urn:iso:std:iso:20022:tech:xsd:pain.010.001.04">
+    <element
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Document;XSDElementDeclaration"
+      name="Document" type="mlib://MMS_Connector_Project#/-/complexType{urn:iso:std:iso:20022:tech:xsd:pain.010.001.04}Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//AccountIdentification4Choice;XSDComplexTypeDefinition" name="AccountIdentification4Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//AccountSchemeName1Choice;XSDComplexTypeDefinition=1" name="AccountSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/simpleType{urn:iso:std:iso:20022:tech:xsd:pain.010.001.04}ActiveCurrencyAndAmount_SimpleType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveCurrencyAndAmount;XSDComplexTypeDefinition=2" name="ActiveCurrencyAndAmount"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/simpleType{urn:iso:std:iso:20022:tech:xsd:pain.010.001.04}ActiveOrHistoricCurrencyAndAmount_SimpleType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount;XSDComplexTypeDefinition=3" name="ActiveOrHistoricCurrencyAndAmount"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Authorisation1Choice;XSDComplexTypeDefinition=4" name="Authorisation1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//BranchAndFinancialInstitutionIdentification5;XSDComplexTypeDefinition=5" name="BranchAndFinancialInstitutionIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//BranchData2;XSDComplexTypeDefinition=6" name="BranchData2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//CashAccount24;XSDComplexTypeDefinition=7" name="CashAccount24"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//CashAccountType2Choice;XSDComplexTypeDefinition=8" name="CashAccountType2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ClearingSystemIdentification2Choice;XSDComplexTypeDefinition=9" name="ClearingSystemIdentification2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ClearingSystemMemberIdentification2;XSDComplexTypeDefinition=10" name="ClearingSystemMemberIdentification2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ContactDetails2;XSDComplexTypeDefinition=11" name="ContactDetails2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//DateAndPlaceOfBirth;XSDComplexTypeDefinition=12" name="DateAndPlaceOfBirth"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//DatePeriodDetails1;XSDComplexTypeDefinition=13" name="DatePeriodDetails1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Document;XSDComplexTypeDefinition=14" name="Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//FinancialIdentificationSchemeName1Choice;XSDComplexTypeDefinition=15" name="FinancialIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//FinancialInstitutionIdentification8;XSDComplexTypeDefinition=16" name="FinancialInstitutionIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Frequency21Choice;XSDComplexTypeDefinition=17" name="Frequency21Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//FrequencyPeriod1;XSDComplexTypeDefinition=18" name="FrequencyPeriod1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//GenericAccountIdentification1;XSDComplexTypeDefinition=19" name="GenericAccountIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//GenericFinancialIdentification1;XSDComplexTypeDefinition=20" name="GenericFinancialIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//GenericOrganisationIdentification1;XSDComplexTypeDefinition=21" name="GenericOrganisationIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//GenericPersonIdentification1;XSDComplexTypeDefinition=22" name="GenericPersonIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//GroupHeader47;XSDComplexTypeDefinition=23" name="GroupHeader47"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//LocalInstrument2Choice;XSDComplexTypeDefinition=24" name="LocalInstrument2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Mandate5;XSDComplexTypeDefinition=25" name="Mandate5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Mandate6;XSDComplexTypeDefinition=26" name="Mandate6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateAmendment4;XSDComplexTypeDefinition=27" name="MandateAmendment4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateAmendmentReason1;XSDComplexTypeDefinition=28" name="MandateAmendmentReason1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateAmendmentRequestV04;XSDComplexTypeDefinition=29" name="MandateAmendmentRequestV04"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateOccurrences3;XSDComplexTypeDefinition=30" name="MandateOccurrences3"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateReason1Choice;XSDComplexTypeDefinition=31" name="MandateReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateSetupReason1Choice;XSDComplexTypeDefinition=32" name="MandateSetupReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//MandateTypeInformation1;XSDComplexTypeDefinition=33" name="MandateTypeInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//OrganisationIdentification8;XSDComplexTypeDefinition=34" name="OrganisationIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//OrganisationIdentificationSchemeName1Choice;XSDComplexTypeDefinition=35" name="OrganisationIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//OriginalMandate3Choice;XSDComplexTypeDefinition=36" name="OriginalMandate3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//OriginalMessageInformation1;XSDComplexTypeDefinition=37" name="OriginalMessageInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Party11Choice;XSDComplexTypeDefinition=38" name="Party11Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//PartyIdentification43;XSDComplexTypeDefinition=39" name="PartyIdentification43"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//PersonIdentification5;XSDComplexTypeDefinition=40" name="PersonIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//PersonIdentificationSchemeName1Choice;XSDComplexTypeDefinition=41" name="PersonIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//PostalAddress6;XSDComplexTypeDefinition=42" name="PostalAddress6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ReferredDocumentInformation6;XSDComplexTypeDefinition=43" name="ReferredDocumentInformation6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ReferredDocumentType3Choice;XSDComplexTypeDefinition=44" name="ReferredDocumentType3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ReferredDocumentType4;XSDComplexTypeDefinition=45" name="ReferredDocumentType4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ServiceLevel8Choice;XSDComplexTypeDefinition=46" name="ServiceLevel8Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//SupplementaryData1;XSDComplexTypeDefinition=47" name="SupplementaryData1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//SupplementaryDataEnvelope1;XSDComplexTypeDefinition=48" name="SupplementaryDataEnvelope1"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveCurrencyAndAmount_SimpleType;XSDSimpleTypeDefinition"
+      name="ActiveCurrencyAndAmount_SimpleType" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveCurrencyCode;XSDSimpleTypeDefinition=1"
+      name="ActiveCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount_SimpleType;XSDSimpleTypeDefinition=2"
+      name="ActiveOrHistoricCurrencyAndAmount_SimpleType" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ActiveOrHistoricCurrencyCode;XSDSimpleTypeDefinition=3"
+      name="ActiveOrHistoricCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//AddressType2Code;XSDSimpleTypeDefinition=4"
+      name="AddressType2Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//AnyBICIdentifier;XSDSimpleTypeDefinition=5"
+      name="AnyBICIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Authorisation1Code;XSDSimpleTypeDefinition=6"
+      name="Authorisation1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//BICFIIdentifier;XSDSimpleTypeDefinition=7"
+      name="BICFIIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//CountryCode;XSDSimpleTypeDefinition=8"
+      name="CountryCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//DecimalNumber;XSDSimpleTypeDefinition=9"
+      name="DecimalNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//DocumentType6Code;XSDSimpleTypeDefinition=10"
+      name="DocumentType6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalAccountIdentification1Code;XSDSimpleTypeDefinition=11"
+      name="ExternalAccountIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalCashAccountType1Code;XSDSimpleTypeDefinition=12"
+      name="ExternalCashAccountType1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalClearingSystemIdentification1Code;XSDSimpleTypeDefinition=13"
+      name="ExternalClearingSystemIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalFinancialInstitutionIdentification1Code;XSDSimpleTypeDefinition=14"
+      name="ExternalFinancialInstitutionIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalLocalInstrument1Code;XSDSimpleTypeDefinition=15"
+      name="ExternalLocalInstrument1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalMandateReason1Code;XSDSimpleTypeDefinition=16"
+      name="ExternalMandateReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalMandateSetupReason1Code;XSDSimpleTypeDefinition=17"
+      name="ExternalMandateSetupReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalOrganisationIdentification1Code;XSDSimpleTypeDefinition=18"
+      name="ExternalOrganisationIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalPersonIdentification1Code;XSDSimpleTypeDefinition=19"
+      name="ExternalPersonIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ExternalServiceLevel1Code;XSDSimpleTypeDefinition=20"
+      name="ExternalServiceLevel1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Frequency6Code;XSDSimpleTypeDefinition=21"
+      name="Frequency6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//IBAN2007Identifier;XSDSimpleTypeDefinition=22"
+      name="IBAN2007Identifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ISODate;XSDSimpleTypeDefinition=23"
+      name="ISODate" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//ISODateTime;XSDSimpleTypeDefinition=24"
+      name="ISODateTime" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max105Text;XSDSimpleTypeDefinition=25"
+      name="Max105Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max128Text;XSDSimpleTypeDefinition=26"
+      name="Max128Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max140Text;XSDSimpleTypeDefinition=27"
+      name="Max140Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max16Text;XSDSimpleTypeDefinition=28"
+      name="Max16Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max2048Text;XSDSimpleTypeDefinition=29"
+      name="Max2048Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max34Text;XSDSimpleTypeDefinition=30"
+      name="Max34Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max350Text;XSDSimpleTypeDefinition=31"
+      name="Max350Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max35Text;XSDSimpleTypeDefinition=32"
+      name="Max35Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//Max70Text;XSDSimpleTypeDefinition=33"
+      name="Max70Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//NamePrefix1Code;XSDSimpleTypeDefinition=34"
+      name="NamePrefix1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//PhoneNumber;XSDSimpleTypeDefinition=35"
+      name="PhoneNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.010.001.04.xsd#//SequenceType2Code;XSDSimpleTypeDefinition=36"
+      name="SequenceType2Code" variety="atomic"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd"
+    prefix="" targetNamespace="urn:iso:std:iso:20022:tech:xsd:pain.011.001.04">
+    <element
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Document;XSDElementDeclaration"
+      name="Document" type="mlib://MMS_Connector_Project#/-/complexType{urn:iso:std:iso:20022:tech:xsd:pain.011.001.04}Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//AccountIdentification4Choice;XSDComplexTypeDefinition" name="AccountIdentification4Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//AccountSchemeName1Choice;XSDComplexTypeDefinition=1" name="AccountSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/simpleType{urn:iso:std:iso:20022:tech:xsd:pain.011.001.04}ActiveOrHistoricCurrencyAndAmount_SimpleType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount;XSDComplexTypeDefinition=2" name="ActiveOrHistoricCurrencyAndAmount"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Authorisation1Choice;XSDComplexTypeDefinition=3" name="Authorisation1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//BranchAndFinancialInstitutionIdentification5;XSDComplexTypeDefinition=4" name="BranchAndFinancialInstitutionIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//BranchData2;XSDComplexTypeDefinition=5" name="BranchData2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//CashAccount24;XSDComplexTypeDefinition=6" name="CashAccount24"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//CashAccountType2Choice;XSDComplexTypeDefinition=7" name="CashAccountType2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ClearingSystemIdentification2Choice;XSDComplexTypeDefinition=8" name="ClearingSystemIdentification2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ClearingSystemMemberIdentification2;XSDComplexTypeDefinition=9" name="ClearingSystemMemberIdentification2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ContactDetails2;XSDComplexTypeDefinition=10" name="ContactDetails2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//DateAndPlaceOfBirth;XSDComplexTypeDefinition=11" name="DateAndPlaceOfBirth"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//DatePeriodDetails1;XSDComplexTypeDefinition=12" name="DatePeriodDetails1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Document;XSDComplexTypeDefinition=13" name="Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//FinancialIdentificationSchemeName1Choice;XSDComplexTypeDefinition=14" name="FinancialIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//FinancialInstitutionIdentification8;XSDComplexTypeDefinition=15" name="FinancialInstitutionIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Frequency21Choice;XSDComplexTypeDefinition=16" name="Frequency21Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//FrequencyPeriod1;XSDComplexTypeDefinition=17" name="FrequencyPeriod1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//GenericAccountIdentification1;XSDComplexTypeDefinition=18" name="GenericAccountIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//GenericFinancialIdentification1;XSDComplexTypeDefinition=19" name="GenericFinancialIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//GenericOrganisationIdentification1;XSDComplexTypeDefinition=20" name="GenericOrganisationIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//GenericPersonIdentification1;XSDComplexTypeDefinition=21" name="GenericPersonIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//GroupHeader47;XSDComplexTypeDefinition=22" name="GroupHeader47"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//LocalInstrument2Choice;XSDComplexTypeDefinition=23" name="LocalInstrument2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Mandate5;XSDComplexTypeDefinition=24" name="Mandate5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateCancellation4;XSDComplexTypeDefinition=25" name="MandateCancellation4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateCancellationRequestV04;XSDComplexTypeDefinition=26" name="MandateCancellationRequestV04"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateOccurrences3;XSDComplexTypeDefinition=27" name="MandateOccurrences3"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateReason1Choice;XSDComplexTypeDefinition=28" name="MandateReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateSetupReason1Choice;XSDComplexTypeDefinition=29" name="MandateSetupReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//MandateTypeInformation1;XSDComplexTypeDefinition=30" name="MandateTypeInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//OrganisationIdentification8;XSDComplexTypeDefinition=31" name="OrganisationIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//OrganisationIdentificationSchemeName1Choice;XSDComplexTypeDefinition=32" name="OrganisationIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//OriginalMandate3Choice;XSDComplexTypeDefinition=33" name="OriginalMandate3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//OriginalMessageInformation1;XSDComplexTypeDefinition=34" name="OriginalMessageInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Party11Choice;XSDComplexTypeDefinition=35" name="Party11Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PartyIdentification43;XSDComplexTypeDefinition=36" name="PartyIdentification43"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PaymentCancellationReason1;XSDComplexTypeDefinition=37" name="PaymentCancellationReason1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PersonIdentification5;XSDComplexTypeDefinition=38" name="PersonIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PersonIdentificationSchemeName1Choice;XSDComplexTypeDefinition=39" name="PersonIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PostalAddress6;XSDComplexTypeDefinition=40" name="PostalAddress6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ReferredDocumentInformation6;XSDComplexTypeDefinition=41" name="ReferredDocumentInformation6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ReferredDocumentType3Choice;XSDComplexTypeDefinition=42" name="ReferredDocumentType3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ReferredDocumentType4;XSDComplexTypeDefinition=43" name="ReferredDocumentType4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ServiceLevel8Choice;XSDComplexTypeDefinition=44" name="ServiceLevel8Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//SupplementaryData1;XSDComplexTypeDefinition=45" name="SupplementaryData1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//SupplementaryDataEnvelope1;XSDComplexTypeDefinition=46" name="SupplementaryDataEnvelope1"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount_SimpleType;XSDSimpleTypeDefinition"
+      name="ActiveOrHistoricCurrencyAndAmount_SimpleType" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ActiveOrHistoricCurrencyCode;XSDSimpleTypeDefinition=1"
+      name="ActiveOrHistoricCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//AddressType2Code;XSDSimpleTypeDefinition=2"
+      name="AddressType2Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//AnyBICIdentifier;XSDSimpleTypeDefinition=3"
+      name="AnyBICIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Authorisation1Code;XSDSimpleTypeDefinition=4"
+      name="Authorisation1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//BICFIIdentifier;XSDSimpleTypeDefinition=5"
+      name="BICFIIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//CountryCode;XSDSimpleTypeDefinition=6"
+      name="CountryCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//DecimalNumber;XSDSimpleTypeDefinition=7"
+      name="DecimalNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//DocumentType6Code;XSDSimpleTypeDefinition=8"
+      name="DocumentType6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalAccountIdentification1Code;XSDSimpleTypeDefinition=9"
+      name="ExternalAccountIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalCashAccountType1Code;XSDSimpleTypeDefinition=10"
+      name="ExternalCashAccountType1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalClearingSystemIdentification1Code;XSDSimpleTypeDefinition=11"
+      name="ExternalClearingSystemIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalFinancialInstitutionIdentification1Code;XSDSimpleTypeDefinition=12"
+      name="ExternalFinancialInstitutionIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalLocalInstrument1Code;XSDSimpleTypeDefinition=13"
+      name="ExternalLocalInstrument1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalMandateReason1Code;XSDSimpleTypeDefinition=14"
+      name="ExternalMandateReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalMandateSetupReason1Code;XSDSimpleTypeDefinition=15"
+      name="ExternalMandateSetupReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalOrganisationIdentification1Code;XSDSimpleTypeDefinition=16"
+      name="ExternalOrganisationIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalPersonIdentification1Code;XSDSimpleTypeDefinition=17"
+      name="ExternalPersonIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ExternalServiceLevel1Code;XSDSimpleTypeDefinition=18"
+      name="ExternalServiceLevel1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Frequency6Code;XSDSimpleTypeDefinition=19"
+      name="Frequency6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//IBAN2007Identifier;XSDSimpleTypeDefinition=20"
+      name="IBAN2007Identifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ISODate;XSDSimpleTypeDefinition=21"
+      name="ISODate" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//ISODateTime;XSDSimpleTypeDefinition=22"
+      name="ISODateTime" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max105Text;XSDSimpleTypeDefinition=23"
+      name="Max105Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max128Text;XSDSimpleTypeDefinition=24"
+      name="Max128Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max140Text;XSDSimpleTypeDefinition=25"
+      name="Max140Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max16Text;XSDSimpleTypeDefinition=26"
+      name="Max16Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max2048Text;XSDSimpleTypeDefinition=27"
+      name="Max2048Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max34Text;XSDSimpleTypeDefinition=28"
+      name="Max34Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max350Text;XSDSimpleTypeDefinition=29"
+      name="Max350Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max35Text;XSDSimpleTypeDefinition=30"
+      name="Max35Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//Max70Text;XSDSimpleTypeDefinition=31"
+      name="Max70Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//NamePrefix1Code;XSDSimpleTypeDefinition=32"
+      name="NamePrefix1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//PhoneNumber;XSDSimpleTypeDefinition=33"
+      name="PhoneNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.011.001.04.xsd#//SequenceType2Code;XSDSimpleTypeDefinition=34"
+      name="SequenceType2Code" variety="atomic"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd"
+    prefix="" targetNamespace="urn:iso:std:iso:20022:tech:xsd:pain.009.001.04">
+    <element
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Document;XSDElementDeclaration"
+      name="Document" type="mlib://MMS_Connector_Project#/-/complexType{urn:iso:std:iso:20022:tech:xsd:pain.009.001.04}Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//AccountIdentification4Choice;XSDComplexTypeDefinition" name="AccountIdentification4Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//AccountSchemeName1Choice;XSDComplexTypeDefinition=1" name="AccountSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/simpleType{urn:iso:std:iso:20022:tech:xsd:pain.009.001.04}ActiveCurrencyAndAmount_SimpleType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ActiveCurrencyAndAmount;XSDComplexTypeDefinition=2" name="ActiveCurrencyAndAmount"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Authorisation1Choice;XSDComplexTypeDefinition=3" name="Authorisation1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//BranchAndFinancialInstitutionIdentification5;XSDComplexTypeDefinition=4" name="BranchAndFinancialInstitutionIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//BranchData2;XSDComplexTypeDefinition=5" name="BranchData2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//CashAccount24;XSDComplexTypeDefinition=6" name="CashAccount24"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//CashAccountType2Choice;XSDComplexTypeDefinition=7" name="CashAccountType2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ClearingSystemIdentification2Choice;XSDComplexTypeDefinition=8" name="ClearingSystemIdentification2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ClearingSystemMemberIdentification2;XSDComplexTypeDefinition=9" name="ClearingSystemMemberIdentification2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ContactDetails2;XSDComplexTypeDefinition=10" name="ContactDetails2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//DateAndPlaceOfBirth;XSDComplexTypeDefinition=11" name="DateAndPlaceOfBirth"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//DatePeriodDetails1;XSDComplexTypeDefinition=12" name="DatePeriodDetails1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Document;XSDComplexTypeDefinition=13" name="Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//FinancialIdentificationSchemeName1Choice;XSDComplexTypeDefinition=14" name="FinancialIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//FinancialInstitutionIdentification8;XSDComplexTypeDefinition=15" name="FinancialInstitutionIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Frequency21Choice;XSDComplexTypeDefinition=16" name="Frequency21Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//FrequencyPeriod1;XSDComplexTypeDefinition=17" name="FrequencyPeriod1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//GenericAccountIdentification1;XSDComplexTypeDefinition=18" name="GenericAccountIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//GenericFinancialIdentification1;XSDComplexTypeDefinition=19" name="GenericFinancialIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//GenericOrganisationIdentification1;XSDComplexTypeDefinition=20" name="GenericOrganisationIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//GenericPersonIdentification1;XSDComplexTypeDefinition=21" name="GenericPersonIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//GroupHeader47;XSDComplexTypeDefinition=22" name="GroupHeader47"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//LocalInstrument2Choice;XSDComplexTypeDefinition=23" name="LocalInstrument2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Mandate7;XSDComplexTypeDefinition=24" name="Mandate7"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//MandateInitiationRequestV04;XSDComplexTypeDefinition=25" name="MandateInitiationRequestV04"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//MandateOccurrences3;XSDComplexTypeDefinition=26" name="MandateOccurrences3"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//MandateSetupReason1Choice;XSDComplexTypeDefinition=27" name="MandateSetupReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//MandateTypeInformation1;XSDComplexTypeDefinition=28" name="MandateTypeInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//OrganisationIdentification8;XSDComplexTypeDefinition=29" name="OrganisationIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//OrganisationIdentificationSchemeName1Choice;XSDComplexTypeDefinition=30" name="OrganisationIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Party11Choice;XSDComplexTypeDefinition=31" name="Party11Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//PartyIdentification43;XSDComplexTypeDefinition=32" name="PartyIdentification43"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//PersonIdentification5;XSDComplexTypeDefinition=33" name="PersonIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//PersonIdentificationSchemeName1Choice;XSDComplexTypeDefinition=34" name="PersonIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//PostalAddress6;XSDComplexTypeDefinition=35" name="PostalAddress6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ReferredDocumentInformation6;XSDComplexTypeDefinition=36" name="ReferredDocumentInformation6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ReferredDocumentType3Choice;XSDComplexTypeDefinition=37" name="ReferredDocumentType3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ReferredDocumentType4;XSDComplexTypeDefinition=38" name="ReferredDocumentType4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ServiceLevel8Choice;XSDComplexTypeDefinition=39" name="ServiceLevel8Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//SupplementaryData1;XSDComplexTypeDefinition=40" name="SupplementaryData1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//SupplementaryDataEnvelope1;XSDComplexTypeDefinition=41" name="SupplementaryDataEnvelope1"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ActiveCurrencyAndAmount_SimpleType;XSDSimpleTypeDefinition"
+      name="ActiveCurrencyAndAmount_SimpleType" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ActiveCurrencyCode;XSDSimpleTypeDefinition=1"
+      name="ActiveCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ActiveOrHistoricCurrencyCode;XSDSimpleTypeDefinition=2"
+      name="ActiveOrHistoricCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//AddressType2Code;XSDSimpleTypeDefinition=3"
+      name="AddressType2Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//AnyBICIdentifier;XSDSimpleTypeDefinition=4"
+      name="AnyBICIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Authorisation1Code;XSDSimpleTypeDefinition=5"
+      name="Authorisation1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//BICFIIdentifier;XSDSimpleTypeDefinition=6"
+      name="BICFIIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//CountryCode;XSDSimpleTypeDefinition=7"
+      name="CountryCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//DecimalNumber;XSDSimpleTypeDefinition=8"
+      name="DecimalNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//DocumentType6Code;XSDSimpleTypeDefinition=9"
+      name="DocumentType6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalAccountIdentification1Code;XSDSimpleTypeDefinition=10"
+      name="ExternalAccountIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalCashAccountType1Code;XSDSimpleTypeDefinition=11"
+      name="ExternalCashAccountType1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalClearingSystemIdentification1Code;XSDSimpleTypeDefinition=12"
+      name="ExternalClearingSystemIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalFinancialInstitutionIdentification1Code;XSDSimpleTypeDefinition=13"
+      name="ExternalFinancialInstitutionIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalLocalInstrument1Code;XSDSimpleTypeDefinition=14"
+      name="ExternalLocalInstrument1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalMandateSetupReason1Code;XSDSimpleTypeDefinition=15"
+      name="ExternalMandateSetupReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalOrganisationIdentification1Code;XSDSimpleTypeDefinition=16"
+      name="ExternalOrganisationIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalPersonIdentification1Code;XSDSimpleTypeDefinition=17"
+      name="ExternalPersonIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ExternalServiceLevel1Code;XSDSimpleTypeDefinition=18"
+      name="ExternalServiceLevel1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Frequency6Code;XSDSimpleTypeDefinition=19"
+      name="Frequency6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//IBAN2007Identifier;XSDSimpleTypeDefinition=20"
+      name="IBAN2007Identifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ISODate;XSDSimpleTypeDefinition=21"
+      name="ISODate" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//ISODateTime;XSDSimpleTypeDefinition=22"
+      name="ISODateTime" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max128Text;XSDSimpleTypeDefinition=23"
+      name="Max128Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max140Text;XSDSimpleTypeDefinition=24"
+      name="Max140Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max16Text;XSDSimpleTypeDefinition=25"
+      name="Max16Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max2048Text;XSDSimpleTypeDefinition=26"
+      name="Max2048Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max34Text;XSDSimpleTypeDefinition=27"
+      name="Max34Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max350Text;XSDSimpleTypeDefinition=28"
+      name="Max350Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max35Text;XSDSimpleTypeDefinition=29"
+      name="Max35Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//Max70Text;XSDSimpleTypeDefinition=30"
+      name="Max70Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//NamePrefix1Code;XSDSimpleTypeDefinition=31"
+      name="NamePrefix1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//PhoneNumber;XSDSimpleTypeDefinition=32"
+      name="PhoneNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.009.001.04.xsd#//SequenceType2Code;XSDSimpleTypeDefinition=33"
+      name="SequenceType2Code" variety="atomic"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd"
+    prefix="" targetNamespace="urn:iso:std:iso:20022:tech:xsd:pain.012.001.04">
+    <element
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Document;XSDElementDeclaration"
+      name="Document" type="mlib://MMS_Connector_Project#/-/complexType{urn:iso:std:iso:20022:tech:xsd:pain.012.001.04}Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//AcceptanceResult6;XSDComplexTypeDefinition" name="AcceptanceResult6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//AccountIdentification4Choice;XSDComplexTypeDefinition=1" name="AccountIdentification4Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//AccountSchemeName1Choice;XSDComplexTypeDefinition=2" name="AccountSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/simpleType{urn:iso:std:iso:20022:tech:xsd:pain.012.001.04}ActiveOrHistoricCurrencyAndAmount_SimpleType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount;XSDComplexTypeDefinition=3" name="ActiveOrHistoricCurrencyAndAmount"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Authorisation1Choice;XSDComplexTypeDefinition=4" name="Authorisation1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//BranchAndFinancialInstitutionIdentification5;XSDComplexTypeDefinition=5" name="BranchAndFinancialInstitutionIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//BranchData2;XSDComplexTypeDefinition=6" name="BranchData2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//CashAccount24;XSDComplexTypeDefinition=7" name="CashAccount24"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//CashAccountType2Choice;XSDComplexTypeDefinition=8" name="CashAccountType2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ClearingSystemIdentification2Choice;XSDComplexTypeDefinition=9" name="ClearingSystemIdentification2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ClearingSystemMemberIdentification2;XSDComplexTypeDefinition=10" name="ClearingSystemMemberIdentification2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ContactDetails2;XSDComplexTypeDefinition=11" name="ContactDetails2"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//DateAndPlaceOfBirth;XSDComplexTypeDefinition=12" name="DateAndPlaceOfBirth"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//DatePeriodDetails1;XSDComplexTypeDefinition=13" name="DatePeriodDetails1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Document;XSDComplexTypeDefinition=14" name="Document"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//FinancialIdentificationSchemeName1Choice;XSDComplexTypeDefinition=15" name="FinancialIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//FinancialInstitutionIdentification8;XSDComplexTypeDefinition=16" name="FinancialInstitutionIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Frequency21Choice;XSDComplexTypeDefinition=17" name="Frequency21Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//FrequencyPeriod1;XSDComplexTypeDefinition=18" name="FrequencyPeriod1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//GenericAccountIdentification1;XSDComplexTypeDefinition=19" name="GenericAccountIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//GenericFinancialIdentification1;XSDComplexTypeDefinition=20" name="GenericFinancialIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//GenericOrganisationIdentification1;XSDComplexTypeDefinition=21" name="GenericOrganisationIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//GenericPersonIdentification1;XSDComplexTypeDefinition=22" name="GenericPersonIdentification1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//GroupHeader47;XSDComplexTypeDefinition=23" name="GroupHeader47"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//LocalInstrument2Choice;XSDComplexTypeDefinition=24" name="LocalInstrument2Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Mandate5;XSDComplexTypeDefinition=25" name="Mandate5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateAcceptance4;XSDComplexTypeDefinition=26" name="MandateAcceptance4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateAcceptanceReportV04;XSDComplexTypeDefinition=27" name="MandateAcceptanceReportV04"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateOccurrences3;XSDComplexTypeDefinition=28" name="MandateOccurrences3"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateReason1Choice;XSDComplexTypeDefinition=29" name="MandateReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateSetupReason1Choice;XSDComplexTypeDefinition=30" name="MandateSetupReason1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//MandateTypeInformation1;XSDComplexTypeDefinition=31" name="MandateTypeInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//OrganisationIdentification8;XSDComplexTypeDefinition=32" name="OrganisationIdentification8"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//OrganisationIdentificationSchemeName1Choice;XSDComplexTypeDefinition=33" name="OrganisationIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//OriginalMandate3Choice;XSDComplexTypeDefinition=34" name="OriginalMandate3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//OriginalMessageInformation1;XSDComplexTypeDefinition=35" name="OriginalMessageInformation1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Party11Choice;XSDComplexTypeDefinition=36" name="Party11Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//PartyIdentification43;XSDComplexTypeDefinition=37" name="PartyIdentification43"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//PersonIdentification5;XSDComplexTypeDefinition=38" name="PersonIdentification5"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//PersonIdentificationSchemeName1Choice;XSDComplexTypeDefinition=39" name="PersonIdentificationSchemeName1Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//PostalAddress6;XSDComplexTypeDefinition=40" name="PostalAddress6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ReferredDocumentInformation6;XSDComplexTypeDefinition=41" name="ReferredDocumentInformation6"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ReferredDocumentType3Choice;XSDComplexTypeDefinition=42" name="ReferredDocumentType3Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ReferredDocumentType4;XSDComplexTypeDefinition=43" name="ReferredDocumentType4"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ServiceLevel8Choice;XSDComplexTypeDefinition=44" name="ServiceLevel8Choice"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//SupplementaryData1;XSDComplexTypeDefinition=45" name="SupplementaryData1"/>
+    <complexType
+      baseType="mlib://MMS_Connector_Project#/-/complexType{http://www.w3.org/2001/XMLSchema}anyType"
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//SupplementaryDataEnvelope1;XSDComplexTypeDefinition=46" name="SupplementaryDataEnvelope1"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ActiveOrHistoricCurrencyAndAmount_SimpleType;XSDSimpleTypeDefinition"
+      name="ActiveOrHistoricCurrencyAndAmount_SimpleType" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ActiveOrHistoricCurrencyCode;XSDSimpleTypeDefinition=1"
+      name="ActiveOrHistoricCurrencyCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//AddressType2Code;XSDSimpleTypeDefinition=2"
+      name="AddressType2Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//AnyBICIdentifier;XSDSimpleTypeDefinition=3"
+      name="AnyBICIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Authorisation1Code;XSDSimpleTypeDefinition=4"
+      name="Authorisation1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//BICFIIdentifier;XSDSimpleTypeDefinition=5"
+      name="BICFIIdentifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//CountryCode;XSDSimpleTypeDefinition=6"
+      name="CountryCode" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//DecimalNumber;XSDSimpleTypeDefinition=7"
+      name="DecimalNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//DocumentType6Code;XSDSimpleTypeDefinition=8"
+      name="DocumentType6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalAccountIdentification1Code;XSDSimpleTypeDefinition=9"
+      name="ExternalAccountIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalCashAccountType1Code;XSDSimpleTypeDefinition=10"
+      name="ExternalCashAccountType1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalClearingSystemIdentification1Code;XSDSimpleTypeDefinition=11"
+      name="ExternalClearingSystemIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalFinancialInstitutionIdentification1Code;XSDSimpleTypeDefinition=12"
+      name="ExternalFinancialInstitutionIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalLocalInstrument1Code;XSDSimpleTypeDefinition=13"
+      name="ExternalLocalInstrument1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalMandateReason1Code;XSDSimpleTypeDefinition=14"
+      name="ExternalMandateReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalMandateSetupReason1Code;XSDSimpleTypeDefinition=15"
+      name="ExternalMandateSetupReason1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalOrganisationIdentification1Code;XSDSimpleTypeDefinition=16"
+      name="ExternalOrganisationIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalPersonIdentification1Code;XSDSimpleTypeDefinition=17"
+      name="ExternalPersonIdentification1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ExternalServiceLevel1Code;XSDSimpleTypeDefinition=18"
+      name="ExternalServiceLevel1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Frequency6Code;XSDSimpleTypeDefinition=19"
+      name="Frequency6Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//IBAN2007Identifier;XSDSimpleTypeDefinition=20"
+      name="IBAN2007Identifier" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ISODate;XSDSimpleTypeDefinition=21"
+      name="ISODate" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//ISODateTime;XSDSimpleTypeDefinition=22"
+      name="ISODateTime" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max105Text;XSDSimpleTypeDefinition=23"
+      name="Max105Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max128Text;XSDSimpleTypeDefinition=24"
+      name="Max128Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max140Text;XSDSimpleTypeDefinition=25"
+      name="Max140Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max16Text;XSDSimpleTypeDefinition=26"
+      name="Max16Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max2048Text;XSDSimpleTypeDefinition=27"
+      name="Max2048Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max34Text;XSDSimpleTypeDefinition=28"
+      name="Max34Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max350Text;XSDSimpleTypeDefinition=29"
+      name="Max350Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max35Text;XSDSimpleTypeDefinition=30"
+      name="Max35Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//Max70Text;XSDSimpleTypeDefinition=31"
+      name="Max70Text" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//NamePrefix1Code;XSDSimpleTypeDefinition=32"
+      name="NamePrefix1Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//PhoneNumber;XSDSimpleTypeDefinition=33"
+      name="PhoneNumber" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//SequenceType2Code;XSDSimpleTypeDefinition=34"
+      name="SequenceType2Code" variety="atomic"/>
+    <simpleType
+      href="platform:/resource/MMS_Connector_Project/pain.012.001.04.xsd#//YesNoIndicator;XSDSimpleTypeDefinition=35"
+      name="YesNoIndicator" variety="atomic"/>
+  </XSDCollection>
+</MessageBroker>

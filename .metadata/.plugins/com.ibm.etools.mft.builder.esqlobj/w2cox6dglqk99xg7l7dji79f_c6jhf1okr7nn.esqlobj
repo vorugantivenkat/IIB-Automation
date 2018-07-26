@@ -1,0 +1,74 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.RETO_GP_HDR.Values[] = SELECT GP.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS GP WHERE GP.GRP_BATCH_REF = Environment.retBatchRef;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			SET Environment.DDOTxnInfo.Values[] = SELECT J.END_TO_END_ID,J.AMOUNT,A.ORDERING_CUSTOMER_ACCOUNT,J.PAYER_BANK,J.PAYER_ACCOUNT,J.STATUS,J.MSG_ID,J.TXN_ID,A.OPT_ID
+			FROM Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS J,Database.{SCHEMA_NAME}.{DDO_GRPHEADER_INFO} AS A
+			WHERE J.END_TO_END_ID = Environment.orgTxnIdDDO AND J.DDO_GRP_HDR_ID_TXN_INFO_FK = A.DDO_GRP_HEADER_ID;
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			SET Environment.DCITxnInfo.Values[] = SELECT J.PMT_ID_TXN_ID,J.DCI_GP_HDR_ID_TXN_FK,J.PMT_ID_ENDTOEND_ID,J.INTERBANK_SETTLE_AMT,J.DBTR_ACCT_FIN_ID_BICFI,J.DBTR_NAME,J.CDTR_ACCT_ID_IBAN,J.DBTR_ACCT_FIN_ID_BICFI,J.DBTR_ACCT_ID_IBAN,J.STATUS,J.MSG_ID,J.CDTR_ACCT_OTHR_ID,J.CDTR_NAME,J.PURP_PROPTYCHAR,J.CDTR_ACCT_FIN_ID_BICFI
+			FROM Database.{SCHEMA_NAME}.{DCI_TXN_INFO} AS J WHERE J.PMT_ID_TXN_ID LIKE Environment.orgTxnIdDCI AND J.STATUS = 'DCI_SUCCESS';
+			SET Environment.msg.id[] = SELECT S.MSG_ID FROM Database.{SCHEMA_NAME}.{DCI_GP_HEADER_INFO} AS S WHERE S.DCI_GP_HEADER_ID =Environment.DCITxnInfo.Values.DCI_GP_HDR_ID_TXN_FK;
+			SET Environment.TxnReason[] = SELECT S.TXN_REASON FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS S WHERE S.END_TO_END_ID = Environment.endID ;
+
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A SET STATUS = Environment.Status,
+			DESCRIPTION = 'Return Outward Transaction has been recived',
+			TXN_FOUND = Environment.TxnFound,
+			ORIG_MSG_ID = Environment.orgBchRef,
+			ORIG_TXN_ID = Environment.orgTxnIdDDO,
+			TXN_AMOUNT = Environment.amount,
+			DEBTOR_ACC_NO = Environment.creditorCustAcc,
+			CREDITOR_BANK_BICFI = Environment.crdtBankBIC WHERE A.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A SET STATUS = Environment.Status,
+			DESCRIPTION = 'Original Transaction was failed',
+			TXN_FOUND = Environment.TxnFound,
+			ORIG_MSG_ID = Environment.orgBchRef,
+			ORIG_TXN_ID = Environment.orgTxnIdDDO,
+			TXN_AMOUNT = Environment.amount,
+			DEBTOR_ACC_NO = Environment.creditorCustAcc,
+			CREDITOR_BANK_BICFI = Environment.crdtBankBIC WHERE A.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A SET STATUS = Environment.Status,
+			DESCRIPTION = 'Return Outward Transaction has been recived',
+			TXN_FOUND = Environment.TxnFound,
+			ORIG_MSG_ID = Environment.orgBchRef,
+			ORIG_TXN_ID = Environment.orgTxnIdDCI,
+			TXN_AMOUNT = Environment.amount,
+			DEBTOR_ACC_NO = Environment.creditorCustAcc,
+			CREDITOR_BANK_BICFI = Environment.crdtBankBIC WHERE A.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A SET STATUS = Environment.Status,
+			DESCRIPTION = 'Original Transaction was failed',
+			TXN_FOUND = Environment.TxnFound,
+			ORIG_MSG_ID = Environment.orgBchRef,
+			ORIG_TXN_ID = Environment.orgTxnIdDCI,
+			TXN_AMOUNT = Environment.amount,
+			DEBTOR_ACC_NO = Environment.creditorCustAcc,
+			CREDITOR_BANK_BICFI = Environment.crdtBankBIC WHERE A.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A SET STATUS = Environment.Status,
+			DESCRIPTION = 'Original Transaction not found',
+			TXN_FOUND = Environment.TxnFound,
+			ORIG_MSG_ID = Environment.orgBchRef,
+			ORIG_TXN_ID = 'Failure', --Environment.orgTxnIdDDO,
+			TXN_AMOUNT = Environment.amount,
+			DEBTOR_ACC_NO = Environment.creditorCustAcc,
+			CREDITOR_BANK_BICFI = Environment.crdtBankBIC WHERE A.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '9' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS='RETO_DDO_ORIGIN_TXN_NOT_HPND',DESCRIPTION = 'Transaction was not found in DDO Table' WHERE J.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS='RETO_DCI_ORIGIN_TXN_NOT_HPND',DESCRIPTION = 'Transaction was not found in DCI Table' WHERE J.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '11' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS='RETO_NO_RECORD_FOUND',DESCRIPTION = 'Transaction was not found both DDO And DCI' WHERE J.END_TO_END_ID = Environment.endID;
+		ELSEIF Environment.dbQueryCount = '12' THEN
+			SET Environment.SET.ACC[] = SELECT J.DD_STLMNT_ACC,J.DC_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		ELSEIF Environment.dbQueryCount = '13' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET CBS_TRAN_REF = Environment.CBS_TRAN_REF, CBS_REQUEST = Environment.cbsMsg, STATUS= Environment.Status,DESCRIPTION = 'Transaction sent to CBS for debiting Ordering Customer Account' WHERE J.END_TO_END_ID = Environment.endID;
+
+		END IF;
+		RETURN TRUE;
+	END;
+

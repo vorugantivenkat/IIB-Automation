@@ -1,0 +1,95 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '1' THEN
+
+			SET Environment.DB.ID[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{REVI_GRP_HEADER_INFO} AS J WHERE J.MSG_ID = Environment.Variables.MsgID;
+
+			SET Environment.ACHConfig.values[] = SELECT C.DC_STLMNT_ACC,C.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+
+		ELSEIF Environment.dbQueryCount = '2' THEN
+
+			INSERT INTO Database.{SCHEMA_NAME}.{REVI_GRP_HEADER_INFO} (MSG_ID,
+			CREATION_DATETIME,
+			NO_OF_TXNS,
+			TOTAL_INTRBANK_SETTLE_AMT,
+			INTERBANK_SETTLE_DATE,
+			SETTLE_INFO_METHOD,
+			SETTLE_INFO_CLR_SYS_PRTRY,
+			INSTG_AGT_FIN_ID_BICFI,
+			INSTG_AGT_BRNCHID_ID,
+			INSTD_AGT_FIN_ID_BICFI,
+			INSTD_AGT_BRNCHID_ID )
+			VALUES (Environment.Variables.MsgID,
+			Environment.crtDtTm,
+			1,
+			Environment.Variables.ttlRvsdIntrBkSttlmAmt,
+			Environment.Variables.intrBk_sttlm_dt,
+			Environment.Variables.sttlmInfoMtd,
+			Environment.Variables.sttlmInfClrSysPrty,
+			Environment.Variables.instgAgtBicfi,
+			Environment.Variables.instgAgtBranchId,
+			Environment.Variables.instdAgtBicfi,
+			Environment.Variables.instdAgtBranchId );
+
+		ELSEIF Environment.dbQueryCount = '3' THEN
+
+			SET Environment.REV_GRP_HEADER_ID = SELECT MAX(REV.REV_GRP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{REVI_GRP_HEADER_INFO} AS REV ;
+
+		ELSEIF Environment.dbQueryCount = '4' THEN
+
+			SET Environment.Status.T1[] = SELECT R.PMT_ID_TXN_ID FROM Database.{SCHEMA_NAME}.{DCI_TXN_INFO} AS R
+			WHERE R.PMT_ID_TXN_ID = Environment.Variables.orgnlTxnId;
+
+		ELSEIF Environment.dbQueryCount = '5' THEN
+
+			SET Environment.Status.T2[] = SELECT R.TXN_ID FROM Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS R
+			WHERE R.TXN_ID = Environment.Variables.orgnlTxnId ;
+
+		ELSEIF Environment.dbQueryCount = '6' THEN
+
+			SET Environment.Status.C1[] = SELECT R.STATUS, R.CDTR_ACCT_OTHR_ID, R.DCI_GP_HDR_ID_TXN_FK, R.CDTR_NAME, R.PURP_PROPTYCHAR,R.CDTR_ACCT_ID_IBAN,R.CDTR_ACCT_FIN_ID_BICFI,R.DBTR_NAME ,R.DBTR_ACCT_FIN_ID_BICFI FROM Database.{SCHEMA_NAME}.{DCI_TXN_INFO} AS R
+			WHERE R.PMT_ID_TXN_ID = Environment.Variables.orgnlTxnId;
+			SET Environment.msg.id[] = SELECT S.MSG_ID FROM Database.{SCHEMA_NAME}.{DCI_GP_HEADER_INFO} AS S WHERE S.DCI_GP_HEADER_ID = Environment.Status.C1.DCI_GP_HDR_ID_TXN_FK;
+
+		ELSEIF Environment.dbQueryCount = '7' THEN
+
+			SET Environment.Status.C2[] =SELECT B.STATUS,B.DDO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS B WHERE B.TXN_ID= Environment.Variables.orgnlTxnId ;
+			SET Environment.Status.C3[]=SELECT A.ORDERING_CUSTOMER_ACCOUNT FROM Database.{SCHEMA_NAME}.{DDO_GROUP_HEADER_INFO} AS A WHERE A.DDO_GRP_HEADER_ID = Environment.Status.C2.DDO_GRP_HDR_ID_TXN_INFO_FK;
+
+		ELSEIF Environment.dbQueryCount = '8' THEN
+
+			INSERT INTO Database.{SCHEMA_NAME}.{REVI_TXN_INFO}
+			(REV_GRP_HDR_ID_TXN_INFO_FK,
+			RVSL_ID,
+			ORGNL_TX_ID,
+			RVSD_INTRBK_STTLM_AMT,ACCOUNT,STATUS)
+			VALUES (Environment.REV_GRP_HEADER_ID,
+			Environment.Variables.rvslId,
+			Environment.Variables.orgnlTxnId,
+			Environment.Variables.ttlRvsdIntrBkSttlmAmt,
+			Environment.ACCOUNT,
+			Environment.Status);
+
+		ELSEIF Environment.dbQueryCount = '9' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_DBT_OC_SENT',
+			CBS_REQUEST_MESSAGE = Environment.cbsReqMsg,
+			CBS_TRAN_REF = Environment.Variables.cbs_tran_ref,
+			TXN_FOUND = Environment.Txn_Found,
+			DESCRIPTION = 'Transaction was sent to External Systems for approval for debiting account of OAB'
+			WHERE R.ORGNL_TX_ID = Environment.Variables.orgnlTxnId;
+
+		ELSEIF Environment.dbQueryCount = '10' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_FAILED',DESCRIPTION = 'Mandatory Field "AddtlInf" is Missing'
+			WHERE R.ORGNL_TX_ID = Environment.Variables.orgnlTxnId;
+			--ELSEIF Environment.dbQueryCount = '10A' THEN
+			--SET Environment.ACHConfig.values[] = SELECT C.DC_STLMNT_ACC,C.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+
+		END IF;
+
+
+		RETURN TRUE;
+	END;
+

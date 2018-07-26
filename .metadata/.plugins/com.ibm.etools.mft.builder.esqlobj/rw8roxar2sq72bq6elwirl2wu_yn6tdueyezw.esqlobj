@@ -1,0 +1,36 @@
+CREATE DATABASE MODULE DirectCredit_Outward_Response_From_CBS_Database
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER ;
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER ;
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSN_NAME EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '9' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_DBT_OC_SUCCESS',CBS_PAY_REF = Environment.cbsRef WHERE R.CBS_TRAN_REF = Environment.cbsTxnRef;
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			SET Environment.Values[] = SELECT A.DC_STLMNT_ACC,J.END_TO_END_ID,J.AMOUNT,J.TXN_REF,J.PURP_OF_TRANSFER,J.DETAILS_OF_PMTS FROM Database.{SCH_NAME}.{DCO_TABLE3} AS A,Database.{SCH_NAME}.{DCO_TABLE2} AS J WHERE J.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.headerID AND J.STATUS = 'DCO_CBS_DBT_OC_SENT';
+			SET Environment.Id.userref[] = SELECT B.BATCH_REFERENCE ,B.ORDERING_CUSTOMER_NAME FROM Database.{SCH_NAME}.{DCO_TABLE1} AS B WHERE B.DCO_GRP_HEADER_ID = Environment.headerID;
+
+		ELSEIF Environment.dbQueryCount = '11' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage,DESCRIPTION = 'Batch Debit Operation was Success and Transaction sent to CBS for credit',CBS_TRAN_REF = Environment.txnRef,CBS_PAY_REF = Environment.cbsRef WHERE R.END_TO_END_ID = Environment.Values[Environment.loopCount].END_TO_END_ID AND R.STATUS = 'DCO_CBS_DBT_OC_SENT';
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SETACC_CRDT_UNDER_PROCESS' WHERE R.CBS_TRAN_REF = Environment.cbsTxnRef;
+		ELSEIF Environment.dbQueryCount = '12' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SETACC_CRDT_ALL_TXNS_PROCESSED' WHERE R.CBS_TRAN_REF = Environment.cbsTxnRef;
+		ELSEIF Environment.dbQueryCount = '13' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_DBT_OC_FAILED',DESCRIPTION = 'Batch Debit failed at CBS',CBS_PAY_REF = Environment.cbsRef,FAULT_CODE = Environment.faultCode,FAULT_STRING = Environment.faultString WHERE R.CBS_TRAN_REF = Environment.TransRefId AND R.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.headerID AND R.STATUS = 'DCO_CBS_DBT_OC_SENT' ;
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_DBT_OC_FAILURE',FAULT_CODE = Environment.faultCode,FAULT_STRING = Environment.faultString WHERE R.CBS_TRAN_REF = Environment.cbsTxnRef;
+		ELSEIF Environment.dbQueryCount = '14' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_SEND_TO_CBO_NPT',DESCRIPTION = 'Transaction for Credit was success and need to sent to CBO',CBS_PAY_REF = Environment.cbsRef WHERE R.CBS_TRAN_REF = Environment.TransRefId AND R.STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT' ;
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_DCSETLACC_FAILED',DESCRIPTION = 'Transaction for Credit has failed at CBS',CBS_PAY_REF = Environment.cbsRef,FAULT_CODE = Environment.faultCode,FAULT_STRING = Environment.faultString WHERE R.CBS_TRAN_REF = Environment.TransRefId AND R.STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT' ;
+		ELSEIF Environment.dbQueryCount = '16' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_OC_SUCCESS',DESCRIPTION = 'Transaction for crediting OC(unfreeze) was successful at CBS',CBS_PAY_REF = Environment.cbsRef WHERE R.CBS_TRAN_REF = Environment.TransRefId ;
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_OC_FAILED',DESCRIPTION = 'Transaction for crediting OC(unfreeze) was Failed at CBS',CBS_PAY_REF = Environment.cbsRef,FAULT_CODE = Environment.faultCode,FAULT_STRING = Environment.faultString WHERE R.CBS_TRAN_REF = Environment.TransRefId;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

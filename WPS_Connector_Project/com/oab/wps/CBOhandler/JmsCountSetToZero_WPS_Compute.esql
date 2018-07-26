@@ -1,0 +1,10 @@
+BROKER SCHEMA com.oab.wps.CBOhandler
+
+
+CREATE COMPUTE MODULE JmsCountSetToZero_WPS_Compute
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET jmsWpsRetryCount = 0;
+		RETURN TRUE;
+	END;
+	END MODULE;

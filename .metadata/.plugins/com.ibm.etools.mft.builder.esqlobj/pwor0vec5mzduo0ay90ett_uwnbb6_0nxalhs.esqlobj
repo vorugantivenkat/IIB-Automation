@@ -1,0 +1,122 @@
+CREATE COMPUTE MODULE PayloadLoging_Compute
+	DECLARE msgId,flowName CHARACTER;
+	DECLARE PAYLOAD_TABLE EXTERNAL CHARACTER;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE REQ_TYPE CHARACTER ;
+	DECLARE MSG_TYPE CHARACTER;
+	DECLARE DB ROW;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE exRef REFERENCE TO InputRoot.XMLNSC.MSG.ExceptionDetails;
+		DECLARE excMessage BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET Environment.excMessage = CAST(excMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+		IF exRef.Description IS NULL AND exRef.filename IS NULL THEN
+			DECLARE cboReqMessage BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.CboReqMessage = CAST(cboReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			DECLARE OriginalTxt REFERENCE TO InputRoot.XMLNSC.*:request.*:content;
+			IF CONTAINS(OriginalTxt,'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>') THEN
+				SET OriginalTxt = SUBSTRING(OriginalTxt AFTER '?>');
+			END IF;
+			CREATE LASTCHILD OF Environment DOMAIN 'XMLNSC' PARSE(OriginalTxt,InputProperties.Encoding,InputProperties.CodedCharSetId);
+			DECLARE REF REFERENCE TO Environment.XMLNSC;
+			SET REQ_TYPE = FIELDVALUE(InputRoot.XMLNSC.*:request.*:type);
+			SET MSG_TYPE = FIELDNAME(Environment.XMLNSC.*:*.[3]);
+			IF MSG_TYPE LIKE 'Encoding' THEN
+				--Got XML Declaration
+				SET MSG_TYPE = FIELDNAME(Environment.XMLNSC.*:*[2].*[2]);
+			END IF;
+		END IF;
+		IF MSG_TYPE LIKE 'FIToFICstmrCdtTrf' THEN
+			--It is pacs.008.001.05 FIToFICstmrCdtTrf
+			--Direct Credit
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:GrpHdr.*:MsgId;
+			SET flowName = 'DIRECTCREDIT';
+		ELSEIF MSG_TYPE LIKE 'FIToFICstmrDrctDbt' THEN
+			--It is pacs.003.001.05 FIToFICstmrDrctDbt
+			--Direct Debit
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			SET flowName = 'DIRECTDEBIT';
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtCxlReq' THEN
+			--It is camt.056.001.04 FIToFIPmtCxlReq
+			--Cancillation
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFIPmtCxlReq.*:Assgnmt.*:Id;
+			SET flowName = 'CANCELLATION';
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtRvsl' THEN
+			--It is pacs.007.001.05 FIToFIPmtRvsl
+			--Reversal
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFIPmtRvsl.*:GrpHdr.*:MsgId;
+			SET flowName = 'REVERSAL';
+		ELSEIF MSG_TYPE LIKE 'PmtRtr' THEN
+			--It is pacs.004.001.05 PmtRtr
+			--Return
+			SET msgId = Environment.XMLNSC.*:Document.*:PmtRtr.*:GrpHdr.*:MsgId;
+			SET flowName = 'RETURN';
+
+		ELSEIF MSG_TYPE LIKE 'RsltnOfInvstgtn' THEN
+			IF REQ_TYPE LIKE 'CN' THEN
+				SET msgId = Environment.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:Assgnmt.*:Id;
+			ELSE
+				SET msgId = Environment.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+			END IF;
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			--Cancillation Response RsltnOfInvstgtn.ns4:Assgnmt.ns4:Id
+			SET flowName = 'CANCEALLATION';
+		ELSEIF MSG_TYPE LIKE 'MndtInitnReq' THEN
+			--It is pain.009.001.04 MndtInitnReq
+			--Mandate Initiation
+			SET msgId = Environment.XMLNSC.*:Document.*:MndtInitnReq.*:GrpHdr.*:MsgId;
+			SET flowName = 'MANDATE_INITATION';
+		ELSEIF MSG_TYPE LIKE 'MndtAmdmntReq' THEN
+			--It is pain.010.001.04 MndtAmdmntReq
+			--Mandate Amendment
+			SET msgId = Environment.XMLNSC.*:Document.*:MndtAmdmntReq.*:GrpHdr.*:MsgId;
+			SET flowName = 'MANDATE_AMENDMENT';
+		ELSEIF MSG_TYPE LIKE 'MndtCxlReq' THEN
+			--It is pain.011.001.04 MndtCxlReq
+			--Mandate Termination
+			SET msgId = Environment.XMLNSC.*:Document.*:MndtCxlReq.*:GrpHdr.*:MsgId;
+			SET flowName = 'MANDATE_TERMINATION';
+		ELSEIF MSG_TYPE LIKE 'MndtAccptncRpt' THEN
+			--It is pain.012.001.04 MndtAccptncRpt
+			--Mandate Response
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtStsRpt' THEN
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+		
+		END IF;	
+
+
+		SET DB.MSG_ID[] = SELECT J.MESSAGE_ID FROM Database.{SCH_NAME}.{PAYLOAD_TABLE} AS J WHERE J.MESSAGE_ID =msgId;
+		IF exRef.Description IS NOT NULL THEN
+			DECLARE Exc_des CHARACTER exRef.Description;
+			DECLARE flowname CHARACTER exRef.FlowName;
+			INSERT INTO Database.{SCH_NAME}.{PAYLOAD_TABLE} (EXCE_DESC,EXCE_TIMESTAMP,FLOW_NAME,EXCE_ORG_MSG)VALUES(Exc_des,CURRENT_TIMESTAMP,flowname,Environment.excMessage);
+		ELSE
+			IF DB.MSG_ID.MESSAGE_ID IS NULL THEN
+				INSERT INTO Database.{SCH_NAME}.{PAYLOAD_TABLE}(MESSAGE_ID,ESB_CBO_REQ_MSG,FLOW_NAME,ESB_CBO_REQ_TIMESTAMP) VALUES (msgId,Environment.CboReqMessage,flowName,CURRENT_TIMESTAMP);
+			ELSEIF MSG_TYPE LIKE 'FIToFIPmtStsRpt' OR MSG_TYPE LIKE 'MndtAccptncRpt'  OR MSG_TYPE LIKE 'RsltnOfInvstgtn' THEN
+				UPDATE Database.{SCH_NAME}.{PAYLOAD_TABLE} AS B SET ESB_CBO_RES_MSG = Environment.CboReqMessage,ESB_CBO_RES_TIMESTAMP = CURRENT_TIMESTAMP WHERE B.MESSAGE_ID = msgId; 			
+				ELSE ---No need to write because duplicate msgid's found
+					
+			END IF;
+		END IF ;
+
+
+	END;
+END MODULE;

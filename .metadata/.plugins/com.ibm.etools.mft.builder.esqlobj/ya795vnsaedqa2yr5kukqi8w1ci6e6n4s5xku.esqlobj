@@ -1,0 +1,22 @@
+CREATE DATABASE MODULE Reversal_Outward_Response_From_CBS_ProcessDBQeury
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE CANO_REVO_RETO_TXN_INFO EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		IF Environment.dbQueryCount = '29' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_SUCCESS',
+			DESCRIPTION = 'Credit OC Success',CBS_PAY_REF=Environment.Variables.cbspayref	WHERE R.CBS_TRAN_REF = Environment.Variables.refId ;
+		ELSEIF Environment.dbQueryCount = '30' THEN
+			
+				UPDATE Database.{SCHEMA_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'REVO_CBS_CRDT_OC_FAILED',
+				DESCRIPTION = 'Credit OC failed at CBS', 
+				CBS_FAULT_STRING = Environment.Variables.faultString,
+				CBS_FAULT_CODE = Environment.Variables.faultCode,
+				EXEC_DESC = COALESCE(Environment.Variables.exc_Desc,'FailedResponse received fromCBS')
+				 WHERE R.CBS_TRAN_REF = Environment.Variables.refId;			
+		END IF;
+			RETURN TRUE;
+		END;
+
+	END MODULE;

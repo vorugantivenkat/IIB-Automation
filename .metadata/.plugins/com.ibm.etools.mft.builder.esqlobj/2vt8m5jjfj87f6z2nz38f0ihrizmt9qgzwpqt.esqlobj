@@ -1,0 +1,12 @@
+CREATE PROCEDURE genSupData(IN outRef REFERENCE )
+BEGIN
+	--DECLARE outRef REFERENCE TO outRef;
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns22 NAME 'achSupplementaryData';
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns22 NAME 'Items';
+	SET outRef.ns22:Item[1] = '2';
+	SET outRef.ns22:Item[1].(XMLNSC.Attribute)key = 'batchSource';
+
+	SET outRef.ns22:Item[2] = '1';
+	SET outRef.ns22:Item[2].(XMLNSC.Attribute)key = 'sessionSequence';
+
+END;

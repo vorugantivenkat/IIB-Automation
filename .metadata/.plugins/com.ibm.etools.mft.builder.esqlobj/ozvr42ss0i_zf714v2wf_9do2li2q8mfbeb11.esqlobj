@@ -1,0 +1,184 @@
+CREATE COMPUTE MODULE OAB_Mandate_Intiation_Compute
+
+	DECLARE rc BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE srcMsg CHARACTER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		CALL CopyEntireMessage() INTO bool;
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+			CALL writeToLogFile(flowName, 'MMSOUT_INFO', 'INFO',' ----------------START------------------') INTO rc;
+
+			DECLARE inBody REFERENCE TO InputRoot.XMLNSC.AchMandateInitiation.Mandate;
+			SET Environment.refId = inBody.Reference;
+			SET Environment.dbQueryCount = '1'; --Selecting Records from DB For duplication Check
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+			IF Environment.val.DB.MI_REFERENCE IS NULL THEN --Duplication Check
+
+				SET Environment.MND_GP_HDP_MSGID = 'OMAB' || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYYMMddHHmmss');
+				SET Environment.MND_GP_HDR_CRE_DT_TM = CAST(CURRENT_GMTDATE AS TIMESTAMP);
+				SET Environment.colAMT = inBody.CollectionAmount;
+				SET Environment.maxAMT = inBody.MaximumAmount;
+
+				IF Environment.colAMT IS NULL THEN
+					SET Environment.amt = inBody.MaximumAmount;
+				ELSE
+					SET Environment.amt = inBody.CollectionAmount;
+				END IF;
+
+				CALL writeToLogFile(flowName, 'MMSOUT_INFO', 'INFO',' Storing the Transaction information in DB') INTO rc;
+
+				SET Environment.dbQueryCount = '2'; --Inserting into DataBase
+				SET Environment.XMLNSC.inBody = inBody;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				DECLARE dte CHARACTER CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+				SET OutputRoot.XMLNSC.ns:Document.(XMLNSC.NamespaceDecl)xmlns = ns;
+				SET OutputRoot.XMLNSC.ns:Document.(XMLNSC.NamespaceDecl)xmlns:ns2 = ns2;
+				SET OutputRoot.XMLNSC.ns:Document.ns:MndtInitnReq.ns:GrpHdr.ns:MsgId = Environment.MND_GP_HDP_MSGID; --bankcode and referenceNumber
+				SET OutputRoot.XMLNSC.ns:Document.ns:MndtInitnReq.ns:GrpHdr.ns:CreDtTm = dte;
+
+				CALL writeToLogFile(flowName, 'MMSOUT_INFO', 'INFO','For success TXNS:: Create ISO request Message ') INTO rc;
+				-------------------Convert into ISO------------------
+
+				SET OutputRoot.XMLNSC.ns:Document.ns:MndtInitnReq.ns:Mndt = '';
+				DECLARE Resref REFERENCE TO OutputRoot.XMLNSC.ns:Document.ns:MndtInitnReq.ns:Mndt;
+				SET Resref.ns:MndtReqId = inBody.Reference;
+				SET Resref.ns:Tp.ns:LclInstrm.ns:Cd = 'POS';
+				SET Resref.ns:Ocrncs.ns:SeqTp = inBody.RecurringFrequency;
+				SET Resref.ns:Ocrncs.ns:Frqcy.ns:Tp = inBody.Frequency;
+				SET Resref.ns:Ocrncs.ns:Drtn.ns:FrDt = inBody.FromDate;
+				SET Resref.ns:Ocrncs.ns:Drtn.ns:ToDt = inBody.ToDate;
+				SET Resref.ns:MaxAmt = Environment.amt;
+				SET Resref.ns:MaxAmt.(XMLNSC.Attribute)Ccy = inBody.Currency;
+				SET Resref.ns:Rsn.ns:Prtry = inBody.Reason;
+				SET Resref.ns:Cdtr.ns:Nm = inBody.Creditor.Name;
+				SET Resref.ns:Cdtr.ns:Id.ns:PrvtId.ns:Othr.ns:Id = inBody.Creditor.Id;
+				SET Resref.ns:Cdtr.ns:Id.ns:PrvtId.ns:Othr.ns:SchmeNm.ns:Prtry= inBody.Creditor.IdType;
+				-- SET Resref.ns:CdtrAcct.ns:Id.ns:IBAN = inBody.cdtr_acct_id_iban;
+				SET Resref.ns:CdtrAcct.ns:Id.ns:Othr.ns:Id = inBody.Creditor.Account;
+				SET Resref.ns:CdtrAgt.ns:FinInstnId.ns:BICFI = inBody.Creditor.Bank;
+				-- SET Resref.ns:CdtrAgt.ns:BrnchId.ns:Id = inBody.cdtragt_brnchid;
+				SET Resref.ns:Dbtr.ns:Nm = inBody.Debtor.Name;
+				SET Resref.ns:Dbtr.ns:Id.ns:PrvtId.ns:Othr.ns:Id = inBody.Debtor.Id;
+				SET Resref.ns:Dbtr.ns:Id.ns:PrvtId.ns:Othr.ns:SchmeNm.ns:Prtry = inBody.Debtor.IdType;
+				-- SET Resref.ns:DbtrAcct.ns:Id.ns:IBAN =inBody.dbtr_acct_id_iban;
+				SET Resref.ns:DbtrAcct.ns:Id.ns:Othr.ns:Id =inBody.Debtor.Account;
+				SET Resref.ns:DbtrAgt.ns:FinInstnId.ns:BICFI = inBody.Debtor.Bank;
+				--SET Resref.ns:DbtrAgt.ns:BrnchId.ns:Id = '';
+				--SET Resref.ns:RfrdDoc = '';
+				--SET Resref.ns:SplmtryData.ns:Envlp.ns:SplmtryData_Envlp_Irrevocable=InputRoot.XMLNSC.SplmtryData_Envlp_Irrevocable;
+
+				CREATE LASTCHILD OF Resref AS Resref NAMESPACE ns NAME 'SplmtryData';
+				CREATE LASTCHILD OF Resref AS Resref NAMESPACE ns NAME 'Envlp';
+				CREATE LASTCHILD OF Resref AS Resref NAMESPACE ns2 NAME 'mandateSupplementaryData';
+				CREATE LASTCHILD OF Resref AS Resref NAMESPACE ns2 NAME 'attachments';
+				CREATE LASTCHILD OF Resref AS Resref NAMESPACE ns2 NAME 'attachment';
+				SET Resref.ns2:file_data = BASE64ENCODE(inBody.SplmtryData_attachment_filedata);
+				SET Resref.ns2:file_name = inBody.SplmtryData_attachment_filename;
+				set Resref.ns2:file_size = inBody.SplmtryData_attachment_filesize;
+				set Resref.ns2:file_type = inBody.SplmtryData_attachment_filetype;
+
+				DECLARE envRef REFERENCE TO OutputRoot.XMLNSC.ns:Document.ns:MndtInitnReq.ns:Mndt.ns:SplmtryData.ns:Envlp.ns2:mandateSupplementaryData;
+
+				SET envRef.ns2:autoPost = inBody.SplmtryData_AutoPost;
+				SET envRef.ns2:initBy = inBody.SplmtryData_InitBy;
+				SET envRef.ns2:irrevocable = inBody.SplmtryData_Envlp_Irrevocable;
+				SET envRef.ns2:nmbrOfPaymnts = inBody.SplmtryData_NmbrOfPaymnts;
+				SET envRef.ns2:prsntEach = inBody.SplmtryData_PrsntEach;
+				SET envRef.ns2:rcurFrqcy = inBody.SplmtryData_RcurFrqcy;
+				SET envRef.ns2:txPurp = inBody.SplmtryData_TxPurp;
+				------------------------------------------------------------------------------
+				SET Environment.dbQueryCount = '3'; --For Statusupdate
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				PROPAGATE TO TERMINAL 'out';
+
+			ELSE -- MNDT Duplication Response
+				IF Environment.val.DB.MT_STATUS = 'MNDT_Terminated' THEN
+					-- SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					-- SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					SET OutputRoot.XMLNSC = null;
+					SET OutputRoot.XMLNSC.AchMandateInitiation = '';
+					DECLARE resp REFERENCE TO OutputRoot.XMLNSC.AchMandateInitiation;
+					SET resp.ResponseCode = 'MIN000';
+					SET resp.ResponseString = 'Mandate Already Terminated';
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+					RETURN FALSE;
+				ELSE
+					-- SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					-- SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					SET OutputRoot.XMLNSC.AchMandateInitiation = '';
+					DECLARE resp REFERENCE TO OutputRoot.XMLNSC.AchMandateInitiation;
+					SET resp.ResponseCode = 'MIN001';
+					SET resp.ResponseString = 'Duplicate Mandate';
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+					RETURN FALSE;
+				END IF;
+			END IF;
+			-- Sucess Response
+			-- SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+			-- SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+			SET OutputRoot.XMLNSC = null;
+			SET OutputRoot.XMLNSC.AchMandateInitiation = '';
+			DECLARE resp REFERENCE TO OutputRoot.XMLNSC.AchMandateInitiation;
+			SET resp.ResponseCode = 'MIN000';
+			SET resp.ResponseString = 'All Transcations Sucessfully Inserted';
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'MMS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+END MODULE;

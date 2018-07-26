@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="WpsSifValidation">
+  	<xsd:complexType>
+  		<xsd:sequence>
+  			<xsd:element name="Channel" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,10}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="Reference" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,16}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="PayerId" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,17}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="EmployerId" minOccurs="0">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,17}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="PayerBank" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,4}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="PayerAccount" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,30}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="SalaryYear" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{4}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="SalaryMonth" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{2}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="TotalSalries" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value="\d{0,9}.\d{0,3}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="NumberOfRecords" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,6}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="PaymentType" minOccurs="1">
+  				<xsd:simpleType>
+  					<xsd:restriction base="xsd:string">
+  						<xsd:pattern value=".{0,20}"></xsd:pattern>
+  					</xsd:restriction>
+  				</xsd:simpleType>
+  			</xsd:element>
+  			<xsd:element name="Employee" maxOccurs="unbounded" minOccurs="1">
+  				<xsd:complexType>
+  					<xsd:sequence>
+  						<xsd:element name="TransactionReference" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+  									<xsd:pattern value=".{0,16}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="UserReference" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+  									<xsd:pattern value=".{0,35}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="IdType" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+  									<xsd:pattern value=".{1}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Id" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,17}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Name" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,70}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Bank" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,11}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Account" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,30}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="SalaryFrequency" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{1}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="NumberOfWorkingDays" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,3}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="NetSalary" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,9}.\d{0,3}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+
+  						<xsd:element name="BasicSalary" minOccurs="1">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,9}.\d{0,3}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="ExtraHours" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,3}.\d{0,2}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="ExtraIncome" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,9}.\d{0,3}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Deduction" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,9}.\d{0,3}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="SocialSecurityDeduction" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern
+  										value="\d{0,9}.\d{0,3}">
+  									</xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  						<xsd:element name="Notes" minOccurs="0">
+  							<xsd:simpleType>
+  								<xsd:restriction base="xsd:string">
+
+  									<xsd:pattern value=".{0,300}"></xsd:pattern>
+  								</xsd:restriction>
+  							</xsd:simpleType>
+  						</xsd:element>
+  					</xsd:sequence>
+  				</xsd:complexType>
+  			</xsd:element>
+  		</xsd:sequence>
+  	</xsd:complexType>
+  </xsd:element>
+</xsd:schema>

@@ -1,0 +1,404 @@
+CREATE COMPUTE MODULE Grp_Txn_toDB_FormingCBSReq
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+	-- DECLARE pool_acc EXTERNAL CHARACTER;
+	DECLARE CANI_ASSIGNMENT EXTERNAL CHARACTER;
+	DECLARE CANI_UNDERLYING EXTERNAL CHARACTER;
+	DECLARE CANI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE CANI_SUPPLEMENTARY_DATA EXTERNAL CHARACTER;
+	DECLARE CANI_UNDRLYG_CANC_RSN_INFO EXTERNAL CHARACTER;
+	DECLARE CANI_TXN_CANC_RSN_INFO EXTERNAL CHARACTER;
+	DECLARE DCI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DDI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE status ROW;
+	DECLARE dbamount FLOAT;
+	DECLARE account CHARACTER;
+	DECLARE txnOrgTxnId CHARACTER;
+	DECLARE txmCxlId CHARACTER;
+	DECLARE cancAssignmentId INTEGER;
+	DECLARE txnPrty CHARACTER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE under REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+		DECLARE txn REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf;
+		DECLARE dbTxns REFERENCE TO Environment.CANC.DBTXNS;
+		DECLARE retValue BOOLEAN;
+		SET retValue = CopyEntireMessage();
+		RETURN retValue;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE insertTxn() BEGIN
+		--DECLARE txnRef REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+		DECLARE txnRef REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf;
+		SET Environment.dbQueryCount = '8';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		DECLARE txnRsn REFERENCE TO txnRef.ns13:CxlRsnInf[>];
+		WHILE LASTMOVE(txnRsn) DO
+			--DECLARE txnPrty CHARACTER txn.ns13:CxlRsnInf.ns13:Rsn.ns13:Prtry;
+			--DECLARE txn_addinfo CHARACTER txn.ns13:CxlRsnInf.ns13:AddtlInf;
+			SET Environment.txnPrty = txnRsn.ns13:Rsn.ns13:Prtry;
+			SET Environment.txnAddInfo = txnRsn.ns13:AddtlInf;
+			SET Environment.dbQueryCount = '9';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			MOVE txnRsn NEXTSIBLING;
+		END WHILE;
+		COMMIT;
+	END;
+
+	CREATE PROCEDURE VerifyTxnID() RETURNS BOOLEAN BEGIN
+		DECLARE addInf CHARACTER InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf.ns13:CxlRsnInf.ns13:AddtlInf;
+		CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Checking the Database whether dulipcate transactions are there or not ' ) INTO rc;
+		IF Environment.grpcxl = false THEN
+			IF LENGTH(Environment.txmCxlId) > 0 THEN
+				IF LENGTH(Environment.txnOrgTxnId) > 0 THEN
+					--IF LENGTH(addInf) > 0 THEN
+					SET Environment.dbQueryCount = '7';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					IF CARDINALITY (Environment.TXN[]) > 0 THEN
+						SET Environment.TxnFail.Rsn = 'Duplicate Transaction Details';
+						SET Environment.Status = 'CANI_DUPLICATE_TXN';
+						SET Environment.TxnFail.AddtlInf = 'The same Transaction ID was processed before';
+						CALL insertTxn();
+						CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Transaction was found Duplicated due to'|| Environment.TxnFail.Rsn||'and updated the status as '|| Environment.Status ) INTO rc;
+						PROPAGATE TO TERMINAL 'out1';
+						RETURN FALSE;
+					ELSE
+						RETURN TRUE;
+					END IF;
+					/* ELSE
+					SET Environment.Status = 'CANI_TXN_INFO_MISSING';
+					SET Environment.TxnFail.Rsn = 'Invalid Transaction Info';
+					SET Environment.TxnFail.AddtlInf = 'Mandatory field "AddtlInf" is missing';
+					CALL insertTxn();
+					CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Transaction was found Duplicated due to'|| Environment.TxnFail.Rsn||'and updated the status as '|| Environment.Status ) INTO rc;
+					PROPAGATE TO TERMINAL 'out1';
+					RETURN FALSE;
+					END IF;*/
+
+				ELSE
+					SET Environment.Status = 'CANI_TXN_INFO_MISSING';
+					SET Environment.TxnFail.Rsn = 'Invalid Transaction Info';
+					SET Environment.TxnFail.AddtlInf = 'Mandatory field "OrgnlTxId" is missing';
+					CALL insertTxn();
+					CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Transaction was found Duplicated due to'|| Environment.TxnFail.Rsn||'and updated the status as '|| Environment.Status ) INTO rc;
+					PROPAGATE TO TERMINAL 'out1';
+					RETURN FALSE;
+				END IF;
+
+			ELSE
+				SET Environment.Status = 'CANI_TXN_INFO_MISSING';
+				SET Environment.TxnFail.Rsn = 'Invalid Transaction Info';
+				SET Environment.TxnFail.AddtlInf = 'Mandatory field "CxlId" is missing';
+				CALL insertTxn();
+				CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Transaction was found Duplicated due to'|| Environment.TxnFail.Rsn||'and updated the status as '|| Environment.Status ) INTO rc;
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			END IF;
+		ELSE
+
+			SET Environment.dbQueryCount = '7';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF CARDINALITY (Environment.TXN[]) > 0 THEN
+				SET Environment.TxnFail.Rsn = 'Duplicate Transaction Details';
+				SET Environment.Status = 'CANI_DUPLICATE_TXN';
+				SET Environment.TxnFail.AddtlInf = 'The same Transaction ID was processed before';
+				CALL insertTxn();
+				CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Transaction was found Duplicated due to'|| Environment.TxnFail.Rsn||'and updated the status as '|| Environment.Status ) INTO rc;
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			ELSE
+				RETURN TRUE;
+			END IF;
+		END IF;
+	END;
+
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			DECLARE under REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+			DECLARE txn REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf;
+			DECLARE dbTxns REFERENCE TO Environment.CANC.DBTXNS;
+			SET Environment.txmCxlId = txn.ns13:CxlId;
+			SET Environment.txnOrgTxnId = COALESCE(txn.ns13:OrgnlTxId,dbTxns.PMT_ID_TXN_ID);
+
+			DECLARE processTxn BOOLEAN;
+			SET processTxn = VerifyTxnID();
+			IF processTxn = TRUE THEN
+
+				SET Environment.Status = 'CANI_RCVD';
+				SET Environment.TxnFail.AddtlInf = 'Cancellation Request from CBO has been received';
+				CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' No duplication was there in Cancellation request thats why creating double entry request and send to CBS' ) INTO rc;
+				CALL insertTxn();
+				/*
+				==================================================================================================
+				Forming CBS/ES Request Message
+				==================================================================================================
+				*/
+
+
+				DECLARE DC_STML_ACC,DD_STML_ACC CHARACTER;
+				SET DC_STML_ACC = Environment.VALUES.DC_STLMNT_ACC; ------ We will get values from Query No 4
+				SET DD_STML_ACC = Environment.VALUES.DD_STLMNT_ACC;
+				--------- forming cbs header ----------
+				--- If Request is for direct credit(credited in OAB) so we need to debit in CBS i.e. 120 but before that we need to get approval.
+
+				IF STARTSWITH(under.ns13:OrgnlMsgNmId,'pacs.008.') THEN
+					DECLARE depReq BOOLEAN;
+					IF Environment.grpcxl = false THEN
+						SET depReq = CREDIT();
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+					ELSE
+						SET Environment.dbamount = dbTxns.INTERBANK_SETTLE_AMT;
+						-- SET Environment.account = dbTxns.CDTR_ACCT_ID_IBAN;
+						SET Environment.account = dbTxns.CDTR_ACCT_OTHR_ID; --CDTR_ACCT_ID_IBAN;
+						SET depReq = TRUE;
+					END IF;
+					IF depReq = TRUE THEN
+						/*Calling a function to get reason description to populate narrative*/
+						SET Environment.ReasonCode_Desc = Environment.txnPrty || MappReasonCodeWithDescription(Environment.txnPrty);
+
+						SET Environment.cbsTranRef = '122' || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS');
+						SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORKSTATION;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionDate = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionReference = Environment.cbsTranRef;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNEL_RESERVED;
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = 'CANI_CBS_DBT_OC_SENT';
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = account;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = CAST(dbamount AS CHARACTER FORMAT '0.00');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+						/*User Ref and Narratives for Debitor*/
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference=Environment.msg.id.MsgID;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1]=Environment.statusdci.DBTR_NAME;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2]=Environment.statusdci.DBTR_ACCT_FIN_ID_BICFI;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3]= Environment.ReasonCode_Desc;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4]=Environment.txnOrgTxnId;
+
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = DC_STML_ACC; --account; --hard coded for testing
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = dbamount;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+						/*User Ref and Narratives for Creditor*/
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference=Environment.msg.id.MsgID;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1]= Environment.statusdci.DBTR_NAME;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2]=Environment.statusdci.DBTR_ACCT_FIN_ID_BICFI;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3]= Environment.ReasonCode_Desc;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]=Environment.txnOrgTxnId;
+
+
+						DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+						SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+						SET Environment.dbQueryCount = '17';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+						PROPAGATE TO TERMINAL 'out';
+						--- Reply to Queue Option need to be enabled
+
+					END IF;
+					--- If Request is for direct debit(debited in OAB) so we need to credit in CBS i.e. 121
+				ELSEIF STARTSWITH(under.ns13:OrgnlMsgNmId,'pacs.003.') THEN
+					DECLARE depReq BOOLEAN;
+					IF Environment.grpcxl = false THEN
+						SET depReq = DEBIT();
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+
+					ELSE
+						SET Environment.dbamount = dbTxns.INTERBANK_SETTLE_AMNT;
+						SET Environment.account = dbTxns.DBTRACCT_ID_OTHR_ID; --DBTRACCT_ID_IBAN;
+						SET depReq = TRUE;
+					END IF;
+					IF depReq = TRUE THEN
+						/*Calling a function to get reason description to populate narrative*/
+						SET Environment.ReasonCode_Desc = Environment.txnPrty || MappReasonCodeWithDescription(Environment.txnPrty);
+						
+						SET Environment.cbsTranRef = '121' || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS');
+						SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORKSTATION;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionDate = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionReference = Environment.cbsTranRef;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNEL_RESERVED;
+						SET Environment.canc_ref = OutputRoot.XMLNSC.space1:Request.space1:Header.space1:transactionReference;
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = 'CANI_CBS_CRDT_OC_SENT';
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = DD_STML_ACC;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = CAST(dbamount AS CHARACTER FORMAT '0.00');
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+						/*User Ref and Narratives for Debitor*/
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference=Environment.MsgIdDdi.MSG_ID;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1]= Environment.ddi.CDTR_NAME;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2]=Environment.ddi.CGTRAGT_FIN_ID_BICFI;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3]=Environment.ReasonCode_Desc;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4]=Environment.ddi.PMT_ID_TXN_ID;
+
+
+
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = account; --hard coded for testing '3101196774500';
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = dbamount;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+						/*User Ref and Narratives for Creditor*/
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference=Environment.MsgIdDdi.MSG_ID;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1]= Environment.ddi.CDTR_NAME;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2]=Environment.ddi.CGTRAGT_FIN_ID_BICFI;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3]=Environment.ReasonCode_Desc;
+						SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]= Environment.ddi.PMT_ID_TXN_ID;
+
+
+
+						DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+						SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+						SET Environment.dbQueryCount = '20';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+						PROPAGATE TO TERMINAL 'out';
+					END IF;
+				END IF;
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'CANI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+
+	CREATE PROCEDURE CREDIT() RETURNS BOOLEAN BEGIN
+		SET Environment.dbQueryCount = '10';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF CARDINALITY(Environment.statusdci[]) > 0 THEN -- checking if transaction is present in DCI_TXN_INFO table
+			IF Environment.statusdci.STATUS = 'DCI_CBS_CRDT_OC_SUCCESS' THEN -- checking if transaction is success earlier
+				SET Environment.dbQueryCount = '11';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET dbamount =Environment.statusdci.INTERBANK_SETTLE_AMT;
+				SET account = Environment.statusdci.CDTR_ACCT_OTHR_ID; --CDTR_ACCT_ID_IBAN;
+				RETURN TRUE;
+			ELSEIF Environment.statusdci.STATUS = 'DCI_RCVD' THEN
+				SET Environment.dbQueryCount = '12';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSEIF Environment.statusdci.STATUS = 'DCI_CBS_CRDT_OC_FAILED' THEN
+				SET Environment.dbQueryCount = '13';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSEIF Environment.statusdci.STATUS = 'DCI_FAILED' THEN
+				SET Environment.dbQueryCount = '14';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE -- rejecting transaction if it failed previously
+				SET Environment.TxnFail.Rsn = 'Original Transaction is in invalid State';
+				SET Environment.TxnFail.AddtlInf = 'Transaction was not success earlier';
+				SET Environment.dbQueryCount = '15';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				SET status = NULL;
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			END IF;
+
+		ELSE -- rejecting transaction if it is invalid
+			SET Environment.TxnFail.Rsn = 'Invalid Transaction ID';
+			SET Environment.TxnFail.AddtlInf = 'Transaction details not found';
+			SET Environment.dbQueryCount = '16';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END IF;
+
+	END;
+
+
+	CREATE PROCEDURE DEBIT() RETURNS BOOLEAN BEGIN
+		SET Environment.dbQueryCount = '18';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+		IF CARDINALITY(Environment.ddi[]) > 0 THEN
+			IF Environment.ddi.STATUS = 'DDI_CBS_DBT_OC_SUCCESS' THEN -- checking if transaction is success earlier
+				-- fetching amount,DEBTOR account info from DDI_TXN_INFO table
+				SET Environment.dbQueryCount = '19';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET dbamount = Environment.ddi.INTERBANK_SETTLE_AMNT;
+				SET account = Environment.ddi.DBTRACCT_ID_OTHR_ID; --DBTRACCT_ID_IBAN;
+				RETURN TRUE;
+			ELSEIF Environment.ddi.STATUS = 'DDI_RCVD' THEN
+				SET Environment.dbQueryCount = '21';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSEIF Environment.ddi.STATUS = 'DDI_CBS_DBT_OC_FAILED' THEN
+				SET Environment.dbQueryCount = '22';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSEIF Environment.ddi.STATUS = 'DDI_FAILED' THEN
+				SET Environment.dbQueryCount = '23';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE -- rejecting transaction if it failed previously
+				SET Environment.TxnFail.Rsn = 'Transaction did not happen';
+				SET Environment.TxnFail.AddtlInf = 'Transaction was not success earlier';
+				SET Environment.dbQueryCount = '24';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			END IF;
+
+		ELSE -- rejecting transaction if it is invalid
+			SET Environment.TxnFail.Rsn = 'Invalid Transaction ID';
+			SET Environment.TxnFail.AddtlInf = 'Transaction Details not found';
+			SET Environment.dbQueryCount = '25';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END IF;
+	END;
+END MODULE;

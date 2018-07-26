@@ -1,0 +1,54 @@
+BROKER SCHEMA com.oab.outward.amendment
+
+
+/*Author : Sandhya Sudharshan
+Subsequent Modifications by : Sandhya Sudharshan
+Module Name : Mandate_Amendment
+Flow Name : Mandate_Amendment
+Purpose : Mandate Request is coming from OAB, Store all transaction into Database and convert into ISO then send to CBO. 
+Dependency Module : Handler_OAB.
+Dependency Database : Yes,MANDATE_MGMT_INFO.
+Dependency XSD(Request Message) : pain.010.001.04.xsd
+Dependency XSD(Response Message) : pain.012.001.04.xsd
+Dependency CBS : No
+Description :
+
+1. Mandate Request is coming from OAB. 
+2(i). Pick individual transaction from Input Message and does the following. For each such transaction following is done. 
+         a. Validate automatically based on the namespace. 
+         b. If Validate is success, then store that particular transaction in Success Environment.
+    
+2(ii).
+		 a. If Validate is failure, then store that particular transaction in Failure Environment. 
+         b. If Original transaction id not available or previous case was unsuccessful, store that particular transaction in Failure Environment.
+
+3. When all the transactions are done, pull the information that is stored in the Failure environment and send back to OAB.
+4. Pull the information that is stored in the success Environment and construct ISO form then send to CBO.
+*/
+CREATE COMPUTE MODULE OAB_Mandate_Amendment_Failure_Bulk
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		 CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		----------------Creating Environment for Failure Bulk----------------
+		DECLARE fCount INTEGER CAST(Environment.usr.failurecount AS INTEGER);
+		SET OutputRoot = InputRoot;
+		SET Environment.Fail.Txns[fCount] = InputRoot.XMLNSC.ns:msg.ns:msg_data;
+		SET fCount = fCount+1;
+		SET Environment.usr.failurecount = fCount;
+	END;
+END MODULE;

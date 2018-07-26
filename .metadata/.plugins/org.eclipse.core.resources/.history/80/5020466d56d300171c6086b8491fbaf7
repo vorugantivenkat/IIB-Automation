@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO.msgflow"
+    nsPrefix="com_oab_DirectCreditInward_DirectCredit_Inward_Response_To_CBO.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_GRP_TABLE" name="DC_GRP_TABLE" defaultValueLiteral="DCI_GP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_SUPP_TABLE" name="DC_SUPP_TABLE" defaultValueLiteral="DCI_SUPPLEMENTRY_DATA">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_TXN_TABLE" name="DC_TXN_TABLE" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_TXN_REMIT_TABLE" name="DC_TXN_REMIT_TABLE" defaultValueLiteral="DCI_TXN_REMIT_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_TXN_CDTR_OTHER" name="DC_TXN_CDTR_OTHER" defaultValueLiteral="DCI_TXN_CDTR_OTHER">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DC_TXN_DBTR_OTHER" name="DC_TXN_DBTR_OTHER" defaultValueLiteral="DCI_TXN_DBTR_OTHER">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DSN" name="DSN" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_NAME" name="SCHEMA_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ACH_CONFIG_VALUES" name="ACH_CONFIG_VALUES" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="DirectCredit_Inward_Response_To_CBO" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/DirectCredit_Inward_Response_To_CBO.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/DirectCredit_Inward_Response_To_CBO.gif"/>
+    <longDescription xmi:type="utility:ConstantString" string="ISO 002.001.06 is generated an sent to CBO"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="152,101" queueName="CBO_DICI_TRIG">
+        <translation xmi:type="utility:ConstantString" string="CBO_DICI_TRIG"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="471,181" queueName="CBO_ACH_IO_Q_REQ_RES">
+        <translation xmi:type="utility:ConstantString" string="CBO_ACH_IO_Q_REQ_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="295,186" dataSource="CBOACH" computeExpression="esql://routine/com.oab.DirectCreditInward#DCI_CBOISOGen_Mapping_Iso.Main">
+        <translation xmi:type="utility:ConstantString" string="ISO_002.001.06_Mapping"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_GRP_TABLE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.DC_GRP_TABLE" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_SUPP_TABLE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.DC_SUPP_TABLE" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_TXN_TABLE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.DC_TXN_TABLE" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_TXN_REMIT_TABLE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.DC_TXN_REMIT_TABLE" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_TXN_CDTR_OTHER">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.DC_TXN_CDTR_OTHER" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DC_TXN_DBTR_OTHER">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.DC_TXN_DBTR_OTHER" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DSN">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DSN" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_NAME">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_NAME" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ACH_CONFIG_VALUES">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.ACH_CONFIG_VALUES" bundleName="com/oab/DirectCreditInward/DirectCredit_Inward_Response_To_CBO" pluginId="ACH_Connector_Project"/>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

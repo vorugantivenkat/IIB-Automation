@@ -1,0 +1,1524 @@
+!SESSION 2017-11-27 14:56:21.387 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:57:08.849
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:57:08.849
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:57:08.849
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:57:08.849
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:57:08.849
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.ui 4 4 2017-11-27 14:57:50.244
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-11-27 14:57:58.425
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:58:28.658
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:58:33.046
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:58:33.046
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:58:33.046
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 14:58:33.046
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 16:34:10.802
+!MESSAGE NLS unused message: ESQLCompiler_BAR_canAdd_notsubflow in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 16:34:10.802
+!MESSAGE NLS missing message: ESQLCompiler_BAR_canAdd_notesql in: com.ibm.etools.mft.bar.compiler.messages
+!SESSION 2017-11-27 19:10:55.154 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-11-27 19:11:04.577
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-11-27 19:11:11.340
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:21.685
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:21.685
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:21.685
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:21.685
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:21.685
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:24.614
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:26.207
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:26.207
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:26.211
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-27 19:11:26.211
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+!SESSION 2017-11-28 09:44:54.872 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-11-28 09:45:12.697
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-11-28 09:45:40.625
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-11-28 09:46:05.803
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:32.651
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:32.651
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:32.651
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:32.651
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:32.651
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:36.532
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:47.004
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:47.011
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:47.011
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-28 09:46:47.011
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+!SESSION 2017-11-29 12:34:21.736 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.ui 4 4 2017-11-29 12:34:27.918
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:28.072
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:28.072
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:28.072
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:28.073
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:28.073
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-11-29 12:34:33.432
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:34:34.924
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY com.ibm.etools.emf.workbench.ui 4 0 2017-11-29 12:35:34.587
+!MESSAGE 
+!STACK 0
+org.eclipse.wst.common.frameworks.internal.enablement.nonui.WFTWrappedException
+org.eclipse.core.internal.resources.ResourceException: Problems encountered while deleting resources.
+	at org.eclipse.core.internal.resources.Resource.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.Project.delete(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.deleteExistingProjectsAndFolders(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.execute(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.doRun(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation$1.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.run(Unknown Source)
+	at org.eclipse.wst.common.frameworks.internal.ui.RunnableWithProgressWrapper.run(Unknown Source)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(Unknown Source)
+Contains: Could not delete '/ACH_Connector_Project/com'.
+org.eclipse.core.internal.resources.ResourceException: Problems encountered while deleting resources.
+	at org.eclipse.core.internal.localstore.FileSystemResourceManager.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.internalDeleteFolder(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.internalDeleteProject(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.standardDeleteProject(Unknown Source)
+	at org.eclipse.core.internal.resources.Resource.unprotectedDelete(Unknown Source)
+	at org.eclipse.core.internal.resources.Resource.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.Project.delete(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.deleteExistingProjectsAndFolders(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.execute(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.doRun(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation$1.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.run(Unknown Source)
+	at org.eclipse.wst.common.frameworks.internal.ui.RunnableWithProgressWrapper.run(Unknown Source)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(Unknown Source)
+Contains: Problems encountered while deleting files.
+Contains: Could not delete: C:\oab_production\ACH_Connector_Project\com\oab.
+Contains: Could not delete: C:\oab_production\ACH_Connector_Project\com.
+Contains: Could not delete 'C:\oab_production\ACH_Connector_Project'.
+Root exception:
+org.eclipse.core.internal.resources.ResourceException: Problems encountered while deleting resources.
+	at org.eclipse.core.internal.resources.Resource.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.Project.delete(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.deleteExistingProjectsAndFolders(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.execute(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.doRun(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation$1.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.run(Unknown Source)
+	at org.eclipse.wst.common.frameworks.internal.ui.RunnableWithProgressWrapper.run(Unknown Source)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(Unknown Source)
+Contains: Could not delete '/ACH_Connector_Project/com'.
+org.eclipse.core.internal.resources.ResourceException: Problems encountered while deleting resources.
+	at org.eclipse.core.internal.localstore.FileSystemResourceManager.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.internalDeleteFolder(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.internalDeleteProject(Unknown Source)
+	at org.eclipse.core.internal.resources.ResourceTree.standardDeleteProject(Unknown Source)
+	at org.eclipse.core.internal.resources.Resource.unprotectedDelete(Unknown Source)
+	at org.eclipse.core.internal.resources.Resource.delete(Unknown Source)
+	at org.eclipse.core.internal.resources.Project.delete(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.deleteExistingProjectsAndFolders(Unknown Source)
+	at com.ibm.bpm.common.ui.project.interchange.ProjectInterchangeImportOperation.execute(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.doRun(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation$1.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at com.ibm.etools.common.frameworks.internal.datamodel.WTPOperation.run(Unknown Source)
+	at org.eclipse.wst.common.frameworks.internal.ui.RunnableWithProgressWrapper.run(Unknown Source)
+	at org.eclipse.jface.operation.ModalContext$ModalContextThread.run(Unknown Source)
+Contains: Problems encountered while deleting files.
+Contains: Could not delete: C:\oab_production\ACH_Connector_Project\com\oab.
+Contains: Could not delete: C:\oab_production\ACH_Connector_Project\com.
+Contains: Could not delete 'C:\oab_production\ACH_Connector_Project'.
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:36:07.132
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:36:07.132
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:36:07.132
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:36:07.133
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:45:14.038
+!MESSAGE NLS unused message: ESQLCompiler_BAR_canAdd_notsubflow in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-29 12:45:14.039
+!MESSAGE NLS missing message: ESQLCompiler_BAR_canAdd_notesql in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.debug.core 4 2 2017-11-29 12:47:54.851
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.debug.core".
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.internal.ui.sourcelookup.SourceLookupFacility.lookup(Unknown Source)
+	at org.eclipse.debug.ui.DebugUITools.lookupSource(Unknown Source)
+	at org.eclipse.debug.internal.ui.elements.adapters.StackFrameSourceDisplayAdapter$SourceLookupJob.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+
+!ENTRY org.eclipse.debug.core 4 125 2017-11-29 12:47:54.852
+!MESSAGE Error logged from Debug Core: 
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.internal.ui.sourcelookup.SourceLookupFacility.lookup(Unknown Source)
+	at org.eclipse.debug.ui.DebugUITools.lookupSource(Unknown Source)
+	at org.eclipse.debug.internal.ui.elements.adapters.StackFrameSourceDisplayAdapter$SourceLookupJob.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+
+!ENTRY org.eclipse.ui 4 0 2017-11-29 12:47:54.922
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.fcb.figure.FCBNodeFigure$1.mouseExited(Unknown Source)
+	at org.eclipse.draw2d.Figure.handleMouseExited(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.dispatchMouseExited(Unknown Source)
+	at org.eclipse.gef.ui.parts.DomainEventDispatcher.dispatchMouseExited(Unknown Source)
+	at org.eclipse.draw2d.LightweightSystem$EventHandler.mouseExit(Unknown Source)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(Unknown Source)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.debug.core 4 2 2017-11-30 11:29:38.921
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.debug.core".
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.model.FlowUIStackFrame.setFlowEditorAndFile(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.FlowDebugHelperDelegate.selectionChanged(Unknown Source)
+	at com.ibm.etools.mft.debug.common.cda.CDASelectionChangedListener.selectionChangedWBIDebugElement(Unknown Source)
+	at com.ibm.etools.mft.debug.common.cda.CDASelectionChangedListener.selectionChanged(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer$3.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.ui.internal.JFaceUtil$1.run(Unknown Source)
+	at org.eclipse.jface.util.SafeRunnable.run(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.firePostSelectionChanged(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.setSelection(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.setSelection(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.InternalTreeModelViewer.trySelection(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.TreeModelContentProvider.handleSelect(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateModel(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.doModelChanged(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.access$10(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider$14.runInUIThread(Unknown Source)
+	at org.eclipse.ui.progress.UIJob$1.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.jface.window.Window.runEventLoop(Unknown Source)
+	at org.eclipse.jface.window.Window.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialog.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.openYesNoQuestion(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager.shouldSwitchPerspective(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager.access$4(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager$4.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.debug.core 4 125 2017-11-30 11:29:38.921
+!MESSAGE Error logged from Debug Core: 
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.model.FlowUIStackFrame.setFlowEditorAndFile(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.FlowDebugHelperDelegate.selectionChanged(Unknown Source)
+	at com.ibm.etools.mft.debug.common.cda.CDASelectionChangedListener.selectionChangedWBIDebugElement(Unknown Source)
+	at com.ibm.etools.mft.debug.common.cda.CDASelectionChangedListener.selectionChanged(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer$3.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.ui.internal.JFaceUtil$1.run(Unknown Source)
+	at org.eclipse.jface.util.SafeRunnable.run(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.firePostSelectionChanged(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.setSelection(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.setSelection(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.InternalTreeModelViewer.trySelection(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.TreeModelContentProvider.handleSelect(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateNodes(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.updateModel(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.doModelChanged(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider.access$10(Unknown Source)
+	at org.eclipse.debug.internal.ui.viewers.model.ModelContentProvider$14.runInUIThread(Unknown Source)
+	at org.eclipse.ui.progress.UIJob$1.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.jface.window.Window.runEventLoop(Unknown Source)
+	at org.eclipse.jface.window.Window.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialog.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.open(Unknown Source)
+	at org.eclipse.jface.dialogs.MessageDialogWithToggle.openYesNoQuestion(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager.shouldSwitchPerspective(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager.access$4(Unknown Source)
+	at org.eclipse.debug.internal.ui.launchConfigurations.PerspectiveManager$4.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.debug.core 4 2 2017-11-30 11:29:38.923
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.debug.core".
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.internal.ui.sourcelookup.SourceLookupFacility.lookup(Unknown Source)
+	at org.eclipse.debug.ui.DebugUITools.lookupSource(Unknown Source)
+	at org.eclipse.debug.internal.ui.elements.adapters.StackFrameSourceDisplayAdapter$SourceLookupJob.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+
+!ENTRY org.eclipse.debug.core 4 125 2017-11-30 11:29:38.923
+!MESSAGE Error logged from Debug Core: 
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.mft.uri.search.AbstractSearchPath.containsAbsUri(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.matchValuesWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.builder.engine.impl.BaseProjectTable.selectRowsWithSearchPath(Unknown Source)
+	at com.ibm.etools.mft.debug.sourcelookup.MBSourceLookupParticipant.findSourceElements(Unknown Source)
+	at com.ibm.etools.mft.debug.flow.sourcelookup.FlowSourceLookupParticipant.findSourceElements(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector$SourceLookupQuery.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.doSourceLookup(Unknown Source)
+	at org.eclipse.debug.core.sourcelookup.AbstractSourceLookupDirector.getSourceElement(Unknown Source)
+	at org.eclipse.debug.internal.ui.sourcelookup.SourceLookupFacility.lookup(Unknown Source)
+	at org.eclipse.debug.ui.DebugUITools.lookupSource(Unknown Source)
+	at org.eclipse.debug.internal.ui.elements.adapters.StackFrameSourceDisplayAdapter$SourceLookupJob.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+!SESSION 2017-11-30 11:53:51.522 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-11-30 11:54:08.509
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.ui 4 4 2017-11-30 11:54:14.350
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:15.179
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:15.179
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:15.179
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:15.179
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:15.179
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-11-30 11:54:44.042
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:47.918
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:58.903
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:58.903
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:58.903
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-11-30 11:54:58.903
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+!SESSION 2017-12-03 12:00:28.695 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-03 12:07:14.903
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-03 12:07:19.692
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:41.462
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:41.463
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:41.464
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:41.465
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:41.466
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:44.493
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:49.928
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:49.928
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:49.928
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-03 12:07:49.928
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+!SESSION 2017-12-05 14:20:35.243 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-12-05 14:21:09.622
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-05 14:21:12.296
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-05 14:21:18.014
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.157
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.157
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.157
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.157
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.157
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.211
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.211
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.211
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:36.211
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-05 14:21:49.877
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+!SESSION 2017-12-06 10:32:54.581 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-12-06 10:32:58.266
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-06 10:33:01.202
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-06 10:33:05.958
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:27.927
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:27.927
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:27.927
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:27.927
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:27.928
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:28.011
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:28.011
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:28.011
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:33:28.012
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 10:57:30.893
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+!SESSION 2017-12-06 14:32:20.697 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.ui.workbench 4 2 2017-12-06 14:32:25.294
+!MESSAGE Problems occurred when invoking code from plug-in: "org.eclipse.ui.workbench".
+!STACK 1
+org.eclipse.ui.WorkbenchException: Content is not allowed in prolog.
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$51.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.restoreState(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchConfigurer.restoreState(Unknown Source)
+	at org.eclipse.ui.application.WorkbenchAdvisor$1.run(Unknown Source)
+Caused by: org.xml.sax.SAXParseException: Content is not allowed in prolog.
+	at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
+	at org.apache.xerces.util.ErrorHandlerWrapper.fatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLScanner.reportFatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentScannerImpl$PrologDispatcher.dispatch(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XMLParser.parse(Unknown Source)
+	at org.apache.xerces.parsers.DOMParser.parse(Unknown Source)
+	at org.apache.xerces.jaxp.DocumentBuilderImpl.parse(Unknown Source)
+	... 7 more
+!SUBENTRY 1 org.eclipse.ui 4 0 2017-12-06 14:32:25.295
+!MESSAGE Content is not allowed in prolog.
+!STACK 0
+org.xml.sax.SAXParseException: Content is not allowed in prolog.
+	at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
+	at org.apache.xerces.util.ErrorHandlerWrapper.fatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLScanner.reportFatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentScannerImpl$PrologDispatcher.dispatch(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XMLParser.parse(Unknown Source)
+	at org.apache.xerces.parsers.DOMParser.parse(Unknown Source)
+	at org.apache.xerces.jaxp.DocumentBuilderImpl.parse(Unknown Source)
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$51.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.restoreState(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchConfigurer.restoreState(Unknown Source)
+	at org.eclipse.ui.application.WorkbenchAdvisor$1.run(Unknown Source)
+!SUBENTRY 1 org.eclipse.ui 4 0 2017-12-06 14:32:25.295
+!MESSAGE Content is not allowed in prolog.
+!STACK 0
+org.xml.sax.SAXParseException: Content is not allowed in prolog.
+	at org.apache.xerces.util.ErrorHandlerWrapper.createSAXParseException(Unknown Source)
+	at org.apache.xerces.util.ErrorHandlerWrapper.fatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLErrorReporter.reportError(Unknown Source)
+	at org.apache.xerces.impl.XMLScanner.reportFatalError(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentScannerImpl$PrologDispatcher.dispatch(Unknown Source)
+	at org.apache.xerces.impl.XMLDocumentFragmentScannerImpl.scanDocument(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XML11Configuration.parse(Unknown Source)
+	at org.apache.xerces.parsers.XMLParser.parse(Unknown Source)
+	at org.apache.xerces.parsers.DOMParser.parse(Unknown Source)
+	at org.apache.xerces.jaxp.DocumentBuilderImpl.parse(Unknown Source)
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.XMLMemento.createReadRoot(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$51.run(Unknown Source)
+	at org.eclipse.core.runtime.SafeRunner.run(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.restoreState(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchConfigurer.restoreState(Unknown Source)
+	at org.eclipse.ui.application.WorkbenchAdvisor$1.run(Unknown Source)
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:32:25.702
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:32:25.702
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:32:25.702
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:32:25.702
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:32:25.702
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-06 14:32:56.874
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-06 14:32:57.161
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:33:18.864
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:33:18.864
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:33:18.865
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 14:33:18.865
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-06 16:07:26.196
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+!SESSION 2017-12-07 10:24:41.278 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-12-07 10:24:46.028
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:24:47.747
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:24:47.748
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:24:47.748
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:24:47.748
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:24:47.748
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-07 10:24:49.370
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-07 10:24:54.139
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:25:04.804
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:25:04.808
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:25:04.808
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:25:04.808
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-07 10:37:30.279
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+!SESSION 2017-12-10 14:53:56.407 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-10 14:54:08.185
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-10 14:54:14.679
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:11.987
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:11.987
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:11.987
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:11.987
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:11.987
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:12.027
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:12.027
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:12.027
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:00:12.027
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:12:49.435
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:43:44.064
+!MESSAGE NLS unused message: ESQLCompiler_BAR_canAdd_notsubflow in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 15:43:44.065
+!MESSAGE NLS missing message: ESQLCompiler_BAR_canAdd_notesql in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.ui 4 0 2017-12-10 15:44:31.713
+!MESSAGE Unhandled event loop exception
+!STACK 0
+org.eclipse.swt.SWTException: Failed to execute runnable (org.eclipse.swt.SWTException: Widget is disposed)
+	at org.eclipse.swt.SWT.error(Unknown Source)
+	at org.eclipse.swt.SWT.error(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.jface.window.Window.runEventLoop(Unknown Source)
+	at org.eclipse.jface.window.Window.open(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.UIUtils.openDialog(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.UIUtils.openErrorDialog(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.model.BrokerRuntimeManager$6.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+Caused by: org.eclipse.swt.SWTException: Widget is disposed
+	at org.eclipse.swt.SWT.error(Unknown Source)
+	at org.eclipse.swt.SWT.error(Unknown Source)
+	at org.eclipse.swt.SWT.error(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.error(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.checkWidget(Unknown Source)
+	at org.eclipse.swt.widgets.Control.setVisible(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.wizards.steps.ProgressDialog.setTaskName(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.wizards.steps.ProgressDialog.failedPerforming(Unknown Source)
+	at com.ibm.etools.mft.broker.runtime.wizards.steps.StepEngine$1.run(Unknown Source)
+	at org.eclipse.swt.widgets.RunnableLock.run(Unknown Source)
+	... 33 more
+
+!ENTRY org.eclipse.ui 4 0 2017-12-10 15:50:07.912
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.fcb.figure.FCBNodeFigure$1.mouseEntered(Unknown Source)
+	at org.eclipse.draw2d.Figure.handleMouseEntered(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.receive(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.gef.ui.parts.DomainEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.draw2d.LightweightSystem$EventHandler.mouseMove(Unknown Source)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(Unknown Source)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.ui 4 0 2017-12-10 15:50:15.096
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.fcb.figure.FCBNodeFigure$1.mouseEntered(Unknown Source)
+	at org.eclipse.draw2d.Figure.handleMouseEntered(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.receive(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.gef.ui.parts.DomainEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.draw2d.LightweightSystem$EventHandler.mouseMove(Unknown Source)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(Unknown Source)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.ui 4 0 2017-12-10 15:54:04.299
+!MESSAGE Unhandled event loop exception
+!STACK 0
+java.lang.NullPointerException
+	at com.ibm.etools.fcb.figure.FCBNodeFigure$1.mouseEntered(Unknown Source)
+	at org.eclipse.draw2d.Figure.handleMouseEntered(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.receive(Unknown Source)
+	at org.eclipse.draw2d.SWTEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.gef.ui.parts.DomainEventDispatcher.dispatchMouseMoved(Unknown Source)
+	at org.eclipse.draw2d.LightweightSystem$EventHandler.mouseMove(Unknown Source)
+	at org.eclipse.swt.widgets.TypedListener.handleEvent(Unknown Source)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2017-12-10 16:20:54.435
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [Unknown javadoc format for Base64DecodingException {key=Lcom/sun/org/apache/xml/internal/security/exceptions/Base64DecodingException;} [in Base64DecodingException.class [in com.sun.org.apache.xml.internal.security.exceptions [in C:\IBM\IntegrationToolkit90\jdk\jre\lib\rt.jar]]]]
+	at org.eclipse.jdt.internal.core.JavadocContents.getTypeDoc(Unknown Source)
+	at org.eclipse.jdt.internal.core.BinaryType.getAttachedJavadoc(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAccess2.getHTMLContent(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.getHoverInfo(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.internalGetHoverInfo(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.getHoverInfo2(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.BestMatchHover.getHoverInfo2(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavaEditorTextHoverProxy.getHoverInfo2(Unknown Source)
+	at org.eclipse.jface.text.TextViewerHoverManager$4.run(Unknown Source)
+!SUBENTRY 1 org.eclipse.jdt.core 4 1009 2017-12-10 16:20:54.435
+!MESSAGE Unknown javadoc format for Base64DecodingException {key=Lcom/sun/org/apache/xml/internal/security/exceptions/Base64DecodingException;} [in Base64DecodingException.class [in com.sun.org.apache.xml.internal.security.exceptions [in C:\IBM\IntegrationToolkit90\jdk\jre\lib\rt.jar]]]
+
+!ENTRY org.eclipse.jdt.ui 4 10001 2017-12-10 16:21:52.043
+!MESSAGE Internal Error
+!STACK 1
+Java Model Exception: Java Model Status [Unknown javadoc format for Base64DecodingException {key=Lcom/sun/org/apache/xml/internal/security/exceptions/Base64DecodingException;} [in Base64DecodingException.class [in com.sun.org.apache.xml.internal.security.exceptions [in C:\IBM\IntegrationToolkit90\jdk\jre\lib\rt.jar]]]]
+	at org.eclipse.jdt.internal.core.JavadocContents.getTypeDoc(Unknown Source)
+	at org.eclipse.jdt.internal.core.BinaryType.getAttachedJavadoc(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.javadoc.JavadocContentAccess2.getHTMLContent(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.getHoverInfo(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.internalGetHoverInfo(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavadocHover.getHoverInfo2(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.BestMatchHover.getHoverInfo2(Unknown Source)
+	at org.eclipse.jdt.internal.ui.text.java.hover.JavaEditorTextHoverProxy.getHoverInfo2(Unknown Source)
+	at org.eclipse.jface.text.TextViewerHoverManager$4.run(Unknown Source)
+!SUBENTRY 1 org.eclipse.jdt.core 4 1009 2017-12-10 16:21:52.043
+!MESSAGE Unknown javadoc format for Base64DecodingException {key=Lcom/sun/org/apache/xml/internal/security/exceptions/Base64DecodingException;} [in Base64DecodingException.class [in com.sun.org.apache.xml.internal.security.exceptions [in C:\IBM\IntegrationToolkit90\jdk\jre\lib\rt.jar]]]
+!SESSION 2017-12-10 16:30:50.713 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-12-10 16:31:31.413
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.core.resources 4 567 2017-12-10 16:31:36.589
+!MESSAGE Could not read metadata for 'C:\oab_production\.metadata\.plugins\org.eclipse.core.resources\.root\.indexes\properties.index'. Unexpected version: 0.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-10 16:32:04.853
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:32:05.266
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:32:05.333
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:32:05.333
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:32:05.333
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:32:05.334
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-10 16:32:09.940
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:33:12.419
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:33:26.650
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:33:26.650
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:33:26.650
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:33:26.650
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:34:49.293
+!MESSAGE NLS unused message: ESQLCompiler_BAR_canAdd_notsubflow in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-10 16:34:49.293
+!MESSAGE NLS missing message: ESQLCompiler_BAR_canAdd_notesql in: com.ibm.etools.mft.bar.compiler.messages
+
+!ENTRY com.ibm.etools.mft.debug 4 8 2017-12-10 16:38:33.821
+!MESSAGE org.eclipse.core.runtime.CoreException: Attach to server at WV-1037:5015 failed.
+!STACK 1
+org.eclipse.core.runtime.CoreException: Attach to server at WV-1037:5015 failed.
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.handleFailedToAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.jvmAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.createJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.doCreateWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.createWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.wsalaunch(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin.buildAndLaunch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin$8.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+Caused by: java.lang.Exception: Connection could not be established.
+	... 14 more
+Contains: This can occur for one or more of these reasons:
+Contains: The host name and/or port are incorrect.
+Contains: The server on WV-1037 is not started in debug mode.
+Contains: Communication timeouts in the Debug preferences (under the Java node in the Preferences dialog box) are not long enough.
+Contains: The state of port 5015 on WV-1037 must be LISTENING. If the state of the port is ESTABLISHED, then another debug session is already connected to the port.
+Contains: The "netstat" command line tool can be used to determine port status.
+Contains: A firewall is interfering with the connection.
+Contains: Ensure that these settings are properly made before attempting to attach to the server.
+!SUBENTRY 1 com.ibm.debug.wsa 4 100 2017-12-10 16:38:33.821
+!MESSAGE Attach to server at WV-1037:5015 failed.
+!STACK 0
+java.lang.Exception: Connection could not be established.
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.handleFailedToAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.jvmAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.createJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.doCreateWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.createWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.wsalaunch(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin.buildAndLaunch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin$8.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE This can occur for one or more of these reasons:
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The host name and/or port are incorrect.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The server on WV-1037 is not started in debug mode.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE Communication timeouts in the Debug preferences (under the Java node in the Preferences dialog box) are not long enough.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The state of port 5015 on WV-1037 must be LISTENING. If the state of the port is ESTABLISHED, then another debug session is already connected to the port.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The "netstat" command line tool can be used to determine port status.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE A firewall is interfering with the connection.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE Ensure that these settings are properly made before attempting to attach to the server.
+
+!ENTRY com.ibm.etools.mft.debug 4 8 2017-12-10 16:38:33.821
+!MESSAGE The flow engine has been attached to another debug session, or 
+ The flow engine is not listening on the specified port, or 
+ The Broker is not running, or 
+ Timeout occurred while connecting
+
+Resolution:
+ Assign a different debug port to the flow engine and restart the Broker, and 
+ Ensure the flow engine is running and listening on the specified port, and 
+ Ensure the broker is running or 
+ Increase the timeout setting in the Preference page
+!STACK 1
+org.eclipse.core.runtime.CoreException: Attach to server at WV-1037:5015 failed.
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.handleFailedToAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.jvmAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.createJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.doCreateWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.createWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.wsalaunch(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin.buildAndLaunch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin$8.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+Caused by: java.lang.Exception: Connection could not be established.
+	... 14 more
+Contains: This can occur for one or more of these reasons:
+Contains: The host name and/or port are incorrect.
+Contains: The server on WV-1037 is not started in debug mode.
+Contains: Communication timeouts in the Debug preferences (under the Java node in the Preferences dialog box) are not long enough.
+Contains: The state of port 5015 on WV-1037 must be LISTENING. If the state of the port is ESTABLISHED, then another debug session is already connected to the port.
+Contains: The "netstat" command line tool can be used to determine port status.
+Contains: A firewall is interfering with the connection.
+Contains: Ensure that these settings are properly made before attempting to attach to the server.
+!SUBENTRY 1 com.ibm.debug.wsa 4 100 2017-12-10 16:38:33.821
+!MESSAGE Attach to server at WV-1037:5015 failed.
+!STACK 0
+java.lang.Exception: Connection could not be established.
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.handleFailedToAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.jvmAttach(Unknown Source)
+	at com.ibm.debug.wsa.internal.launcher.LaunchUtils.createJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.doCreateWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.internal.core.WSAJavaDebugTarget.createWSAJavaDebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.debug.wsa.WSADebugPlugin.createWSADebugTarget(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.wsalaunch(Unknown Source)
+	at com.ibm.etools.mft.debug.internal.MBLaunchConfigurationDelegate.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.core.LaunchConfiguration.launch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin.buildAndLaunch(Unknown Source)
+	at org.eclipse.debug.internal.ui.DebugUIPlugin$8.run(Unknown Source)
+	at org.eclipse.core.internal.jobs.Worker.run(Unknown Source)
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE This can occur for one or more of these reasons:
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The host name and/or port are incorrect.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The server on WV-1037 is not started in debug mode.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE Communication timeouts in the Debug preferences (under the Java node in the Preferences dialog box) are not long enough.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The state of port 5015 on WV-1037 must be LISTENING. If the state of the port is ESTABLISHED, then another debug session is already connected to the port.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE The "netstat" command line tool can be used to determine port status.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE A firewall is interfering with the connection.
+!SUBENTRY 2 com.ibm.debug.wsa 4 4 2017-12-10 16:38:33.821
+!MESSAGE Ensure that these settings are properly made before attempting to attach to the server.
+!SESSION 2017-12-11 10:39:10.486 -----------------------------------------------
+eclipse.buildId=unknown
+java.fullversion=JRE 1.7.0 IBM J9 2.6 Windows 7 x86-32 20150701_255667 (JIT enabled, AOT enabled)
+J9VM - R26_Java726_SR9_20150701_0050_B255667
+JIT  - tr.r11_20150626_95120.01
+GC   - R26_Java726_SR9_20150701_0050_B255667
+J9CL - 20150701_255667
+BootLoader constants: OS=win32, ARCH=x86, WS=win32, NL=en_US
+Framework arguments:  -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+Command-line arguments:  -os win32 -ws win32 -arch x86 -showlocation -product com.ibm.etools.msgbroker.tooling.ide
+
+!ENTRY org.eclipse.core.resources 2 10035 2017-12-11 10:39:31.712
+!MESSAGE The workspace exited with unsaved changes in the previous session; refreshing workspace to recover changes.
+
+!ENTRY org.eclipse.wst.common.project.facet.core 4 0 2017-12-11 10:39:49.135
+!MESSAGE Project facet jst.jsf has not been defined. It is used in plugin com.ibm.etools.javaee.cdi.core.
+
+!ENTRY org.eclipse.ui 4 4 2017-12-11 10:39:55.377
+!MESSAGE Invalid preference page path: Websphere Application Server
+
+!ENTRY org.eclipse.jface 2 0 2017-12-11 10:40:00.773
+!MESSAGE Ignored reentrant call while viewer is busy. This is only logged once per viewer instance, but similar calls will still be ignored.
+!STACK 0
+java.lang.RuntimeException
+	at org.eclipse.jface.viewers.ColumnViewer.checkBusy(Unknown Source)
+	at org.eclipse.jface.viewers.ColumnViewer.update(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.update(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.FlowDeltaVisitor.handleMarkersChanged(Unknown Source)
+	at com.ibm.etools.mft.navigator.AbstractDeltaVisitor.handleResourceModified(Unknown Source)
+	at com.ibm.etools.mft.navigator.AbstractDeltaVisitor.visit(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.WorkspaceRootDeltaVisitor.handleResourceModified(Unknown Source)
+	at com.ibm.etools.mft.navigator.AbstractDeltaVisitor.visit(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at org.eclipse.core.internal.events.ResourceDelta.accept(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.ResourceTreeContentProvider$ResourceChangeListener$DeltaVisitorRunnable.run(Unknown Source)
+	at org.eclipse.ui.internal.UILockListener.doPendingWork(Unknown Source)
+	at org.eclipse.ui.internal.UILockListener.aboutToWait(Unknown Source)
+	at org.eclipse.core.internal.jobs.LockManager.aboutToWait(Unknown Source)
+	at org.eclipse.core.internal.jobs.OrderedLock.doAcquire(Unknown Source)
+	at org.eclipse.core.internal.jobs.OrderedLock.acquire(Unknown Source)
+	at org.eclipse.core.internal.jobs.OrderedLock.acquire(Unknown Source)
+	at org.eclipse.core.internal.resources.WorkManager.checkIn(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.prepareOperation(Unknown Source)
+	at org.eclipse.core.internal.resources.Workspace.run(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.runOperation(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaModelManager.getClasspathContainer(Unknown Source)
+	at org.eclipse.jdt.core.JavaCore.getClasspathContainer(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaProject.resolveClasspath(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaProject.resolveClasspath(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaProject.getResolvedClasspath(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaProject.buildStructure(Unknown Source)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaElement.getChildren(Unknown Source)
+	at org.eclipse.jdt.internal.core.JavaProject.getPackageFragmentRoots(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.getNamespace(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.internalGetObjectsInContainer(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.internalGetObjectsInContainer(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.getObjectsInContainer(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.getAllObjectsInApplication(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.getProjectChildrenForApplicationOrLibraryProj(Unknown Source)
+	at com.ibm.etools.mft.navigator.utils.VirtualFolderUtils.getProjectChildrenForLibraryProj(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.factory.ResourceLibraryFactory.getProjectChildren(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.ResourceTreeContentProvider.getProjectChildren(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.ResourceTreeContentProvider.getChildren(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.ResourceTreeContentProvider.hasChildren(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.isExpandable(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.isExpandable(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.isExpandable(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.updatePlus(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.updatePlus(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.createTreeItem(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer$1.run(Unknown Source)
+	at org.eclipse.swt.custom.BusyIndicator.showWhile(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.createChildren(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.createChildren(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.createChildren(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.internalInitializeTree(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.internalInitializeTree(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer$5.run(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.preservingSelection(Unknown Source)
+	at org.eclipse.jface.viewers.TreeViewer.preservingSelection(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.preservingSelection(Unknown Source)
+	at org.eclipse.jface.viewers.AbstractTreeViewer.inputChanged(Unknown Source)
+	at org.eclipse.jface.viewers.ContentViewer.setInput(Unknown Source)
+	at org.eclipse.jface.viewers.StructuredViewer.setInput(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.ResourceTreeViewer.init(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.NamespaceNavigator.createProjectsSection(Unknown Source)
+	at com.ibm.etools.mft.navigator.resource.viewer.NamespaceNavigator.createPartControl(Unknown Source)
+	at org.eclipse.ui.internal.ViewReference.createPartHelper(Unknown Source)
+	at org.eclipse.ui.internal.ViewReference.createPart(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchPartReference.getPart(Unknown Source)
+	at org.eclipse.ui.internal.PartPane.setVisible(Unknown Source)
+	at org.eclipse.ui.internal.ViewPane.setVisible(Unknown Source)
+	at org.eclipse.ui.internal.presentations.PresentablePart.setVisible(Unknown Source)
+	at org.eclipse.ui.internal.presentations.util.PresentablePartFolder.select(Unknown Source)
+	at org.eclipse.ui.internal.presentations.util.LeftToRightTabOrder.select(Unknown Source)
+	at org.eclipse.ui.internal.presentations.util.TabbedStackPresentation.selectPart(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.refreshPresentationSelection(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.setSelection(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.showPart(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.replace(Unknown Source)
+	at org.eclipse.ui.internal.PerspectiveHelper.addPart(Unknown Source)
+	at org.eclipse.ui.internal.Perspective.removeFastView(Unknown Source)
+	at org.eclipse.ui.internal.Perspective.removeFastView(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchPage.removeFastView(Unknown Source)
+	at org.eclipse.ui.internal.FastViewManager.makeFast(Unknown Source)
+	at org.eclipse.ui.internal.FastViewManager.removeViewReference(Unknown Source)
+	at org.eclipse.ui.internal.FastViewManager.restoreToPresentation(Unknown Source)
+	at org.eclipse.ui.internal.ViewStack.setMinimized(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.smartUnzoom(Unknown Source)
+	at org.eclipse.ui.internal.PartStack$3.runWithException(Unknown Source)
+	at org.eclipse.ui.internal.StartupThreading$StartupRunnable.run(Unknown Source)
+	at org.eclipse.swt.widgets.Synchronizer.syncExec(Unknown Source)
+	at org.eclipse.ui.internal.UISynchronizer.syncExec(Unknown Source)
+	at org.eclipse.swt.widgets.Display.syncExec(Unknown Source)
+	at org.eclipse.ui.internal.StartupThreading.runWithoutExceptions(Unknown Source)
+	at org.eclipse.ui.internal.PartStack.setState(Unknown Source)
+	at org.eclipse.ui.internal.EditorSashContainer.removeEditor(Unknown Source)
+	at org.eclipse.ui.internal.EditorAreaHelper.closeEditor(Unknown Source)
+	at org.eclipse.ui.internal.EditorAreaHelper.closeEditor(Unknown Source)
+	at org.eclipse.ui.internal.WorkbenchPage.closeEditors(Unknown Source)
+	at org.eclipse.ui.internal.EditorStack.close(Unknown Source)
+	at org.eclipse.ui.internal.PartStack$1.close(Unknown Source)
+	at org.eclipse.ui.internal.presentations.SystemMenuCloseAll.run(Unknown Source)
+	at org.eclipse.jface.action.Action.runWithEvent(Unknown Source)
+	at org.eclipse.jface.action.ActionContributionItem.handleWidgetSelection(Unknown Source)
+	at org.eclipse.jface.action.ActionContributionItem.access$2(Unknown Source)
+	at org.eclipse.jface.action.ActionContributionItem$5.handleEvent(Unknown Source)
+	at org.eclipse.swt.widgets.EventTable.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Widget.sendEvent(Unknown Source)
+	at org.eclipse.swt.widgets.Display.runDeferredEvents(Unknown Source)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runEventLoop(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.runUI(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.access$4(Unknown Source)
+	at org.eclipse.ui.internal.Workbench$7.run(Unknown Source)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Unknown Source)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(Unknown Source)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(Unknown Source)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(Unknown Source)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(Unknown Source)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.basicRun(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.run(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.main(Unknown Source)
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.484
+!MESSAGE NLS unused message: PD_HELP_POPUP_RELATED_HELP_SECTION_TITLE in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.484
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_OPEN_DYNAMIC_HELP_LINK_TEXT in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.484
+!MESSAGE NLS unused message: PD_HELP_POPUP_DECORATOR_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.484
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_MORE_INFO_LINK in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.484
+!MESSAGE NLS unused message: PROPERTY_LEVEL_HELP_POPUP_SECTION_HOVER_HELP in: com.ibm.etools.mft.flow.msgFlowStrings
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.693
+!MESSAGE NLS missing message: WSDL_GatewayNonGatewayString in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.693
+!MESSAGE NLS missing message: tooltipFTETransferMode in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.693
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Node_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 10:40:15.693
+!MESSAGE NLS missing message: CICS_GROUP_HEADER_Broker_ConnectionDetails in: com.ibm.etools.mft.ibmnodes.plugin.ibmnodesresources
+
+!ENTRY org.eclipse.osgi 2 1 2017-12-11 11:45:17.029
+!MESSAGE NLS missing message: ApplicationLibraryProjectReferenceWizardPage_directoryLabel in: com.ibm.etools.mft.util.ui.messages

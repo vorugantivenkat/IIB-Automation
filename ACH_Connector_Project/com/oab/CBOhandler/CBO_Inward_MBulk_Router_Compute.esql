@@ -1,0 +1,40 @@
+BROKER SCHEMA com.oab.CBOhandler
+CREATE COMPUTE MODULE CBO_Inward_MBulk_Router_Compute
+DECLARE keyStoreFileName EXTERNAL CHARACTER;
+	DECLARE keyStorePassword EXTERNAL CHARACTER;
+	DECLARE fileDir EXTERNAL CHARACTER;
+	DECLARE keyAlias EXTERNAL CHARACTER;
+	DECLARE brokerUrl EXTERNAL CHARACTER;
+	DECLARE queueName EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+	DECLARE xmlInput BLOB InputRoot.XMLNSC.*:response.content;
+		--DECLARE fileName CHARACTER fileDir || '/' || 'test.csv';
+       DECLARE msgid CHARACTER fileDir || '/' || InputRoot.MQRFH2.usr.messageId;
+       DECLARE digitalsignature CHARACTER InputRoot.MQRFH2.usr.digitalSignature;
+       DECLARE messagetype CHARACTER InputRoot.MQRFH2.usr.messageType;
+       DECLARE Data BLOB InputRoot.BLOB.BLOB;
+       CALL sendAndReceive('receive',msgid,keyStoreFileName,keyStorePassword,keyAlias,brokerUrl,queueName,Data,digitalsignature);
+	END;
+	CREATE PROCEDURE sendAndReceive (IN functionVal CHARACTER,IN fileName CHARACTER,IN keyStoreFileName CHARACTER,
+	IN keyStorePassword CHARACTER,IN keyAlias CHARACTER,IN brokerUrl CHARACTER,IN queueName CHARACTER,IN Data BLOB, IN digitalsignature CHARACTER)
+	LANGUAGE JAVA
+	EXTERNAL NAME "FileSigningSample.sendAndReceive";
+
+END MODULE;

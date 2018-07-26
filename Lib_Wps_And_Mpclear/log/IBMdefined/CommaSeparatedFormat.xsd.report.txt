@@ -1,0 +1,12 @@
+
+
+Importing file: C:\IBM\IntegrationToolkit90\configuration\org.eclipse.osgi\bundles\371\1\.cp\formats\ibm\CommaSeparatedFormat.xsd
+
+
+Elapsed time processing this message definition file: 0.121 seconds
+Number of warnings for this message definition file: 0
+
+
+Number of files processed: 1
+
+

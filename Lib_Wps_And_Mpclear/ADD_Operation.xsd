@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">        
+    <xsd:element name="WpsAddRegulatedEntities">
+    	<xsd:complexType>
+    		<xsd:choice maxOccurs="unbounded" minOccurs="0">
+    			<xsd:sequence>
+    				<xsd:element name="Entity">
+    					<xsd:complexType>
+    						<xsd:sequence>
+    							<xsd:element name="EmployerId"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value="\w{1,17}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerName"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerBusinessType"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element
+    								name="EmployerBranchesCount" maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,3}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerGrade"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,1}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerEmail"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value="([\w\.-]*@[a-zA-Z]+\.[a-zA-Z]{2,4}){0,254}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerAddress"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,254}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerPhone"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,20}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerPoBox"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,6}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerPostalCode"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,14}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerSignatory1 "
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerSignatory2"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="EmployerSignatory3"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerId"
+    								maxOccurs="1" minOccurs="1">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,17}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerIdType"
+    								maxOccurs="1" minOccurs="1">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,3}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerName"
+    								maxOccurs="1" minOccurs="1">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,70}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerBank"
+    								maxOccurs="1" minOccurs="1">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,4}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerAccount"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,30}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    							<xsd:element name="PayerBranch"
+    								maxOccurs="1" minOccurs="0">
+    								<xsd:simpleType>
+    									<xsd:restriction
+    										base="xsd:string">
+    										<xsd:pattern
+    											value=".{0,12}">
+    										</xsd:pattern>
+    									</xsd:restriction>
+    								</xsd:simpleType>
+    							</xsd:element>
+    						</xsd:sequence>
+    					</xsd:complexType>
+    				</xsd:element>
+
+    			</xsd:sequence>
+    			
+    		</xsd:choice>
+    	</xsd:complexType>
+
+    </xsd:element>
+    
+</xsd:schema>

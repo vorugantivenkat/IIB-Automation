@@ -1,0 +1,52 @@
+BROKER SCHEMA com.oab.CBOhandler
+DECLARE ns NAMESPACE 'urn:iso:std:psys:request';
+
+CREATE COMPUTE MODULE CBO_Outward_CASHINOUT_Router_Compute
+		DECLARE KEYPATH EXTERNAL CHARACTER;
+		DECLARE KeyStore_pwd EXTERNAL CHARACTER;
+	DECLARE msgId CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+     SET msgId =  InputRoot.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:GrpHdr.*:MsgId;
+		
+		SET OutputRoot.XMLNSC.ns:request.id = msgId;
+		-- DECLARE dbtrIBAN CHARACTER InputRoot.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:CdtTrfTxInf.*:DbtrAcct.*:Id.*:IBAN;
+		-- IF dbtrIBAN = '' THEN
+		-- SET OutputRoot.XMLNSC.ns:request.type = 'COUT';
+		-- ELSE
+		-- SET OutputRoot.XMLNSC.ns:request.type = 'CIN';
+		-- END IF;
+		SET OutputRoot.XMLNSC.ns:request.type = 'PACS.008';
+		SET OutputRoot.XMLNSC.ns:request.format = 'MX';
+		SET OutputRoot.XMLNSC.ns:request.date = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+
+
+	--	DECLARE KEYPATH CHARACTER 'C:\IIBWorkspace\OmanArabBank\DigitalSignAndVerify_XML_OAB\src\resources\OAB.jks';
+		DECLARE Signature CHARACTER;
+		DECLARE msg_con BLOB ASBITSTREAM(InputRoot.XMLNSC ENCODING 541 CCSID 1208);
+		DECLARE msg_char CHARACTER CAST(msg_con AS CHARACTER CCSID 1208);
+
+		SET Signature= DigitalSignatureOABSign(msg_char,KEYPATH,KeyStore_pwd);
+
+		SET OutputRoot.XMLNSC.ns:request.signature = Signature;
+
+		SET OutputRoot.XMLNSC.ns:request.(XMLNSC.CDataField)content = msg_char;
+
+	END;
+END MODULE;

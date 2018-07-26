@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmDatabase.msgnode="ComIbmDatabase.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:com_oab_exceptionhandler_CommonExceptionHandle.subflow="com/oab/exceptionhandler/CommonExceptionHandle.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/return/outward/Return_Outward_Main.msgflow"
+    nsPrefix="com_oab_return_outward_Return_Outward_Main.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_NAME" name="SCHEMA_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDO_TXN_INFO" name="DDO_TXN_INFO" defaultValueLiteral="DDO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL" name="CHANNEL" defaultValueLiteral="ACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USER" name="USER" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WORKSTATION" name="WORKSTATION" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNELRESERVED" name="CHANNELRESERVED">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DSN" name="DSN" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RETO_HEADER_INFO" name="RETO_HEADER_INFO" defaultValueLiteral="CANO_REVO_RETO_GRPHDR_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RETO_TXN_INFO" name="RETO_TXN_INFO" defaultValueLiteral="CANO_REVO_RETO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_TXN_INFO" name="DCI_TXN_INFO" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ACH_CONFIG_VALUES" name="ACH_CONFIG_VALUES" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CURRENCY" name="CURRENCY" defaultValueLiteral="OMR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDO_GRPHEADER_INFO" name="DDO_GRPHEADER_INFO" defaultValueLiteral="DDO_GROUP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EXC_TABLENAME" name="EXC_TABLENAME" defaultValueLiteral="EX_HANDLER_CONFIG_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_CODE" name="INTERFACE_CODE" defaultValueLiteral="19">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EInt"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_NAME" name="INTERFACE_NAME" defaultValueLiteral="PAY_RETURN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4J_CONF_FILE" name="LOG4J_CONF_FILE" defaultValueLiteral="Y:\OAB\IBM\logs4J\Log4jConfigurationFile.xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_GP_HEADER_INFO" name="DCI_GP_HEADER_INFO" defaultValueLiteral="DCI_GP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="Return_Outward_Main" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/Return_Outward_Main.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/Return_Outward_Main.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="10,138" queueName="OAB_RETO_Q_REQ" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="OAB_RETO_Q_REQ"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="317,209" computeExpression="esql://routine/com.oab.return.outward#Return_Outward_InsertDB_DEP.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="DB_Insert_DEP_Req"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_13" location="557,171" destinationMode="reply">
+        <translation xmi:type="utility:ConstantString" string="OAB_ACH_FAIL_Q_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="587,234" queueName="ESB.REQUEST" request="true" replyToQ="CBO.ACH.IN">
+        <translation xmi:type="utility:ConstantString" string="ESB.REQUEST"/>
+      </nodes>
+      <nodes xmi:type="com_oab_exceptionhandler_CommonExceptionHandle.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="303,53">
+        <translation xmi:type="utility:ConstantString" string="CommonExceptionHandle"/>
+      </nodes>
+      <nodes xmi:type="ComIbmDatabase.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="508,97" dataSource="CBOACH" statement="esql://routine/com.oab.return.outward#Return_Outward_Main_Database.Main">
+        <translation xmi:type="utility:ConstantString" string="Database"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_13" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in">
+        <bendPoints>31,-64,190,-176</bendPoints>
+        <bendPoints>-58,-89,101,-201</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_NAME">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_NAME" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDO_TXN_INFO">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.DDO_TXN_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.USER">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.USER" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WORKSTATION">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.WORKSTATION" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNELRESERVED">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNELRESERVED" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DSN">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DSN" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.RETO_HEADER_INFO">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.RETO_HEADER_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.RETO_TXN_INFO">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.RETO_TXN_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_TXN_INFO">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_TXN_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ACH_CONFIG_VALUES">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.ACH_CONFIG_VALUES" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CURRENCY">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.CURRENCY" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDO_GRPHEADER_INFO">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.DDO_GRPHEADER_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EXC_TABLENAME">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.EXC_TABLENAME" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_CODE">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_CODE" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_NAME">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_NAME" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4J_CONF_FILE">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4J_CONF_FILE" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_GP_HEADER_INFO">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_GP_HEADER_INFO" bundleName="com/oab/return/outward/Return_Outward_Main" pluginId="ACH_Connector_Project"/>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="PayerName">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,140}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="PurposeOfTransfer">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,4}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="UserReference">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="MandateReference">
+
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,20}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="Channel">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,10}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="Priority">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\d{1,1}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="DetailsOfPayments">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,140}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="OrderingCustomerIdType">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="PayerIdType">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="MandatepaymentCollectionDate" type="xsd:string"/>
+  <xsd:element name="OrderingCustomerId">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="TransactionReference">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,16}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="PayerId">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="PayerBank">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="BatchReference">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,16}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="Currency">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,3}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="MandateFirstCollectionDate" type="xsd:string"/>
+  <xsd:element name="PayerAccount">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,34}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="Amount">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\d{1,18}(\.\d{1,5})?"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="OrderingCustomerAccount">
+
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,34}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="AchDirectDebit">
+    <xsd:complexType>
+      <xsd:sequence>
+      	<xsd:element name="OptionalIdentifier" type="xsd:string" minOccurs="0" maxOccurs="1"></xsd:element>
+      	<xsd:element ref="Channel" minOccurs="1">
+      	</xsd:element>
+      	<xsd:element ref="Priority" minOccurs="1" />
+      	<xsd:element ref="BatchReference" minOccurs="1" />
+      	<xsd:element ref="OrderingCustomerAccount" minOccurs="0" />
+      	<xsd:element ref="OrderingCustomerName" minOccurs="1" />
+      	<xsd:element ref="OrderingCustomerId" minOccurs="0" />
+      	<xsd:element ref="OrderingCustomerIdType" minOccurs="0" />
+      	<xsd:element ref="PurposeOfTransfer" minOccurs="0" />
+      	<xsd:element ref="Currency" minOccurs="0" />
+      	<xsd:element ref="Transaction" minOccurs="1"
+      		maxOccurs="unbounded" />
+      </xsd:sequence>
+      <xsd:attribute name="OptionalIdentifier" type="xsd:string" use="optional"/>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="OrderingCustomerName">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value="\w{1,140}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="Transaction">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="TransactionReference" minOccurs="1"/>
+        <xsd:element ref="UserReference" minOccurs="0"/>
+        <xsd:element ref="MandateReference" minOccurs="1"/>
+        <xsd:element ref="MandateFirstCollectionDate" minOccurs="0"/>
+        <xsd:element ref="MandatepaymentCollectionDate" minOccurs="0"/>
+        <xsd:element ref="MandatepaymentSequence" minOccurs="0"/>
+        <xsd:element ref="Amount" minOccurs="1"/>
+        <xsd:element ref="PayerBank" minOccurs="1"/>
+        <xsd:element ref="PayerAccount" minOccurs="1"/>
+        <xsd:element ref="PayerName" minOccurs="0"/>
+        <xsd:element ref="PayerId" minOccurs="0"/>
+        <xsd:element ref="PayerIdType" minOccurs="0"/>
+        <xsd:element ref="PurposeOfTransfer" minOccurs="0"/>
+        <xsd:element ref="DetailsOfPayments" minOccurs="0"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="MandatepaymentSequence" type="xsd:string"/>
+</xsd:schema>

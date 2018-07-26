@@ -1,0 +1,104 @@
+
+
+
+
+
+
+BROKER SCHEMA com.oab.cancellation.inward
+
+/*
+Author : Naveen
+Subsequent Modifications by : Naveen
+Module Name : Cancellation_Inward
+Flow Name : Cancellation_Response_From_CBS
+Purpose : Updating Database against CBS Response
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : Yes,CANI_ASSIGNMENT,CANI_UNDERLYING,CANI_TXN_INFO,CANI_SUPPLEMENTARY_DATA,CANI_UNDRLYG_CANC_RSN_INFO,CANI_TXN_CANC_RSN_INFO,DCI_TXN_INFO,DDI_TXN_INFO
+Dependency XSD(Request Message) : camt.056.001.04.xsd
+Dependency XSD(Response Message) : camt.029.001.05.xsd
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+1. CBS Response for individual Transaction is received as input
+2. Updating Database with appropriate status code if the response is FIN
+3. Also updating database with appropriate status code if the response is Non FIN
+*/
+
+
+DECLARE rep NAMESPACE 'http://www.oab.com';
+
+CREATE COMPUTE MODULE CBS_Response_Compute
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+	DECLARE CANI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+				SET Environment.Properties = InputRoot.Properties;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.txnRef = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			SET Environment.payRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			SET Environment.faultString = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+			SET Environment.faultCode = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultCode;
+
+			SET Environment.result = InputRoot.XMLNSC.*:Reply.*:Header.*:replyStatus;
+
+			IF Environment.txnRef LIKE '12%' THEN
+
+				IF Environment.result = 'FIN' THEN
+					CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Response for double entry request with transactionReference' || Environment.txnRef ||'was success updating the status as CANI_CBS_SUCCESS_CBO_SEND') INTO rc;
+					SET Environment.dbQueryCount = '26';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+
+
+				ELSE
+					SET Environment.cbsFail = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+					CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Response for double entry request with transactionReference' || Environment.txnRef ||'was success updating the status as CANI_CBS_FAILED_CBO_SEND') INTO rc;
+					SET Environment.dbQueryCount = '27';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+
+				END IF;
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'CANI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+END MODULE;

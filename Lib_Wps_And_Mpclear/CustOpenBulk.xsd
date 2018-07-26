@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+                        <xsd:element ibmSchExtn:docRoot="true" name="AccCloseBulk">
+    <xsd:complexType>
+      <xsd:sequence dfdl:separator="">
+        <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="AccCloseData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                                                                                                    							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <xsd:element name="Account_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="acc_type" type="xsd:string"/>
+                    <xsd:element name="acc_mobile_or_service" type="xsd:string"/>
+                    <xsd:element name="acc_reg_code" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                            <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                                                                            </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:element ibmSchExtn:docRoot="true" name="AccMaintBulk">
+    <xsd:complexType>
+      <xsd:sequence dfdl:separator="">
+        <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="AccMaintData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                                                                                                    							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <xsd:element name="Account_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="Account_Id">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="acc_type" type="xsd:string"/>
+                          <xsd:element name="acc_mobile_or_service" type="xsd:string"/>
+                          <xsd:element name="acc_reg_code" type="xsd:string"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element minOccurs="0" name="acc_alias" type="xsd:string"/>
+                    <xsd:element minOccurs="0" name="acc_deafult" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                            <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                                                                            </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:element ibmSchExtn:docRoot="true" name="AccOpenBulk">
+    <xsd:complexType>
+      <xsd:sequence dfdl:separator="">
+                                        <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="AccOpenData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                                                                                                                                							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <xsd:element name="Customer_Id_Info">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="customer_id_type" type="xsd:string"/>
+                          <xsd:element name="customer_id" type="xsd:string"/>
+                          <xsd:element name="id_issuing_country" type="xsd:string"/>
+                                                                            </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                            <xsd:element name="Account_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="Account_Id">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="acc_type" type="xsd:string"/>
+                          <xsd:element name="acc_mobile_or_service" type="xsd:string"/>
+                          <xsd:element name="acc_reg_code" type="xsd:string"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element name="acc_banked" type="xsd:string"/>
+                    <xsd:element name="acc_currency" type="xsd:string"/>
+                    <xsd:element minOccurs="0" name="acc_alias" type="xsd:string"/>
+                    <xsd:element minOccurs="0" name="acc_deafult" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                                                                                                                                </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                                  </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:element ibmSchExtn:docRoot="true" name="CustCloseBulk">
+    <xsd:complexType>
+      <xsd:sequence dfdl:separator="">
+        <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="CustCloseData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                <xsd:element name="Customer_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="Customer_Id_Info">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="customer_id_type" type="xsd:string"/>
+                          <xsd:element name="customer_id" type="xsd:string"/>
+                          <xsd:element name="id_issuing_country" type="xsd:string"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                                                                              </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                        							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:element ibmSchExtn:docRoot="true" name="CustMaintBulk">
+    <xsd:complexType>
+      <xsd:sequence dfdl:separator="">
+        <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="CustMaintData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                <xsd:element name="Customer_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="Customer_Id_Info">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="customer_id_type" type="xsd:string"/>
+                          <xsd:element name="customer_id" type="xsd:string"/>
+                          <xsd:element name="id_issuing_country" type="xsd:string"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element ibmDfdlExtn:sampleValue="value2" name="customer_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value3" name="customer_dob_or_reg" type="xsd:string"/>
+                                      </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                        							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <xsd:element name="Address">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element ibmDfdlExtn:sampleValue="value5" minOccurs="0" name="building_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value6" minOccurs="0" name="country_code" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value7" minOccurs="0" name="city_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value8" minOccurs="0" name="governorate_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value9" minOccurs="0" name="mobile_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value10" minOccurs="0" name="phone_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value11" minOccurs="0" name="po_box" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value12" minOccurs="0" name="postal_code" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value13" minOccurs="0" name="street_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value14" minOccurs="0" name="town_name" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                    <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+
+	<xsd:element ibmSchExtn:docRoot="true" name="CustOpenBulk">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+				<xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="CustOpenData">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="">
+                                                        							                                                        							                            <xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="1" name="Indicator" type="xsd:string"/>
+                            <xsd:element name="Msg">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="id" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                                                <xsd:element name="Customer_Info">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="Customer_Id_Info">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="customer_id_type" type="xsd:string"/>
+                          <xsd:element name="customer_id" type="xsd:string"/>
+                          <xsd:element name="id_issuing_country" type="xsd:string"/>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                    <xsd:element ibmDfdlExtn:sampleValue="value2" name="customer_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value3" name="customer_dob_or_reg" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value4" name="customer_type" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                        							                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <xsd:element name="Address">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element ibmDfdlExtn:sampleValue="value5" minOccurs="0" name="building_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value6" minOccurs="0" name="country_code" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value7" minOccurs="0" name="city_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value8" minOccurs="0" name="governorate_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value9" minOccurs="0" name="mobile_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value10" minOccurs="0" name="phone_number" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value11" minOccurs="0" name="po_box" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value12" minOccurs="0" name="postal_code" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value13" minOccurs="0" name="street_name" type="xsd:string"/>
+                    <xsd:element ibmDfdlExtn:sampleValue="value14" minOccurs="0" name="town_name" type="xsd:string"/>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+                                                                                    <xsd:element minOccurs="0" name="Additnl_Info" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+</xsd:schema>

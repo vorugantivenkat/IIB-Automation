@@ -1,0 +1,74 @@
+BROKER SCHEMA com.oab.DirectCreditInward
+
+
+
+CREATE DATABASE MODULE DirectCredit_Inward_Main_Database1
+	DECLARE DC_GRP_TABLE EXTERNAL CHARACTER; -- This table is used to store the group header details: DCI_GP_HEADER_INFO.
+	DECLARE DC_TXN_TABLE EXTERNAL CHARACTER; -- This table is used to store the transaction details: DCI_TXN_INFO.
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '4' THEN
+			SET Environment.ID[] = SELECT GP.DCI_GP_HEADER_ID FROM Database.{SCHEMA_NAME}.{DC_GRP_TABLE} AS GP WHERE GP.MSG_ID = Environment.MsgID;
+			SET Environment.gpheaderpk = Environment.ID.DCI_GP_HEADER_ID;
+			--=================| Inserting the txn into db |====================--
+			INSERT INTO Database.{SCHEMA_NAME}.{DC_TXN_TABLE} 
+			(DCI_GP_HDR_ID_TXN_FK,
+			PMT_ID_INSTR_ID,
+			PMT_ID_ENDTOEND_ID,
+			PMT_ID_TXN_ID,
+			INTERBANK_SETTLE_AMT,
+			STLMT_PRITRY,
+			CHARGE_BEARER,
+			INSTD_AGT_FIN_ID_BICFI,
+			INSTD_AGT_BNCHID_ID,
+			DBTR_NAME,
+			DBTR_ACCT_ID_IBAN,
+			DBTR_ACCT_OTHR_ID,
+			DBTR_ACCT_FIN_ID_BICFI,
+			DBTR_ACCT_BNCHID_ID,
+			CDTR_NAME,
+			CDTR_ACCT_ID_IBAN,
+			CDTR_ACCT_OTHR_ID,
+			CDTR_ACCT_FIN_ID_BICFI,
+			CDTR_ACCT_BNCHID_ID,
+			PURP_PROPTYCHAR,
+			STATUS,
+			DESCRIPTION)
+			VALUES (
+			Environment.gpheaderpk,
+			Environment.pmt_instr_id,
+			Environment.pmt_etoe_id,
+			Environment.pmt_txn_id,
+			Environment.inter_sett_amt,
+			Environment.stlmnt_prty,
+			Environment.chrg_br,
+			Environment.inst_agnt_BICFI,
+			Environment.inst_agnt_brnch_id,
+			Environment.dbtr_name,
+			Environment.dbtr_acct_iban,
+			Environment.dbtr_acct_othr_id,
+			Environment.dbtr_acct_bicfi,
+			Environment.dbtr_acct_bnchid,
+			Environment.cdtr_name,
+			Environment.cdtr_acct_iban,
+			Environment.cdtr_acct_othr_id,
+			Environment.cdtr_acct_bicfi,
+			Environment.cdtr_acct_bnchid,
+			Environment.purp_prtry,
+			Environment.DBStatus,
+			Environment.DBDescription);
+			SET Environment.value[] = SELECT J.DC_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+			COMMIT;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			DECLARE test CHARACTER;
+			SET test = 'DCI_CBS_CRDT_OC_SENT';
+			UPDATE Database.{SCHEMA_NAME}.{DC_TXN_TABLE} AS R SET CBS_TRAN_REF = Environment.CBS_TRAN_REF,CBS_REQUEST_MESSAGE = Environment.CbsReqMessage, STATUS = test,DESCRIPTION = 'Transaction has been sent to CBS for crediting Ordering Customer Account' WHERE R.PMT_ID_ENDTOEND_ID = Environment.pmt_etoe_id AND R.PMT_ID_TXN_ID = Environment.pmt_txn_id;
+			COMMIT;
+
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

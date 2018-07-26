@@ -1,0 +1,47 @@
+CREATE DATABASE MODULE Return_Inward_Main_Database
+	DECLARE PRI_GP_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE PRI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DCO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DCO_GROUP_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE DDI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.DB.ID[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO} AS J WHERE J.MSG_ID = Environment.msgId; ---- Checking Whether message is there in database or not
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO} (MSG_ID,CRE_DT_TM,
+			NB_OF_TXS, TTL_RTRD_INTR_BK_STTLM_AMT, INTR_BK_STTLM_DT, STTLM_INF_STTLMN_MTD,
+			STTLM_INF_CLR_SYS_PRTRY, INSTG_AGT_FIN_INSTN_ID_BICFI,
+			INSTG_AGT_BRNCH_ID_ID, INSTD_AGT_FIN_INSTN_ID_BICFI, INSTD_AGT_BRNCH_ID_ID,SRC_MSG)
+			VALUES(Environment.MSG_ID, Environment.crtDtTm, Environment.noOfTxn, Environment.ttlRtrdIntrBkSttlmAmt,
+			Environment.interBkSttlmDt, Environment.sttlmInfSttlmnMtd, Environment.sttlmInfClrSysPrty,
+			Environment.instgAgtFinInstnIdBicfi, Environment.instgAgtBrchId,
+			Environment.instdAgtFinInstnIdBicfi, Environment.instdAgtBranchId,Environment.srcMsg);
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			SET Environment.DB.TXN[] = SELECT J.ORGNL_TX_ID FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS J WHERE J.ORGNL_TX_ID = Environment.orgnlTxnId ;
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			------ checking if transaction is present in DDI_TXN_INFO table-----
+			SET Environment.Status.T1[] = SELECT R.PMT_ID_TXN_ID FROM Database.{SCHEMA_NAME}.{DDI_TXN_INFO} AS R WHERE R.PMT_ID_TXN_ID = Environment.orgnlTxnId ;
+			------ checking if transaction is present in DC_TXN_INFO table-----
+			SET Environment.Status.T2[] = SELECT S.TXN_ID FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS S WHERE S.TXN_ID = Environment.orgnlTxnId ;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			SET Environment.Status.C1[] = SELECT R.STATUS,R.DBTRACCT_ID_IBAN,R.DBTRACCT_ID_OTHR_ID FROM Database.{SCHEMA_NAME}.{DDI_TXN_INFO} AS R WHERE R.PMT_ID_TXN_ID = Environment.orgnlTxnId ;
+			SET Environment.Status.C2[] = SELECT S.DCO_GRP_HDR_ID_TXN_INFO_FK,S.STATUS,S.BENEF_ACC FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS S WHERE S.TXN_ID = Environment.orgnlTxnId ;
+			SET Environment.Status.C3[]= SELECT S.ORDERING_CUSTOMER_ACCOUNT,S.BATCH_REFERENCE,S.ORDERING_CUSTOMER_NAME FROM Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO} AS S WHERE S.DCO_GRP_HEADER_ID= Environment.Status.C2.DCO_GRP_HDR_ID_TXN_INFO_FK;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{PRI_TXN_INFO}(PR_GP_HEADER_ID_TXN_FK, RTR_ID, ORGNL_TX_ID, RTRD_INTR_BK_STTLM_AMT,ACCOUNT,STATUS) VALUES
+			(Environment.PR_GP_HEADER_ID,Environment.rtrId,Environment.orgnlTxnId,Environment.RTRD_INTR_BK_STTLM_AMT,Environment.ACCOUNT,Environment.Status);
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			SET Environment.ACHConfig.values[] = SELECT C.DC_STLMNT_ACC,C.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			UPDATE Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS J SET STATUS = 'RETI_CBS_CRDT_OC_SENT',CBS_REQUEST = Environment.cbsMsg,CBS_TRAN_REF = Environment.CBS_TRAN_REF, DESCRIPTION = 'Transaction was sent to CBS for crediting the account of OAB' WHERE J.ORGNL_TX_ID = Environment.orgnlTxnId;
+
+		END IF;
+
+
+		RETURN TRUE;
+	END;
+
+END MODULE;

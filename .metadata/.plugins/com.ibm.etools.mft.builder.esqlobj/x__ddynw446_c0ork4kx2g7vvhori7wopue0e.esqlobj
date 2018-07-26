@@ -1,0 +1,73 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '4' THEN
+			SET Environment.value[] = SELECT J.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+			
+			SET Environment.gpheaderpk = SELECT MAX(GP.DDI_GP_HEADER_ID) FROM Database.{DD_GRP_TABLE} AS GP;
+			INSERT INTO Database.{SCHEMA_NAME}.{DD_TXN_TABLE} 
+			(DDI_GP_HDR_ID_TXN_FK,
+			PMT_ID_INSTR_ID,
+			PMT_ID_ENDTOEND_ID,
+			PMT_ID_TXN_ID,
+			INTERBANK_SETTLE_AMNT,
+			STLMT_PRITRY,
+			CHARGE_BEARER,
+			DD_TXN_MNDTRLTDINF_MNDTID,
+			DD_TXN_MNDTRLTDINF_FSTCOLNDT,
+			INSTD_AGT_FIN_ID_BICFI,
+			INSTD_AGT_BNCHID_ID,
+			DBTR_NAME,DBTR_ID_PRVTID_OTHR_ID,
+			DBTR_ID_PRVTID_OTHR_SCHNM_PRTY,
+			DBTRACCT_ID_IBAN,
+			DBTRACCT_ID_OTHR_ID,
+			DBTRAGNT_ID_FIN_ID_BICFI,
+			DBTRAGNT_BNCHID_ID,
+			CDTR_NAME,
+			CDTR_ID_PRVTID_OTHR_ID,
+			CDTR_ID_PRVTID_OTHR_SCHNM_PRTY,
+			CDTRACCT_ID_IBAN,
+			CDTRACCT_ID_OTHR_ID,
+			CGTRAGT_FIN_ID_BICFI,
+			CGTRAGT_BNCHID_ID,
+			PURP_PROPTYCHAR,STATUS)
+			VALUES 
+			(Environment.gpheaderpk,
+			Environment.PMT_ID_INSTR_ID,
+			Environment.PMT_ID_ENDTOEND_ID,
+			Environment.PMT_ID_TXN_ID,
+			Environment.INTERBANK_SETTLE_AMT,
+			Environment.STLMT_PRITRY,
+			Environment.CHARGE_BEARER,
+			Environment.DD_TXN_MNDTRLTDINF_MNDTID,
+			Environment.DD_TXN_MNDTRLTDINF_FSTCOLNDT,
+			Environment.INSTD_AGT_FIN_ID_BICFI,
+			Environment.INSTD_AGT_BNCHID_ID,
+			Environment.DBTR_NAME,
+			Environment.DBTR_ID_PRVTID_OTHR_ID,
+			Environment.DBTR_ID_PRVTID_OTHR_SCHNM_PRTY,
+			Environment.DBTRACCT_ID_IBAN,
+			Environment.DBTRACCT_ID_OTHR_ID,
+			Environment.DBTRAGNT_ID_FIN_ID_BICFI,
+			Environment.DBTRAGNT_BNCHID_ID,
+			Environment.CDTR_NAME,
+			Environment.CDTR_ID_PRVTID_OTHR_ID,
+			Environment.CDTR_ID_PRVTID_OTHR_SCHNM_PRTY,
+			Environment.CDTRACCT_ID_IBAN,
+			Environment.CDTRACCT_ID_OTHR_ID,
+			Environment.CGTRAGT_FIN_ID_BICFI,
+			Environment.CGTRAGT_BNCHID_ID,
+			Environment.PURP_PROPTYCHAR,
+			Environment.Status);
+
+		ELSEIF Environment.dbQueryCount = '5' THEN
+
+			DECLARE test CHARACTER;
+			SET test = 'DDI_CBS_DBT_OC_SENT';
+			UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS J SET CBS_TRAN_REF = Environment.CBS_TRAN_REF,CBS_REQUEST_MESSAGE =Environment.CbsReqMessage, STATUS = test, DESCRIPTION = 'Transaction was sent to CBS to debit the Debtor Account' WHERE J.PMT_ID_ENDTOEND_ID = Environment.pmt_etoe_id AND J.PMT_ID_TXN_ID = Environment.pmt_txn_id;
+
+		
+
+		END IF;
+		RETURN TRUE;
+	END;
+

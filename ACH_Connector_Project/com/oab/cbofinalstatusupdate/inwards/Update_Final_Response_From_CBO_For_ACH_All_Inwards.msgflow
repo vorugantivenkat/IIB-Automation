@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmMQGet.msgnode="ComIbmMQGet.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards.msgflow"
+    nsPrefix="com_oab_cbofinalstatusupdate_inwards_Update_Final_Response_From_CBO_For_ACH_All_Inwards.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_TXN_TABLE" name="DCI_TXN_TABLE" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDI_TXN_TABLE" name="DDI_TXN_TABLE" defaultValueLiteral="DDI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.RETI_TXN_TABLE" name="RETI_TXN_TABLE" defaultValueLiteral="PRI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_TXN_TABLE" name="REVI_TXN_TABLE" defaultValueLiteral="REVI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_TXN_TABLE" name="CANI_TXN_TABLE" defaultValueLiteral="CANI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCH_NAME" name="SCH_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DSN_NAME" name="DSN_NAME" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4J_CONF_FILE" name="LOG4J_CONF_FILE" defaultValueLiteral="Y:\OAB\IBM\logs4J\Log4jConfigurationFile.xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="Update_Final_Response_From_CBO_For_ACH_All_Inwards" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/Update_Final_Response_From_CBO_For_ACH_All_Inwards.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/Update_Final_Response_From_CBO_For_ACH_All_Inwards.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="132,116" queueName="CBO_STATUS_REPORTS_Q" messageDomainProperty="XMLNSC" browse="true" resetBrowseTimeout="1000">
+        <translation xmi:type="utility:ConstantString" string="CBO_Response_Q"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="296,130" dataSource="CBOACH" computeExpression="esql://routine/com.oab.cbofinalstatusupdate.inwards#Update_Final_Response_From_CBO_For_ACH_All_Inwards_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="Updating_CBO_Response_In_Inward_ACH"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQGet.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="570,123" queueName="CBO_STATUS_REPORTS_Q">
+        <translation xmi:type="utility:ConstantString" string="MQ Get"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="367,41" computeExpression="esql://routine/com.oab.cbofinalstatusupdate.inwards#checkingdb.Main">
+        <translation xmi:type="utility:ConstantString" string="checkingdb"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_TXN_TABLE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_TXN_TABLE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDI_TXN_TABLE">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.DDI_TXN_TABLE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.RETI_TXN_TABLE">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.RETI_TXN_TABLE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_TXN_TABLE">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_TXN_TABLE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_TXN_TABLE">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_TXN_TABLE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCH_NAME">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.SCH_NAME" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DSN_NAME">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.DSN_NAME" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4J_CONF_FILE">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4J_CONF_FILE" bundleName="com/oab/cbofinalstatusupdate/inwards/Update_Final_Response_From_CBO_For_ACH_All_Inwards" pluginId="ACH_Connector_Project"/>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

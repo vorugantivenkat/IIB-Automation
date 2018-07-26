@@ -1,0 +1,293 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage() INTO bool;
+		
+		RETURN FALSE;
+	END;
+	----copy message header-----------------
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+
+			SET Environment.Properties = InputRoot.Properties;
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+			-- SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+
+
+			DECLARE resmsg REFERENCE TO InputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr;
+			DECLARE resRef REFERENCE TO InputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:TxInfAndSts[>];
+
+			DECLARE cbsRef CHARACTER;
+			DECLARE getGrpHdrId ROW;
+
+
+			DECLARE origin_Msg_Id,pmt_txn_id,status_code,status_rsn,account,groupStatus CHARACTER;
+			DECLARE amount DECIMAL;
+
+			SET Environment.Variables.origin_Msg_Id = InputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgId;
+			SET Environment.Variables.groupStatus = InputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts.ns4:GrpSts;
+			SET Environment.Variables.pmt_txn_id = resRef.ns4:OrgnlTxId;
+			SET Environment.Variables.TxSts = resRef.ns4:TxSts ;
+			--SET amount = resRef.nmpmstrp:OrgnlTxRef.nmpmstrp:IntrBkSttlmAmt.Ccy;
+			-------Debitted transaction getting from DirectDebitInward-----------
+			--checking the status of the transaction and updating the database
+			IF resRef.ns4:TxSts LIKE 'ACTC' THEN
+
+				SET Environment.dbQueryCount = '15';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '16';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '17';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+			ELSEIF resRef.ns4:TxSts LIKE 'ACSP' THEN
+
+				SET Environment.dbQueryCount = '18';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '19';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '20';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+			ELSEIF resRef.ns4:TxSts LIKE 'ACSC' THEN
+
+				SET Environment.dbQueryCount = '21';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '22';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Response Revceived from CBO status is ACSC and Cheking the transaction found , OptionalIDentifier') INTO rc;
+
+				SET Environment.dbQueryCount = '23';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+
+				SET Environment.dbQueryCount = '24';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				-- IF getAccount.B.TXN_FOUND = 'DirectCreditOutward' AND getAccount.B.OPTIONAL_ID = 'PassThru' THEN
+				-- --updatting the database in case of DCO with passthru .
+				-- CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','transaction found in DirectCreditOutward with OPI as PassThru updating db with REVO_DCO_SUCCESS') INTO rc;
+				--
+				-- UPDATE Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS R SET STATUS = 'REVO_DCO_SUCCESS',CBO_STATUS = resRef.ns4:TxSts WHERE R.MSG_ID = origin_Msg_Id AND R.TXN_ID =pmt_txn_id;
+				-- COMMIT;
+				--
+				-- ELSE
+				IF Environment.getAccount.B.TXN_FOUND = 'DirectCreditOutward' THEN
+					--updatig the databse and prepare doubleentry posting request to credit the ordering customer accoutn
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','transaction found in DirectCreditOutward with out OPI calling doubleEntry posting service to credit OC') INTO rc;
+
+					SET Environment.Variables.OCACNO = Environment.getAccount.B.CREDITOR_ACC_NO;
+					SET Environment.Variables.TXNAMOUNT = Environment.getAccount.B.TXN_AMOUNT;
+					SET Environment.Variables.DEBITACC = Environment.getAccount.confVal.DC_STLMNT_ACC;
+					SET Environment.Variables.STATUS = 'REVO_DCO_CBS_CRDT_OC_SENT';
+					
+					SET Environment.varables.name=Environment.DCO.ORDERING_CUSTOMER_NAME;
+					SET Environment.varables.BeneficiaryName = Environment.DCO.BENEF_NAME;
+					
+					SET Environment.varables.userReference=Environment.DCO.BATCH_REFERENCE;
+					SET Environment.varables.BankCode='OMABOMRU';
+					SET Environment.varables.ReasonCode = Environment.getAccount.B.TXN_REASON;
+					SET Environment.varables.EndToEndId = Environment.getAccount.B.ORIGIN_END_TO_END_ID;
+
+
+
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','OCACNO :'||Environment.Variables.OCACNO) INTO rc;
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','TXNAMT :'||CAST(Environment.Variables.TXNAMOUNT AS CHARACTER)) INTO rc;
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','DEBAC :'||Environment.Variables.DEBITACC) INTO rc;
+
+					CALL doubleEntryposting();
+
+					PROPAGATE TO TERMINAL 'out' ;
+
+				ELSEIF Environment.getAccount.B.TXN_FOUND = 'DirectDebitInward' THEN
+					--updating the database for DirectDebit outward and process for double enrty positng
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','transaction found in DirectDebitInward calling doubleEntry posting service to credit OC') INTO rc;
+
+					SET Environment.Variables.OCACNO = Environment.getAccount.B.CREDITOR_ACC_NO;
+					SET Environment.Variables.TXNAMOUNT = Environment.getAccount.B.TXN_AMOUNT;
+					SET Environment.Variables.DEBITACC = Environment.getAccount.confVal.DD_STLMNT_ACC;
+					SET Environment.Variables.STATUS = 'REVO_DDI_CBS_CRDT_OC_SENT';
+
+					SET Environment.varables.name=Environment.DDI.CDTR_NAME;
+					SET Environment.varables.userReference= Environment.DDI.MSGID.MSG_ID;
+					SET Environment.varables.BankCode=Environment.DDI.CGTRAGT_FIN_ID_BICFI;
+					SET Environment.varables.ReasonCode = Environment.getAccount.B.TXN_REASON;
+					SET Environment.varables.EndToEndId = Environment.getAccount.B.ORIGIN_END_TO_END_ID;
+
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','OCACNO :'||Environment.Variables.OCACNO) INTO rc;
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','TXNAMT :'||CAST(Environment.Variables.TXNAMOUNT AS CHARACTER)) INTO rc;
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','DEBAC :'||Environment.Variables.DEBITACC) INTO rc;
+
+					CALL doubleEntryposting();
+
+					PROPAGATE TO TERMINAL 'out' ;
+
+				END IF;
+				CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction sent to CBS to credit OC and databse updated with status:' ||Environment.Variables.STATUS) INTO rc;
+
+				SET Environment.dbQueryCount = '25';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+
+			ELSE
+				--if status of the transaction is failed update the database
+				SET Environment.dbQueryCount = '26';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				SET Environment.dbQueryCount = '27';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+
+				CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction failed at CBO and StatusUpdted to REVO_CBO_FAILED for E2EID :' || origin_Msg_Id) INTO rc;
+
+				SET Environment.dbQueryCount = '28';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+			END IF;
+		ELSE --main else block
+
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+
+				SET OutputRoot.Properties = Environment.Properties;
+				SET OutputRoot.XMLNSC = Environment.srcMsg;
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'REVO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+
+	END;
+	CREATE PROCEDURE doubleEntryposting ( )
+	BEGIN
+		--do double entry posting to creditthe Ordering customer account .
+		------CREDIT THE AMOUNT to REVERSAL REQUESTED ACCOUNT----------
+		SET Environment.PurposeCodeDesc = Environment.varables.ReasonCode || MappPurposeCodeWithDescription(Environment.varables.ReasonCode);
+		DECLARE ns NAMESPACE 'http://www.oab.com';
+		DECLARE cbsRef CHARACTER;
+		SET OutputRoot.XMLNSC.ns:Request.(XMLNSC.NamespaceDecl)xmlns:urn=ns;
+		--SET OutputRoot.XMLNSC.ns:Request.(XMLNSC.Attribute) type = 'request';
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.ns:channel = CHANNEL;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.ns:user = USER;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.ns:workstation = WORKSTATION;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+
+		SET Environment.Variables.cbsRef = '181' ||CAST(CURRENT_GMTTIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS');
+		CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','CBS REF is :' || Environment.Variables.cbsRef ) INTO rc;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.ns:transactionReference = Environment.Variables.cbsRef;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Header.ns:channelReserved = CHANNELRESERVED;
+
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.Variables.STATUS;
+
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:account = Environment.Variables.DEBITACC;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:amount = Environment.Variables.TXNAMOUNT;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:currency = 'OMR';
+		/*User Ref and Narratives for Debitor*/
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:userReference= Environment.varables.userReference;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:narratives.ns:narrative[1]= Environment.varables.name;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:narratives.ns:narrative[2]= Environment.varables.BankCode;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:narratives.ns:narrative[3]= Environment.PurposeCodeDesc;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:debit.ns:narratives.ns:narrative[4]= Environment.varables.EndToEndId;
+		--------Credit-----
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:account = Environment.Variables.OCACNO;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:amount = Environment.Variables.TXNAMOUNT;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:currency = 'OMR';
+		/*User Ref and Narratives for Creditor*/
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:userReference= Environment.varables.userReference;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:narratives.ns:narrative[1]= Environment.varables.BeneficiaryName;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:narratives.ns:narrative[2]= Environment.varables.BankCode;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:narratives.ns:narrative[3]= Environment.PurposeCodeDesc;
+		SET OutputRoot.XMLNSC.ns:Request.ns:Data.ns:DoubleEntryFinancialTransaction.ns:credit.ns:narratives.ns:narrative[4]= Environment.varables.EndToEndId;
+
+
+		DECLARE cbsBlob BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET Environment.cbsMsg = CAST(cbsBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+
+	END;

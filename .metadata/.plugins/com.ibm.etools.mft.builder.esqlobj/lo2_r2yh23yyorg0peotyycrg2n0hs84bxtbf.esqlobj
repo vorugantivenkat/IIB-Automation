@@ -1,0 +1,54 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		CALL ProcessFinalTxnStatus();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	CREATE PROCEDURE ProcessFinalTxnStatus() BEGIN
+		/*Decoding the finalstatus request mesage to xml message and routing to respective application to update the
+		final status */
+
+		DECLARE INREF REFERENCE TO InputRoot.XMLNSC;
+		DECLARE OriginalTxt CHARACTER INREF.*:request.*:content;
+		DECLARE XMLString CHARACTER;
+
+		SET XMLString = DecodeAndConverttoXML(OriginalTxt);
+
+		CREATE LASTCHILD OF Environment DOMAIN 'XMLNSC' PARSE(XMLString,InputProperties.Encoding,InputProperties.CodedCharSetId);
+		DECLARE REF REFERENCE TO Environment.XMLNSC;
+		/*Preparing Statusreport ISO message to send to CBORESPONSE FLOW to update*/
+
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns3 = ns3;
+
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr = '';
+		DECLARE isogrpheader REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr;
+		SET isogrpheader.ns4:MsgId = bchId;
+		SET isogrpheader.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET isogrpheader.ns4:InstgAgt.ns4:FinInstnId.ns4:BICFI = achConfig.values.INSTAGT_FN_BICFI;
+		SET isogrpheader.ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = d1.INST_AGT_FIN_ID_BICFI;
+		--SET isogrpheader.ns4:InstgAgt.ns4:FinInstnId.ns4:ClrSysMmbId.ns4:MmbId = d1.INSTG_AGT_FIN_ID_CLR_SYS_MMBID; -- List will give by CBO
+		
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+		DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+		SET IsoOrgInfSts.ns4:OrgnlMsgId = d1.MSG_ID;
+		SET IsoOrgInfSts.ns4:OrgnlMsgNmId = 'pacs.008.001.05';
+		SET IsoOrgInfSts.ns4:GrpSts = 'RJCT';
+
+
+	END;

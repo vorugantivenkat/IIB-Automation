@@ -1,0 +1,129 @@
+
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.wps
+CREATE DATABASE MODULE WPS_SIF_ProcessingFrom_CBO_TO_OAB_Database
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE DC_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE PAYLOAD_TABLE EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '8' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET STATUS = Environment.status WHERE S.SIF_FILE_NAME = Environment.sifFileName AND S.RECORD_ID =Environment.recordID AND S.REFERENCE_NUMBER = Environment.referenceNumber;
+		ELSEIF Environment.dbQueryCount = '9' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'CBO_TECH_VAL_SUCCESS' WHERE S.SIF_CBO_FILE_NAME = Environment.sifFileName;
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET STATUS = 'CBO_TECH_VAL_SUCCESS' WHERE S.SIF_FILE_NAME = Environment.sifFileName;
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'CBO_TECH_VAL_FAILED',ERROR_LIST = Environment.errorReason WHERE S.SIF_CBO_FILE_NAME = Environment.sifFileName;
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET STATUS = 'CBO_TECH_VAL_FAILED' WHERE S.SIF_FILE_NAME = Environment.sifFileName;
+		ELSEIF Environment.dbQueryCount = '11' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'CBO_WPS_SUCCESS' WHERE S.SIF_CBO_FILE_NAME = Environment.sifFileName;
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET STATUS = 'CBO_WPS_SUCCESS' WHERE S.SIF_FILE_NAME = Environment.sifFileName;
+			-- UPDATE Database.{SCH_NAME}.{PAYLOAD_TABLE} AS S SET ESB_CBO_RES_MSG = Environment.CboResMessage WHERE S.MESSAGE_ID = Environment.sifFileName;
+		ELSEIF Environment.dbQueryCount = '12' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'CBO_WPS_FAILED',ERROR_LIST = Environment.errorReason WHERE S.SIF_CBO_FILE_NAME = Environment.sifFileName;
+			-- UPDATE Database.{SCH_NAME}.{PAYLOAD_TABLE} AS S SET ESB_CBO_RES_MSG = Environment.CboResMessage WHERE S.MESSAGE_ID = Environment.sifFileName;
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET STATUS = 'CBO_WPS_FAILED' WHERE S.SIF_FILE_NAME = Environment.sifFileName;
+		ELSEIF Environment.dbQueryCount = '13' THEN
+			INSERT INTO Database.{SCH_NAME}.{WPS_TABLE1}
+			(SIF_CBO_FILE_NAME,
+			EMPLOYEER_CRNO,
+			PAYER_CRNO,
+			PAYER_BANK_SHORT_NAME,
+			PAYER_ACCOUNT_NO,
+			SALARY_YEAR,
+			SALARY_MONTH,
+			TOTAL_SALARIES,
+			NO_OF_RECORDS,
+			Payment_Type,
+			ESB_STATUS
+			)
+			VALUES(Environment.sifFileName,
+			Environment.inRefHeader.EmployerID,
+			Environment.inRefHeader.PayerID,
+			Environment.inRefHeader.PayerBankShortName,
+			Environment.inRefHeader.PayerAccNo_IBAN,
+			Environment.inRefHeader.SalaryYear,
+			Environment.inRefHeader.SalaryMonth,
+			Environment.inRefHeader.TotalSalaries,
+			Environment.inRefHeader.NoOfRecords,
+			Environment.inRefHeader.PaymentType,
+			'SIF_INT_REQ_RCVD'
+			);
+		ELSEIF Environment.dbQueryCount = '14' THEN
+			SET Environment.OrginalMsg.HeaderRowId = SELECT MAX(SIF.WPS_SIF_HEADER_INFO_ID) FROM Database.{SCH_NAME}.{WPS_TABLE1} AS SIF;
+			SET Environment.PaymentType[] = SELECT H.PAYMENT_TYPE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS H WHERE H.SIF_CBO_FILE_NAME = Environment.sifFileName ;
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			INSERT INTO Database.{SCH_NAME}.{WPS_TABLE2}
+			(
+			SIF_FILE_NAME,
+			EMPLOYEE_ID_TYPE,
+			REFERENCE_NUMBER,
+			EMPLOYEE_ID,
+			EMPLOYEE_NAME,
+			EMPLOYEE_BANK_CODE,
+			EMPLOYEE_ACC_NO,
+			SALARY_FREQUENCY,
+			NO_OF_WORKING_DAYS,
+			NET_SALARY,
+			BASIC_SALARY,
+			EXTRA_HOURS,
+			EXTRA_INCOME,
+			DEDUCTIONS,
+			SOCIAL_SECURITY_DEDUCTIONS,
+			NOTES_COMMENTS,
+			RECORD_ID,
+			WPS_SIF_HEADER_INFO_ID,
+			STATUS
+			)
+			VALUES (Environment.sifFileName,
+			Environment.inRefBody.EmployeeIDType,
+			Environment.inRefBody.ReferenceNumber,
+			Environment.inRefBody.EmployeeID,
+			Environment.inRefBody.EmployeeName,
+			Environment.inRefBody.EmployeeBankCode,
+			Environment.inRefBody.EmployeeAccount_IBAN,
+			Environment.inRefBody.SalaryFrequency,
+			Environment.inRefBody.NoOfWorkingdays,
+			Environment.inRefBody.NetSalary,
+			Environment.inRefBody.BasicSalary,
+			Environment.inRefBody.Extrahours,
+			Environment.inRefBody.Extraincome,
+			Environment.inRefBody.Deductions,
+			Environment.inRefBody.SocialSecurityDeduct,
+			Environment.inRefBody.Notes_Comments,
+			Environment.inRefBody,
+			Environment.OrginalMsg.HeaderRowId,
+			'SIF_INT_REQ_RCVD'
+			);
+		ELSEIF Environment.dbQueryCount = '16' THEN
+			UPDATE Database.{SCH_NAME}.WPS_SIF_HEADER_INFO AS S SET CBS_TXN_REF = Environment.var.hedTxRefId,CBO_STATUS = 'CBS_PAYER_DEBIT_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage.message WHERE S.SIF_CBO_FILE_NAME = Environment.sifFileName;
+
+
+		ELSEIF Environment.dbQueryCount = '8A' THEN
+
+			SET Environment.Salary[] = SELECT J.NET_SALARY FROM Database.{SCH_NAME}.{WPS_TABLE2} AS J WHERE J.RECORD_ID = Environment.recordID AND J.SIF_FILE_NAME = Environment.sifFileName;
+			SET Environment.ACCNO[] = SELECT J.PAYER_ACCOUNT_NO,J.PAYMENT_TYPE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS J WHERE J.SIF_CBO_FILE_NAME = Environment.sifFileName;
+			SET Environment.value[] = SELECT J.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DC_CONFIG_VALUES} AS J;
+
+
+		ELSEIF Environment.dbQueryCount = '8B' THEN
+
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS S SET TXN_REF_ID = Environment.var.hedTxRefId,STATUS = 'CBS_PAYER_CRDIT_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage.message WHERE S.SIF_FILE_NAME = Environment.sifFileName AND S.RECORD_ID = Environment.recordID;
+
+		END IF;
+
+
+		RETURN TRUE;
+	END;
+
+END MODULE;

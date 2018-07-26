@@ -1,0 +1,334 @@
+CREATE COMPUTE MODULE DD_ISO_Generation_isoGeneration
+--	DECLARE EXC_TABLENAME EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE DD_GRP_TABLE EXTERNAL CHARACTER;
+	DECLARE DD_TXN_TABLE EXTERNAL CHARACTER;
+
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE txn_end_id,StsID CHARACTER;
+	DECLARE insertStatusQuery CHARACTER;
+	DECLARE insertRes ROW;
+	DECLARE success ROW;
+	DECLARE seqCount INTEGER 1;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		
+		RETURN FALSE ;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+		DECLARE ACHConfig ROW;
+		SET ACHConfig.values[] = SELECT C.BANK_PREFIX,C.INSTAGT_FN_BICFI FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+
+		CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Fetching Message ID from Header table where txn status is DDI_CBS_DBT_OC_SUCCESS or DDI_CBS_DBT_OC_FAILED') INTO rc;
+		--========| Fetching data from DDI_GP_HEADER_INFO table where corresponding txns status is DDI_CBS_DBT_OC_SUCCESS or DDI_CBS_DBT_OC_FAILED |=======--
+
+
+		DECLARE SQL1 CHARACTER 'SELECT DISTINCT GP.DDI_GP_HEADER_ID,GP.INSTG_AGT_FIN_ID_BICFI,
+		GP.INSTG_AGT_BRNCHID_ID,GP.INSTD_AGT_FIN_ID_BICFI,
+		GP.INSTD_AGT_BRNCHID_ID,GP.MSG_ID,GP.INSTD_AGT_FIN_ID_BICFI FROM '||SCHEMA_NAME||'.'||DD_TXN_TABLE||' T, '||SCHEMA_NAME||'.'||DD_GRP_TABLE||' GP WHERE GP.DDI_GP_HEADER_ID = T.DDI_GP_HDR_ID_TXN_FK AND (T.STATUS = ? OR T.STATUS =?)';
+		DECLARE headerRef ROW;
+		SET headerRef.data[] = PASSTHRU( SQL1 TO Database.{DSN} VALUES ('DDI_CBS_DBT_OC_SUCCESS', 'DDI_CBS_DBT_OC_FAILED'));
+
+
+		DECLARE id_len,alpha CHARACTER;
+		SET id_len = CARDINALITY(headerRef.data[]);
+
+		DECLARE d1 REFERENCE TO headerRef.data[>];
+		WHILE LASTMOVE(d1) DO
+			DECLARE idRef INTEGER CAST(d1.DDI_GP_HEADER_ID AS INTEGER);
+			-----generating Batch Sequence(MsgID) which is in the format BankCode(4digit)+CurrentDate(yyMMdd)+Sequence(001)-----------------
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Retrieving transactions from database for Message Id '||d1.MSG_ID) INTO rc;
+			DECLARE currDay,currDate,estSeq CHARACTER;
+			DECLARE previousDate DATE ;
+			SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+			--SET currDate = SUBSTRING(currDay FROM 5 FOR 2);
+			SET estSeq = ACHConfig.values.BANK_PREFIX;
+
+			DECLARE DI ROW;
+			DECLARE GroupID INTEGER;
+			--SET GroupID = SELECT MAX(J.DDI_GP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{DD_GRP_TABLE} AS J ; --SUBSTRING(bchId FROM 9 FOR 2); -- if contains, extracting date from it
+			SET GroupID = SELECT MAX(J.DDI_GP_HDR_ID_TXN_FK) FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS J WHERE J.MSG_ID IS NOT NULL;
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCHEMA_NAME}.{DD_GRP_TABLE};
+
+			IF Environment.recCount =1 AND bchSeq > 0 THEN
+				SET bchSeq = bchSeq + 1;
+			ELSE
+				--SET DI.V[] = SELECT K.CREATION_DATETIME FROM Database.{SCHEMA_NAME}.{DD_GRP_TABLE} AS K WHERE K.DDI_GP_HEADER_ID = GroupID - 1;
+				SET DI.V[] = SELECT K.CREATION_DATETIME FROM Database.{SCHEMA_NAME}.{DD_GRP_TABLE} AS K WHERE K.DDI_GP_HEADER_ID = GroupID;
+				SET previousDate = CAST(DI.V.CREATION_DATETIME as DATE FORMAT 'yyMMdd' );
+				IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+					IF seqCount = 1 THEN
+						IF previousDate = currDay THEN
+							SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+						ELSE
+							SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+							SET seqCount = seqCount + 1;
+						END IF;
+					ELSE
+						SET bchSeq = bchSeq + 1;
+					END IF;
+
+				ELSE -- if there is no previous BatchID value in shared variable
+					DECLARE DB ROW;
+					SET DB.V[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS J WHERE J.MSG_ID LIKE estSeq||'%';
+					IF CARDINALITY(DB.V[]) > 0 and previousDate = currDay THEN
+						DECLARE maxId INTEGER;
+						--SET maxId = SELECT MAX(GP.DDI_TXN_INFO_ID) FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS GP ;
+						--SET maxId = SELECT MAX(GP.DDI_TXN_INFO_ID) FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS GP WHERE GP.MSG_ID IS NOT NULL;
+						SET DB.NM[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS A WHERE A.DDI_GP_HDR_ID_TXN_FK = GroupID;
+						DECLARE maxIdSeq,maxIdChar CHARACTER;
+						SET maxIdChar = CAST(DB.NM.MSG_ID AS CHARACTER);
+						SET maxIdChar = CAST(maxId AS CHARACTER);
+						SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+						DECLARE newSeq INTEGER;
+						SET newSeq = CAST(maxIdSeq as INTEGER);
+
+						SET bchSeq = newSeq + 1;
+					ELSE -- if not there then starting with 1
+						SET bchSeq = 1;
+						SET seqCount = seqCount + 1;
+					END IF;
+				END IF;
+			END IF;
+			DECLARE j CHARACTER;
+			SET j = CAST(bchSeq AS CHARACTER);
+			DECLARE alpha CHARACTER;
+			SET alpha = random(3);
+			SET bchId = ACHConfig.values.BANK_PREFIX || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Fetching transactions from TXN table for Message Id - '||d1.MSG_ID||' where status is DDI_CBS_DBT_OC_SUCCESS') INTO rc;
+			DECLARE PKEY CHARACTER d1.DDI_GP_HEADER_ID;
+			-- DECLARE SQL2 CHARACTER 'SELECT TXN.PMT_ID_ENDTOEND_ID,TXN.PMT_ID_TXN_ID,TXN.INSTD_AGT_FIN_ID_BICFI,TXN.INSTD_AGT_BNCHID_ID
+			-- FROM '||SCHEMA_NAME||'.'||DD_TXN_TABLE||' TXN WHERE TXN.DDI_GP_HEADER_ID = T.DDI_GP_HDR_ID_TXN_FK=? AND TXN.STATUS = ?';
+			-- SELECT TXN.PMT_ID_ENDTOEND_ID,TXN.PMT_ID_TXN_ID,TXN.INSTD_AGT_FIN_ID_BICFI,TXN.INSTD_AGT_BNCHID_ID
+			-- FROM DDI_GP_HEADER_INFO B, DDI_TXN_INFO TXN WHERE B.DDI_GP_HEADER_ID = '3511' AND TXN.STATUS = 'DDI_CBS_DBT_OC_SUCCESS';
+
+			SET success.data[] = SELECT TXN.PMT_ID_ENDTOEND_ID,TXN.PMT_ID_TXN_ID,TXN.INSTD_AGT_FIN_ID_BICFI,TXN.INSTD_AGT_BNCHID_ID FROM Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS TXN WHERE TXN.DDI_GP_HDR_ID_TXN_FK = PKEY AND TXN.STATUS = 'DDI_CBS_DBT_OC_SUCCESS' ;
+			--=======| Fetching txns from DDI_TXN_INFO table where status is DDI_CBS_DBT_OC_SUCCESS corresponding to DDI_GP_HEADER_ID in DD_GRP_TABLE table |=========--
+			--SET success.data[] = PASSTHRU(SQL2 TO Database.{DSN} VALUES (PKEY,'DDI_CBS_DBT_OC_SUCCESS'));
+			DECLARE success_no INTEGER CARDINALITY(success.data[]);
+
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Fetching transactions from TXN table for Message Id - '||d1.MSG_ID||' where status is DDI_CBS_DBT_OC_FAILED') INTO rc;
+			DECLARE SQL22 CHARACTER ' SELECT TXN.PMT_ID_ENDTOEND_ID,TXN.FAULT_CODE,TXN.FAULT_STRING,TXN.PMT_ID_TXN_ID,TXN.INSTD_AGT_FIN_ID_BICFI,TXN.INSTD_AGT_BNCHID_ID,TXN.DESCRIPTION
+			FROM '||SCHEMA_NAME||'.'||DD_TXN_TABLE||' TXN WHERE TXN.DDI_GP_HDR_ID_TXN_FK =? AND TXN.STATUS = ?';
+			--======| Fetching txns from DDI_TXN_INFO table where status is DDI_CBS_DBT_OC_SUCCESS corresponding to DDI_GP_HEADER_ID in DD_GRP_TABLE table |=======--
+			DECLARE failure ROW;
+			SET failure.data[] = PASSTHRU( SQL22 TO Database.{DSN} VALUES (PKEY,'DDI_CBS_DBT_OC_FAILED'));
+			DECLARE Failure_num INTEGER CARDINALITY(failure.data[]);
+			DECLARE tot INTEGER;
+			SET tot = success_no + Failure_num;
+			-----------------------------Creating ISO Header----------------------------------
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Generating CBO response message') INTO rc;
+
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns3 = ns20;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr = '';
+			DECLARE isogrpheader REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr;
+			SET isogrpheader.ns4:MsgId = bchId ;
+			SET isogrpheader.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+			SET isogrpheader.ns4:InstgAgt.ns4:FinInstnId.ns4:BICFI = ACHConfig.values.INSTAGT_FN_BICFI; --'OMABOMRU';
+			SET isogrpheader.ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = d1.INSTG_AGT_FIN_ID_BICFI;
+
+			IF success_no = 0 THEN
+				------------------Creating Original Group Information status--------------
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+				DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+				SET IsoOrgInfSts.ns4:OrgnlMsgId = d1.MSG_ID;
+				SET IsoOrgInfSts.ns4:OrgnlMsgNmId = 'pacs.003.001.05';
+				SET IsoOrgInfSts.ns4:GrpSts = 'RJCT';
+
+
+			ELSEIF Failure_num >= 1 THEN
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+				DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+				SET IsoOrgInfSts.ns4:OrgnlMsgId = d1.MSG_ID;
+				SET IsoOrgInfSts.ns4:OrgnlMsgNmId = 'pacs.003.001.05';
+				SET IsoOrgInfSts.ns4:GrpSts = 'PART';
+			ELSE
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+				DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+				SET IsoOrgInfSts.ns4:OrgnlMsgId = d1.MSG_ID;
+				SET IsoOrgInfSts.ns4:OrgnlMsgNmId = 'pacs.003.001.05';
+				SET IsoOrgInfSts.ns4:GrpSts = 'ACSP';
+			END IF;
+			--------------Creating ISO body For success Txn--------
+
+			DECLARE k INTEGER 1;
+			DECLARE i,a,b,c INTEGER 1;
+			WHILE k<= tot DO
+
+				IF success_no > 0 THEN
+
+					WHILE i<=success_no DO
+
+						SET StsID = bchId || CAST(RIGHT('000'||CAST(k AS CHARACTER),3) AS CHARACTER);
+
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:TxInfAndSts[i] = '';
+						DECLARE isobody REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt;
+						SET isobody.ns4:TxInfAndSts[k].ns4:StsId = StsID;
+						SET isobody.ns4:TxInfAndSts[k].ns4:OrgnlEndToEndId = success.data[i].PMT_ID_ENDTOEND_ID;
+						SET isobody.ns4:TxInfAndSts[k].ns4:OrgnlTxId =success.data[i].PMT_ID_TXN_ID;
+						SET isobody.ns4:TxInfAndSts[k].ns4:TxSts='ACSP';
+						-- SET isobody.ns4:TxInfAndSts[k].ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = success.data[i].INSTD_AGT_FIN_ID_BICFI; -- PREVIOUSLY dbtragt_fin_BICFI
+
+						DECLARE PMT_ID_ENDTOEND_ID , PMT_ID_TXN_ID CHARACTER;
+						SET PMT_ID_ENDTOEND_ID = success.data[i].PMT_ID_ENDTOEND_ID;
+						SET PMT_ID_TXN_ID = success.data[i].PMT_ID_TXN_ID;
+						SET Environment.PMT_ID_TXN_ID = PMT_ID_TXN_ID; --setting txn id in environment
+
+						CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Updating status as DDI_SUCCESS in TXN table for END_TO_END_ID - '||PMT_ID_ENDTOEND_ID) INTO rc;
+						UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_SUCCESS', DESCRIPTION = 'Transaction was success at CBS and sent to CBO',TXN_ID=StsID WHERE R.PMT_ID_ENDTOEND_ID = PMT_ID_ENDTOEND_ID AND R.PMT_ID_TXN_ID = PMT_ID_TXN_ID AND R.STATUS = 'DDI_CBS_DBT_OC_SUCCESS';
+						--=============| updating DB with success status code |==========--
+						CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Updating status as DDI_SUCCESS in STATUS table for END_TO_END_ID - '||PMT_ID_ENDTOEND_ID) INTO rc;
+--						SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+--						TXN_END_TO_END_ID,
+--						STATUS,
+--						STATUS_UPDATED_TIMESTAMP,
+--						TXN_TYPE
+--						) VALUES (?,?,?,?)';
+--						SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(PMT_ID_ENDTOEND_ID,'DDI_SUCCESS',CURRENT_TIMESTAMP,'DDI'));
+--						COMMIT;
+						SET i = i+1;
+						SET k = k +1;
+					END WHILE;
+
+				END IF;
+				------------for failure txn------------------
+
+				SET k = i;
+
+				DECLARE j INTEGER 1 ;
+				DECLARE CBO_Reason_Code INTEGER;
+
+				IF Failure_num > 0 THEN
+
+					WHILE j<=Failure_num DO
+						SET StsID = bchId || CAST(RIGHT('000'||CAST(k AS CHARACTER),3) AS CHARACTER);
+						
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:TxInfAndSts[1] = '';
+						DECLARE isobody REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt;
+
+						SET isobody.ns4:TxInfAndSts[k].ns4:StsId = StsID;--failure.data[j].PMT_ID_ENDTOEND_ID; --Orginal End to End ID
+						SET isobody.ns4:TxInfAndSts[k].ns4:OrgnlEndToEndId = failure.data[j].PMT_ID_ENDTOEND_ID;
+						SET isobody.ns4:TxInfAndSts[k].ns4:OrgnlTxId =failure.data[j].PMT_ID_TXN_ID;
+						SET isobody.ns4:TxInfAndSts[k].ns4:TxSts='RJCT';						
+						
+						SET CBO_Reason_Code = CASE failure.data[j].FAULT_CODE
+						WHEN 'KSM0104' THEN '5'
+						WHEN 'KSM0106' THEN '5'
+						WHEN 'KSM0261' THEN '5'
+						WHEN 'KSM0669' THEN '5'
+						WHEN 'KSM0847' THEN '5'
+						WHEN 'KSM1164' THEN '5'
+						WHEN 'KSM1885' THEN '5'
+						WHEN 'KSM1886' THEN '5'
+						WHEN 'KSM1894' THEN '5'
+						WHEN 'KSM2081' THEN '5'
+						WHEN 'KSM2086' THEN '5'
+						WHEN 'KSM2256' THEN '5'
+						WHEN 'KSM2613' THEN '5'
+						WHEN 'KSM4049' THEN '5'
+						WHEN 'KSM4050' THEN '5'
+						WHEN 'KSM4240' THEN '5'
+						WHEN 'KSM4283' THEN '5'
+						WHEN 'KSM4350' THEN '5'
+						WHEN 'KSM4701' THEN '5'
+						WHEN 'KSM4702' THEN '5'
+						WHEN 'KSM5714' THEN '5'
+						WHEN 'KSM5715' THEN '5'
+						WHEN 'KSM5830' THEN '5'
+
+						WHEN 'KSM0124' THEN '4'
+						WHEN 'KSM0140' THEN '4'
+						WHEN 'KSM5418' THEN '4'
+						WHEN 'KSM5421' THEN '4'
+
+						WHEN 'KSM0148' THEN '2'
+						WHEN 'KSM5362' THEN '2'
+						WHEN 'KSM5625' THEN '2'
+
+						WHEN 'KSM2630' THEN '1'
+						WHEN 'KSM0149' THEN '1'
+						WHEN 'KSM0125' THEN '1'
+
+						WHEN 'KSM2060' THEN '13'
+						WHEN 'KSM2629' THEN '13'
+
+						WHEN 'KSM0145' THEN '15'
+
+						ELSE '6'
+
+						END;
+						SET isobody.ns4:TxInfAndSts[k].ns4:StsRsnInf.ns4:Rsn.ns4:Prtry=CBO_Reason_Code; --'Transaction Failed';
+						SET isobody.ns4:TxInfAndSts[k].ns4:StsRsnInf.ns4:AddtlInf=failure.data[j].FAULT_STRING; --'Transaction Failed in CBS';
+					--	SET isobody.ns4:TxInfAndSts[k].ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = failure.data[j].INSTD_AGT_FIN_ID_BICFI;
+
+
+						DECLARE PMT_ID_ENDTOEND_ID , PMT_ID_TXN_ID CHARACTER;
+						SET PMT_ID_ENDTOEND_ID = failure.data[j].PMT_ID_ENDTOEND_ID;
+						SET PMT_ID_TXN_ID = failure.data[j].PMT_ID_TXN_ID;
+
+						SET Environment.PMT_ID_TXN_ID = PMT_ID_TXN_ID; --Setting Txn in environment
+						--=============| updating DB with failure status code |==============--
+						UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_FAILED', DESCRIPTION = 'Transaction was failed at CBS and sent to CBO',TXN_ID=StsID  WHERE R.PMT_ID_ENDTOEND_ID = PMT_ID_ENDTOEND_ID AND R.PMT_ID_TXN_ID = PMT_ID_TXN_ID AND R.STATUS = 'DDI_CBS_DBT_OC_FAILED';
+
+--						SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+--						TXN_END_TO_END_ID,
+--						STATUS,
+--						STATUS_UPDATED_TIMESTAMP,
+--						TXN_TYPE
+--						) VALUES (?,?,?,?)';
+--						SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(PMT_ID_ENDTOEND_ID,'DDI_FAILED',CURRENT_TIMESTAMP,'DDI'));
+--						COMMIT;
+						SET j = j+1;
+						SET k = k + 1;
+					END WHILE;
+				END IF;
+				--SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:SplmtryData = '';
+				DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt;
+				CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns4 NAME 'SplmtryData';
+				CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns4 NAME 'Envlp';
+				CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns20 NAME 'supplementaryData';
+				CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns20 NAME 'Items';
+				SET outRef.ns20:Item = '2';
+				SET outRef.ns20:Item.(XMLNSC.Attribute)key = 'batchSource';
+
+				UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS J SET MSG_ID = bchId WHERE J.DDI_GP_HDR_ID_TXN_FK = idRef;
+
+
+
+				COMMIT;
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Sending ISO response to CBO') INTO rc;
+
+
+
+				PROPAGATE TO TERMINAL 'out';
+
+			END WHILE;
+			MOVE d1 NEXTSIBLING;
+		END WHILE;
+		CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+	END;
+	CREATE PROCEDURE random(IN Length INTEGER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";
+END MODULE;

@@ -1,0 +1,15 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		
+		IF Environment.dbQueryCount = '16' THEN		
+			DECLARE MG ROW;
+			SET MG.ID[] = SELECT M.MND_GP_HDR_MSGID FROM Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS M WHERE M.MND_GP_HDR_MSGID = Environment.MsgId;
+			SET Environment.ID = MG.ID.MND_GP_HDR_MSGID;
+				
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			
+			UPDATE Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS T SET MND_INTERFACE_CODE = 'MANDTTER',STATUS ='MNDT_TERMINATED',MND_GP_HDR_MSGID = Environment.MsgId,MSG_ID = Environment.Variables.CBOMsgId WHERE T.MNDT_REQID = Environment.OrignlMndtId;			
+		END IF;
+		RETURN TRUE;
+	END;
+

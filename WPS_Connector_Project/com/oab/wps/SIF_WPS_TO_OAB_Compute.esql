@@ -1,0 +1,325 @@
+
+/*
+Author : Ashoke
+Subsequent Modifications by : Atul
+Module Name : WPS
+Flow Name : WPS_SIF_ProcessingFrom_CBO_TO_OAB
+Purpose : validate account info and balance info of header table from database and send header info to CBS
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : YES,WPS_SIF_HEADER_INFO
+Dependency XSD(Request Message) : NO
+Dependency XSD(Response Message) : NO
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+1. Receive ACK input payload and validate it.
+2. if validation is success then construct message for CBS call to validate account
+3. if it fails then update status code and exception description in database and send same info to OAB.
+4. if success then construct message for CBS call to validate balance.
+5. if it fails then update status code and exception description in database and send same info to OAB.
+6. if success then construct message to be send to CBS.
+7. if validation is failure then propagate it to exception handler.
+*/
+
+BROKER SCHEMA com.oab.wps
+DECLARE nsai NAMESPACE 'http://www.oab.com';
+
+CREATE COMPUTE MODULE SIF_WPS_TO_OAB_Compute
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE DC_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+--	DECLARE pool_acc EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE sifFileName,status,rsnCode,reasonName,errorList,referenceNumber CHARACTER;
+	DECLARE recordID,reasonCode INTEGER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		RETURN bool;
+		DECLARE noOfDupFail INTEGER 0;
+		DECLARE i INTEGER 1;
+		SET OutputLocalEnvironment.Destination.File.Name = InputLocalEnvironment.File.Name;
+
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+	END;
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.InputFileName = InputLocalEnvironment.File.Name;
+			DECLARE flowName CHARACTER MessageFlowLabel;
+			IF InputLocalEnvironment.File.Name LIKE 'ACK_SYNCBACK_%' THEN
+
+
+
+				CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIF_SYNCBACK_ACK');
+				SET Environment.DFDL = InputRoot.DFDL;
+				DECLARE recordRef REFERENCE TO InputRoot.DFDL.SIF_SYNCBACK_ACK.Sync_Back_Record[>];
+				DECLARE i INTEGER 1;
+				WHILE LASTMOVE(recordRef) DO
+					SET Environment.sifFileName = InputRoot.DFDL.SIF_SYNCBACK_ACK.Orig_File_Record.RecordVal;
+					SET Environment.recordID = recordRef.RecordId;
+					SET Environment.referenceNumber = recordRef.RefNumber;
+					SET Environment.status = recordRef.Status;
+					SET Environment.reasonCode = recordRef.ReasonCode;
+
+					IF Environment.status = 'ACPT' THEN
+
+						SET Environment.dbQueryCount = '8';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+
+					ELSE
+						SET Environment.dbQueryCount = '8A';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+						SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24R'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS')||CAST(i AS CHARACTER);
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+						-- SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.ACCNO.PAYER_ACCOUNT_NO;
+						-- SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '+' || CAST(Environment.Salary.NET_SALARY AS CHARACTER);
+						-- SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = currency;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.ACCNO.PAYMENT_TYPE||'_'||'CBS_PAYER_CRDIT_SENT';
+
+
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:debit.urn:account = Environment.value.DC_STLMNT_ACC;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:debit.urn:amount = CAST(Environment.Salary.NET_SALARY AS CHARACTER FORMAT '0.00');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:debit.urn:currency = CURRENCY;
+
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:credit.urn:account = Environment.ACCNO.PAYER_ACCOUNT_NO;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:credit.urn:amount = CAST(Environment.Salary.NET_SALARY AS CHARACTER FORMAT '0.00');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:DoubleEntryFinancialTransaction.urn:credit.urn:currency = CURRENCY;
+
+
+						SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+						DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+						SET Environment.CbsReqMessage.message = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+						SET Environment.dbQueryCount = '8B';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+						PROPAGATE To TERMINAL 'out';
+
+
+						SET i = i + 1;
+
+					END IF;
+
+					MOVE recordRef NEXTSIBLING;
+				END WHILE;
+			ELSEIF SUBSTRING(InputLocalEnvironment.File.Name BEFORE '_') = 'ACK' AND SUBSTRING(InputLocalEnvironment.File.Name FROM POSITION ('_' IN InputLocalEnvironment.File.Name REPEAT 3)+1 FOR 3) = 'SIF' THEN
+				IF CONTAINS(InputLocalEnvironment.File.Name, 'SUCCESS') THEN
+					CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIF_ACK_MSG');
+					SET Environment.DFDL = InputRoot.DFDL;
+					SET Environment.status = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.Status;
+					SET Environment.sifFileName = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.Originalfilename;
+					SET Environment.rsnCode = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.ReasonCode;
+					SET Environment.reasonName = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.ReasonName;
+					SET Environment.inputMessage.file.name = sifFileName;
+					SET Environment.dbQueryCount = '9';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+				ELSE
+					CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIF_ACK_FAILED_MSG');
+					SET Environment.DFDL = InputRoot.DFDL;
+					SET Environment.sifFileName = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.Originalfilename;
+					SET Environment.status = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.Status;
+					SET Environment.rsnCode = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.ReasonCode;
+					SET Environment.reasonName = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.ReasonName;
+					DECLARE errorRef REFERENCE TO InputRoot.DFDL.SIF_ACK_FAILED_MSG.ErrorsList[>];
+					SET Environment.errorReason = 'Error ReasonName is :';
+					WHILE LASTMOVE(errorRef) DO
+						SET Environment.errorList = errorRef.ErrorReason;
+						SET Environment.errorReason = Environment.errorReason || Environment.errorList;
+						MOVE errorRef NEXTSIBLING;
+					END WHILE;
+					--SET errorList = InputRoot.DFDL.SIF_ACK_FAILED_MSG.ErrorsList.ErrorReason;
+					SET Environment.dbQueryCount = '10';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+				END IF;
+			ELSEIF SUBSTRING(InputLocalEnvironment.File.Name FROM 1 FOR 3) = 'ACK' AND SUBSTRING(InputLocalEnvironment.File.Name FROM POSITION ('_' IN InputLocalEnvironment.File.Name REPEAT 3)+1 FOR 3) = 'REP' THEN
+				IF CONTAINS(InputLocalEnvironment.File.Name, 'SUCCESS') THEN
+					CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIF_ACK_MSG');
+
+					SET Environment.DFDL = InputRoot.DFDL;
+					SET Environment.sifFileName = 'SIF_'|| SUBSTRING(InputRoot.DFDL.SIF_ACK_MSG.RecordBody.Originalfilename AFTER 'SIF_');
+					SET Environment.status = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.Status;
+					SET Environment.rsnCode = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.ReasonCode;
+					SET Environment.reasonName = InputRoot.DFDL.SIF_ACK_MSG.RecordBody.ReasonName;
+					-- SET errorList =InputRoot.DFDL.SIF_ACK_MSG.RecordBody.ErrorsList;
+					-- SET noOfDupFail = (CARDINALITY(InputRoot.DFDL.SIF_ACK_MSG.*[])-2);
+					DECLARE cboResMessage BLOB ASBITSTREAM(InputRoot.DFDL,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+					SET Environment.CboResMessage = CAST(cboResMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+					SET Environment.inputMessage.file.name = sifFileName;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving response of final cvs file from CBO and updating header table with status as CBO_STLEACC_CREDIT_SUCCESS ') INTO rc;
+				ELSE
+					CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIF_ACK_FAILED_MSG');
+
+					SET Environment.DFDL = InputRoot.DFDL;
+					SET Environment.sifFileName = 'SIF_'|| SUBSTRING(InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.Originalfilename AFTER 'SIF_');
+					SET Environment.status = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.Status;
+					SET Environment.rsnCode = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.ReasonCode;
+					SET Environment.reasonName = InputRoot.DFDL.SIF_ACK_FAILED_MSG.RecordBody.ReasonName;
+					DECLARE errorRef REFERENCE TO InputRoot.DFDL.SIF_ACK_FAILED_MSG.ErrorsList[>];
+					SET Environment.errorReason = 'Error ReasonName is :';
+					WHILE LASTMOVE(errorRef) DO
+						SET Environment.errorList = errorRef.ErrorReason;
+						SET Environment.errorReason = Environment.errorReason || Environment.errorList;
+						MOVE errorRef NEXTSIBLING;
+					END WHILE;				
+					DECLARE cboResMessage BLOB ASBITSTREAM(InputRoot.DFDL,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+					SET Environment.CboResMessage = CAST(cboResMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+					SET Environment.inputMessage.file.name = sifFileName;
+					--we should confirm that what if we receive rep ack as failure.
+					SET Environment.dbQueryCount = '12';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving response of final cvs file from CBO and updating header table with status as CBO_STLEACC_CREDIT_FAILED ') INTO rc;				
+
+				END IF;				
+
+
+				
+					
+
+
+
+			ELSE
+				----first insert record into DB and create SEP to send to CBS
+				---do we receive the file name as per the specification from the CBO.?
+				CREATE LASTCHILD OF InputRoot DOMAIN 'DFDL' PARSE(InputRoot.BLOB.BLOB ENCODING InputRoot.Properties.Encoding CCSID InputRoot.Properties.CodedCharSetId TYPE '{}:SIFFormatValidation');
+				SET Environment.DFDL = InputRoot.DFDL;
+				DECLARE inRefHeader REFERENCE TO InputRoot.DFDL.SIFFormatValidation.HeaderBody;
+				SET Environment.sifFileName = SUBSTRING(InputLocalEnvironment.File.Name BEFORE '.');
+				DECLARE flowName CHARACTER MessageFlowLabel;
+				SET Environment.inRefHeader = inRefHeader;
+				SET Environment.dbQueryCount = '13';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.dbQueryCount = '14';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				/* ======================================
+				Record values insertion
+				======================================*/
+				DECLARE inRefSIF REFERENCE TO InputRoot.DFDL.SIFFormatValidation; --unwanted line
+				DECLARE recordLength INTEGER;
+				DECLARE sifName,recordId CHARACTER;
+				DECLARE i INTEGER 1;
+				SET sifName = REPLACE(sifFileName,'_','');
+
+
+				WHILE i <= (inRefHeader.NoOfRecords) DO
+
+					SET Environment.inRefBody = InputRoot.DFDL.SIFFormatValidation.RecordBody[i];
+					SET recordId = i;
+					SET recordLength = LENGTH(recordId);
+					SET recordId =
+					CASE recordLength
+					WHEN '6' THEN recordId
+					WHEN '5' THEN '0'||recordId
+					WHEN '4' THEN '00'||recordId
+					WHEN '3' THEN '000'||recordId
+					WHEN '2' THEN '0000'||recordId
+					WHEN '1' THEN '00000'||recordId
+					ELSE recordId
+					END;
+					SET Environment.recordId = recordId;
+					SET Environment.dbQueryCount = '15';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					SET i = i + 1;
+				END WHILE;
+				CALL writeToLogFile(flowName, 'wps_info', 'INFO','inserting SIF header and record info into DB') INTO rc;
+				--creating single entry posting request to CBS for debiting the
+				SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24H'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.PaymentType.PAYMENT_TYPE||'_'||'CBS_PAYER_DEBIT_SENT';
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = inRefHeader.PayerAccNo_IBAN;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '-' ||CAST(inRefHeader.TotalSalaries AS CHARACTER);
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+				SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+				DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.CbsReqMessage.message = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+				SET Environment.dbQueryCount = '16';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				propagate to TERMINAL 'out';
+				CALL writeToLogFile(flowName, 'wps_info', 'INFO','create SEP and send to CBS, updating header table with status CBS_PAYER_DEBIT_SENT') INTO rc;
+			END IF;
+
+			RETURN FALSE;
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				SET OutputRoot.DFDL = Environment.DFDL;
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'WPS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+
+END MODULE;

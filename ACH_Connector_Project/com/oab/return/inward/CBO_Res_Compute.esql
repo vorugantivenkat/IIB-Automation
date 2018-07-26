@@ -1,0 +1,207 @@
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.return.inward
+DECLARE bchSeq SHARED INTEGER;
+DECLARE bchId SHARED CHARACTER;
+/*Author : Sandhya Sudharshan
+Subsequent Modifications by : Lokesh
+Module Name : Return_Inward
+Flow Name : Return_Response_To_CBO
+Purpose : Forming ISO message
+Dependency Database : Yes,PRI_GP_HEADER_INFO,PRI_ORGNL_GRP_INFO,PRI_RTR_RSN_INFO,PRI_SUPPLEMENTRY_DATA,PRI_TXN_INFO,DDI_TXN_INFO
+Dependency XSD(Request Message) : pacs.004.001.05.xsd
+Dependency XSD(Response Message) : pacs.002.001.06.xsd
+*/
+DECLARE ns4 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.002.001.06';
+
+CREATE COMPUTE MODULE CBO_Res_Compute
+	DECLARE rc BOOLEAN;
+	DECLARE PRI_GP_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE PRI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER; --schema name of the database: esbach
+	DECLARE DSN EXTERNAL CHARACTER; -- Data source name for the connection :it can be varied from SIT, UAT,PROD
+
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE insertStatusQuery CHARACTER;
+	DECLARE insertRes ROW;
+	DECLARE flowName CHARACTER MessageFlowLabel; --getting flowname
+	DECLARE rev REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:PmtRtr;
+	DECLARE ORGNL_TX_ID CHARACTER rev.ns:TxInf.ns:OrgnlTxId;
+	DECLARE count INTEGER 3;
+	DECLARE seqCount INTEGER 1;
+	DECLARE alpha CHARACTER; -- to get the random alphabetic number from the java code.
+	--DECLARE ORGNL_TX_ID CHARACTER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+
+
+
+		CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+		DECLARE ACHConfig ROW;
+		SET ACHConfig.values[] = SELECT C.BANK_PREFIX,C.INSTAGT_FN_BICFI FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+		CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Fetching Message ID from Header table where txn status is RETI_CBS_SUCCESS_CBO_SEND or RETI_CBS_FAILED_CBO_SEND') INTO rc;
+		--========| Fetching data from DCI_GP_HEADER_INFO table where corresponding txns status is DCI_CBS_CRDT_OC_SUCCESS or DCI_CBS_CRDT_OC_FAILED |=======--
+		DECLARE SQL1 CHARACTER 'SELECT DISTINCT A.PR_GP_HEADER_ID,A.MSG_ID,A.INSTG_AGT_FIN_INSTN_ID_BICFI,A.INSTD_AGT_FIN_INSTN_ID_BICFI
+		FROM '||SCHEMA_NAME||'.'||PRI_GP_HEADER_INFO||' A,'||SCHEMA_NAME||'.'||PRI_TXN_INFO||' T WHERE A.PR_GP_HEADER_ID = T.PR_GP_HEADER_ID_TXN_FK AND (T.STATUS = ? OR T.STATUS = ?)';
+
+		DECLARE headerRef ROW;
+		SET headerRef.data[] = PASSTHRU(SQL1 TO Database.{DSN} VALUES('RETI_CBS_SUCCESS_CBO_SEND','RETI_CBS_FAILED_CBO_SEND'));
+		DECLARE resRef REFERENCE TO headerRef.data[>];
+
+
+		WHILE LASTMOVE(resRef) DO
+			DECLARE idRef INTEGER CAST(resRef.PR_GP_HEADER_ID AS INTEGER);
+			-----generating Batch Sequence(MsgID) which is in the format BankCode(4digit)+CurrentDate(yyMMdd)+Sequence(001)-----------------
+
+		DECLARE currDay,currDate,estSeq,previousDate CHARACTER;
+			SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd');
+
+			DECLARE DD ROW;
+			DECLARE GroupID INTEGER;
+						SET GroupID = SELECT MAX(J.PR_GP_HEADER_ID_TXN_FK) FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS J WHERE J.MSG_ID IS NOT NULL; --SUBSTRING(bchId FROM 9 FOR 2); -- if contains, extracting date from it
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO};
+
+			IF Environment.recCount =1 AND bchSeq > 0 THEN
+				SET bchSeq = bchSeq + 1;
+			ELSE
+				SET DD.V[] = SELECT K.CRE_DT_TM FROM Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO} AS K WHERE K.PR_GP_HEADER_ID= GroupID;
+				SET previousDate = SUBSTRING(DD.V.CRE_DT_TM FROM 1 FOR 8);
+				IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+					IF seqCount = 1 THEN
+						IF previousDate = currDate THEN
+							SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+						ELSE
+							SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+							SET seqCount = seqCount + 1;
+						END IF;
+					ELSE
+						SET bchSeq = bchSeq + 1;
+					END IF;
+
+				ELSE -- if there is no previous BatchID value in shared variable
+					DECLARE DB,ref ROW;
+					SET DB.V[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS J WHERE J.MSG_ID LIKE ACHConfig.values.BANK_PREFIX ||'%';
+					IF CARDINALITY(DB.V[]) > 0 AND previousDate = currDate THEN --- checking in DB, MsgId column whether there is a sequence with current date
+						DECLARE maxId INTEGER;
+						--SET maxId = SELECT MAX(GP.PR_GP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO} AS GP ;
+									SET ref.NM[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS A WHERE A.PR_GP_HEADER_ID_TXN_FK = GroupID;
+						DECLARE maxIdSeq,maxIdChar CHARACTER;
+						SET maxIdChar = CAST(ref.NM.MSG_ID AS CHARACTER);
+						SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+						DECLARE newSeq INTEGER;
+						SET newSeq = CAST(maxIdSeq as INTEGER);
+						SET bchSeq = newSeq + 1; -- if there incrementing by 1
+
+					ELSE -- if not there then starting with 1
+						SET bchSeq = 1;
+						SET seqCount = seqCount + 1;
+					END IF;
+				END IF;
+			END IF;
+
+
+			DECLARE j CHARACTER;
+			SET j = CAST(bchSeq AS CHARACTER);
+			SET alpha = random(count);
+			SET bchId = ACHConfig.values.BANK_PREFIX || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+			DECLARE transDetails ROW;
+			SET transDetails.record[] = SELECT A.STATUS,A.ORGNL_TX_ID,A.RTR_ID FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS A WHERE A.PR_GP_HEADER_ID_TXN_FK = idRef;
+			--=============| Creating ISO Header |==============--
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns22 = ns22;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr = '';
+			DECLARE isogrpheader REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr;
+			SET isogrpheader.ns4:MsgId = bchId;
+			SET isogrpheader.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+			SET isogrpheader.ns4:InstgAgt.ns4:FinInstnId.ns4:BICFI =  ACHConfig.values.INSTAGT_FN_BICFI;-- 'OMABOMRU';
+			SET isogrpheader.ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = resRef.INSTG_AGT_FIN_INSTN_ID_BICFI;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+
+			DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+
+			SET IsoOrgInfSts.ns4:OrgnlMsgId = resRef.MSG_ID;
+			SET IsoOrgInfSts.ns4:OrgnlMsgNmId = 'pacs.004.001.05';
+
+			IF transDetails.record.STATUS = 'RETI_CBS_SUCCESS_CBO_SEND' THEN
+				--=========| Creating Original Group Information status |===============--
+				SET Environment.GrpSts = 'ACSC'; -- Conform once these groupsts
+				SET Environment.Status = 'RETI_SUCCESS';
+				SET Environment.description = 'Transaction was success at CBS and sent to CBO';
+				SET IsoOrgInfSts.ns4:GrpSts = 'ACSC'; ---- Conform once these groupsts
+			ELSE
+				SET Environment.GrpSts = 'RJCT';
+				SET Environment.Status = 'RETI_FAILED';
+				SET Environment.description = 'Transaction Failed at CBS and sent to CBO';
+				SET IsoOrgInfSts.ns4:GrpSts = 'RJCT';
+
+			END IF;
+			DECLARE stsId CHARACTER;
+			SET stsId = bchId || '001';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:TxInfAndSts = '';
+			DECLARE isoBody REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt;
+			SET isoBody.ns4:TxInfAndSts.ns4:StsId = stsId;
+			SET isoBody.ns4:TxInfAndSts.ns4:OrgnlTxId = transDetails.record.RTR_ID; ---check once
+			SET isoBody.ns4:TxInfAndSts.ns4:TxSts = Environment.GrpSts;
+			IF Environment.GrpSts = 'ACSC' THEN
+				---- StsRsnInf is populated only when Status is RJCT
+			ELSE
+				SET isoBody.ns4:TxInfAndSts.ns4:StsRsnInf.ns4:Rsn.ns4:Prtry= ''; ----Conform Once From where we need to populate that Fault Codes
+				SET isoBody.ns4:TxInfAndSts.ns4:StsRsnInf.ns4:AddtlInf = '';
+			END IF;
+			SET ORGNL_TX_ID = transDetails.record.ORGNL_TX_ID;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Updating status as' || Environment.Status || 'in TXN table for END_TO_END_ID - '||ORGNL_TX_ID) INTO rc;
+			--=============| updating DB with success status code |==========--
+			UPDATE Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS R SET STATUS = Environment.Status,DESCRIPTION = Environment.description,MSG_ID = bchId,TXN_ID=stsId WHERE R.ORGNL_TX_ID = ORGNL_TX_ID AND R.STATUS = transDetails.record.STATUS AND R.PR_GP_HEADER_ID_TXN_FK = idRef ;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting status as' || Environment.Status || 'in STATUS table for END_TO_END_ID - '||ORGNL_TX_ID) INTO rc;
+--			SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+--			TXN_END_TO_END_ID,
+--			STATUS,
+--			STATUS_UPDATED_TIMESTAMP,
+--			TXN_TYPE
+--			) VALUES (?,?,?,?)';
+--			SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(ORGNL_TX_ID,Environment.Status,CURRENT_TIMESTAMP,'RETI'));
+--			COMMIT;
+			DECLARE SupRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns1:FIToFIPmtStsRpt;
+			CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns4 NAME 'SplmtryData';
+			CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns4 NAME 'Envlp';
+			CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'supplementaryData';
+			CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'Items';
+			SET SupRef.ns22:Item = '2';
+			SET SupRef.ns22:Item.(XMLNSC.Attribute)key = 'batchSource';
+
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Sending ISO response to CBO') INTO rc;
+			PROPAGATE TO TERMINAL 'out';
+			MOVE resRef NEXTSIBLING;
+		END WHILE;
+		CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+	END;
+END MODULE;
+
+CREATE PROCEDURE random(IN Length INTEGER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";

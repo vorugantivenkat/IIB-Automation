@@ -1,0 +1,57 @@
+CREATE COMPUTE MODULE DDI_Retry_flow_Compute
+	DECLARE header ROW;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DDI_TABLE1 EXTERNAL CHARACTER;
+	DECLARE DDI_TABLE2 EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE inMessage CHARACTER;
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.MQMD = InputRoot.MQMD;
+		SET OutputRoot.MQRFH2.usr.dbQueryCount = InputRoot.XMLNSC.MSG.ExceptionDetails.dbQueryCount;
+			SET OutputRoot.MQRFH2.usr.Retry = 'True';
+		DECLARE actMsg CHARACTER REPLACE(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg,'<xmlns:ns>http://www.oab.com</xmlns:ns>','');
+		DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+		CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+		DECLARE inRef REFERENCE TO OutputRoot.XMLNSC;
+		DECLARE dbCount CHARACTER OutputRoot.MQRFH2.usr.dbQueryCount;
+		IF dbCount = '1' OR dbCount = '2'  THEN 
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDI_Q_REQ';
+			SET OutputRoot.MQRFH2.usr.Retry = NULL;
+			PROPAGATE TO TERMINAL 'out';
+			
+		ELSEIF dbCount = '4' OR dbCount = '8'THEN
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDI_Q_REQ';
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF dbCount = '5' THEN
+			DECLARE header ROW;
+			DECLARE test CHARACTER;
+			SET header.id[] = SELECT J.DDI_GP_HEADER_ID FROM Database.{SCH_NAME}.{DDI_TABLE1} AS J WHERE J.MSG_ID = inRef.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			DELETE FROM Database.{SCH_NAME}.{DDI_TABLE2} AS K WHERE K.DDI_GP_HDR_ID_TXN_FK = header.id.DDI_GP_HEADER_ID;
+			--DELETE FROM Database.{SCH_NAME}.{DDI_TABLE1} AS K WHERE K.MSG_ID = inRef.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDI_Q_REQ';
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF dbCount = '6' OR dbCount = '7' THEN
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_DDI_Q_RES';
+			PROPAGATE TO TERMINAL 'out';
+
+		END IF;
+	END;
+END MODULE;

@@ -1,0 +1,41 @@
+CREATE DATABASE MODULE WPS_SIF_Processing_CBO_Database
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '17A' THEN
+			SET Environment.PayType[] = SELECT S.PAYMENT_TYPE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS S WHERE S.CHL_REFERENCE = Environment.Chlreference;
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			SET Environment.data[] = SELECT S.TOTAL_SALARIES,S.PAYER_ACCOUNT_NO FROM Database.{SCH_NAME}.{WPS_TABLE1} AS S WHERE S.CHL_REFERENCE = Environment.Chlreference AND (S.CBO_STATUS = 'CBO_TECH_VAL_SUCCESS' OR S.CBO_STATUS = 'CBS_PAYER_DEBIT_FAILED');
+		ELSEIF Environment.dbQueryCount = '18' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBS_TXN_REF = Environment.var.hedTxRefId,CBO_STATUS = 'CBS_PAYER_DEBIT_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage WHERE S.CHL_REFERENCE = Environment.Chlreference;
+		ELSEIF Environment.dbQueryCount = '19' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS R SET EMPLOYEE_ID_TYPE = Environment.recordRef.IdType,
+			EMPLOYEE_ID = Environment.recordRef.Id,
+			EMPLOYEE_NAME = Environment.recordRef.Name,
+			EMPLOYEE_BANK_CODE = Environment.recordRef.Bank,
+			EMPLOYEE_ACC_NO = Environment.recordRef.Account,
+			SALARY_FREQUENCY = Environment.recordRef.SalaryFrequency,
+			NO_OF_WORKING_DAYS = Environment.recordRef.NumberOfWorkingDays,
+			NET_SALARY = Environment.recordRef.NetSalary,
+			BASIC_SALARY = Environment.recordRef.BasicSalary,
+			EXTRA_HOURS = Environment.recordRef.ExtraHours,
+			EXTRA_INCOME = Environment.recordRef.ExtraIncome,
+			DEDUCTIONS = Environment.recordRef.Deduction,
+			SOCIAL_SECURITY_DEDUCTIONS = Environment.recordRef.SocialSecurityDeduction,
+			NOTES_COMMENTS = Environment.recordRef.Notes,
+			REFERENCE_NUMBER = Environment.recordRef.ReferenceNumber
+			WHERE R.EMPLOYEE_ID = Environment.recordRef.Id;
+		ELSEIF Environment.dbQueryCount = '20' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS R SET TXN_REF_ID = Environment.var.hedTxRefId,STATUS = 'CBS_EMP_CREDIT_REQ_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage WHERE R.CHL_REFERENCE = Environment.Chlreference AND R.EMPLOYEE_ID = Environment.recordRef.Id;
+		ELSEIF Environment.dbQueryCount = '21' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS A SET CBO_STATUS = 'REJECTED' WHERE A.CHL_REFERENCE = Environment.Chlreference;
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS A SET STATUS = 'REJECTED' WHERE A.CHL_REFERENCE = Environment.Chlreference;
+		ELSEIF Environment.dbQueryCount = '35' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'CBS_PAYER_DEBIT_SUCCESS',OPTIONALIDENTIFIER = Environment.identifier WHERE S.CHL_REFERENCE = Environment.Chlreference;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

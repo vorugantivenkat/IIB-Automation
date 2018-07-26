@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="www.oab.com/mandate_amendment" xmlns:req="www.oab.com/mandate_amendment">
+  <xsd:element name="SplmtryData_attachment_filename">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="source_sys_timestamp" type="xsd:string"/>
+  <xsd:element name="other_info">
+    <xsd:complexType/>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filetype">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{0,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="dbtragt_brnchid" type="xsd:string"/>
+  <xsd:element name="cdtragt_brnchid" type="xsd:string"/>
+  <xsd:element name="source_sys_code" type="xsd:string"/>
+  <xsd:element name="msg_header">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:source_sys_code"/>
+        <xsd:element ref="req:source_sys_id"/>
+        <xsd:element ref="req:interface_code"/>
+        <xsd:element ref="req:source_sys_timestamp"/>
+        <xsd:element ref="req:other_info"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="dbtr_acct_id_iban">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,30}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="dbtr_nm">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,140}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="dbtr_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cdtr_id_prtry" type="xsd:string"/>
+  <xsd:element name="linstrm_code" type="xsd:string"/>
+  <xsd:element name="amd_rsn_prtry" type="xsd:string"/>
+  <xsd:element name="ocrncs_todt" type="xsd:string"/>
+  <xsd:element name="SplmtryData_Envlp_Irrevocable">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,11}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cdtr_nm">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,140}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="ocrncs_frdt" type="xsd:string"/>
+  <xsd:element name="max_amt" type="xsd:string"/>
+  <xsd:element name="SplmtryData_TxPurp" type="xsd:string"/>
+  <xsd:element name="interface_code" type="xsd:string"/>
+  <xsd:element name="SplmtryData_attachment_filedata">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,64}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="orgnl_mndtid">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,20}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="ocrncs_seqtp">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,4}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_PrsntEach" type="xsd:string"/>
+  <xsd:element name="SplmtryData_AutoPost" type="xsd:string"/>
+  <xsd:element name="SplmtryData_attachment_filesize" type="xsd:int" />
+  <xsd:element name="cdtragt_bicfi" type="xsd:string"/>
+  <xsd:element name="SplmtryData_InitBy">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,8}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="rsn_prtry" type="xsd:string"/>
+  <xsd:element name="SplmtryData_attachment_filecomment">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{0,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_NmbrOfPaymnts">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,3}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cdtr_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="mndtreq_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,20}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cdtr_acct_id_iban">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,30}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="dbtr_id_prtry" type="xsd:string"/>
+  <xsd:element name="msg">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:msg_header"/>
+        <xsd:element maxOccurs="unbounded" ref="req:msg_data"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="source_sys_id" type="xsd:string"/>
+  <xsd:element name="dbtr_acct_id_othr_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,34}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cdtr_acct_id_othr_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,34}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_RcurFrqcy">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,2}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="dbtragt_bicfi" type="xsd:string"/>
+  <xsd:element name="amd_addtinf">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{0,105}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="msg_data">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:amd_rsn_prtry" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:amd_addtinf" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:mndtreq_id" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:linstrm_code" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:ocrncs_seqtp" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:ocrncs_frqcy_tp" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:ocrncs_frdt" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:ocrncs_todt" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:max_amt" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:rsn_prtry" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cdtr_nm" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cdtr_id" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cdtr_id_prtry" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cdtr_acct_id_iban" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cdtr_acct_id_othr_id" minOccurs="1" maxOccurs="1"/>
+                <xsd:element ref="req:cdtragt_bicfi" minOccurs="1" maxOccurs="1"/>
+                <xsd:element ref="req:cdtragt_brnchid" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:dbtr_nm" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtr_id" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtr_id_prtry" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtr_acct_id_iban" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtr_acct_id_othr_id" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtragt_bicfi" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:dbtragt_brnchid" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:orgnl_mndtid" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_Envlp_Irrevocable" minOccurs="1" maxOccurs="1"/>
+        <xsd:choice>
+          <xsd:element minOccurs="1" ref="req:SplmtryData_InitBy" maxOccurs="1"/>
+          <xsd:element minOccurs="0" ref="req:SplmtryData_AutoPost" maxOccurs="1"/>
+        </xsd:choice>
+        <xsd:element ref="req:SplmtryData_RcurFrqcy" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_PrsntEach" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_NmbrOfPaymnts" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_TxPurp" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_attachment_filename" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_attachment_filesize" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_attachment_filedata" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_attachment_filetype" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:SplmtryData_attachment_filecomment" minOccurs="0" maxOccurs="1"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="ocrncs_frqcy_tp">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,4}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+</xsd:schema>

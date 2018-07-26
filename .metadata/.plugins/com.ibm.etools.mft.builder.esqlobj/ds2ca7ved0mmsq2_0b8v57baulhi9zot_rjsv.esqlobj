@@ -1,0 +1,119 @@
+CREATE COMPUTE MODULE WPS_SIF_HEADER_UPDATE_Compute
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE TABLE1_HEADER EXTERNAL CHARACTER;
+	DECLARE TABLE2_RECORD EXTERNAL CHARACTER;
+	DECLARE PAYLOAD_TABLE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE fileName,record ROW;
+		DECLARE len,count INTEGER;
+		DECLARE headerStatus CHARACTER;
+		DECLARE recordStatus CHARACTER;
+		DECLARE i INTEGER 1;
+
+		DECLARE flowName CHARACTER MessageFlowLabel;
+		DECLARE FileName CHARACTER;
+
+		SET fileName.data[] = SELECT A.* FROM Database.{SCHEMA_NAME}.WPS_SIF_HEADER_INFO AS A WHERE A.CBO_STATUS = 'CBS_PAYER_DEBIT_SUCCESS';
+		DECLARE InRef REFERENCE TO fileName.data[>];
+		WHILE LASTMOVE(InRef) DO
+			SET count = SELECT count(*) FROM Database.{SCHEMA_NAME}.{TABLE2_RECORD} AS A WHERE (A.STATUS = 'CBS_EMP_CREDIT_SUCCESS' OR A.STATUS = 'CBS_STLEACC_CREDIT_SUCCESS') AND A.SIF_FILE_NAME = InRef.SIF_CBO_FILE_NAME;
+			--FileName creation
+			SET FileName = 'REP_'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMdd')||'_'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'hhmm')||'_' || fileName.data.SIF_CBO_FILE_NAME||'.csv';
+			SET OutputLocalEnvironment.Destination.File.Name = FileName;
+			SET OutputRoot.MQMD = InputRoot.MQMD;
+			SET OutputRoot.MQRFH2.usr.camelFileName = FileName;
+			SET Environment.camelFileName = FileName;
+
+			IF count <> 0 THEN
+				SET record.data[] = SELECT A.* FROM Database.{SCHEMA_NAME}.WPS_SIF_RECORD_INFO AS A where A.SIF_FILE_NAME = InRef.SIF_CBO_FILE_NAME;
+				SET len = CARDINALITY(record.data[]);
+				--UPDATE Database.WPS_SIF_HEADER_INFO AS A SET STATUS_FLAG = 'SP' WHERE A.SIF_FILE_NAME = InRef.SIF_FILE_NAME;
+				------------header tile is set to default-----------------------------------
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.EmployerCRNO = InRef.EMPLOYEER_CRNO;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.PayerCRNO = InRef.PAYER_CRNO;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.PayerBankShortName = InRef.PAYER_BANK_SHORT_NAME;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.PayerAccNo_IBAN = InRef.PAYER_ACCOUNT_NO;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.SalaryYear = InRef.SALARY_YEAR;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.SalaryMonth = InRef.SALARY_MONTH;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.TotalSalaries = InRef.TOTAL_SALARIES;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.NoOfRecords = InRef.NO_OF_RECORDS;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.PaymentType = InRef.PAYMENT_TYPE;
+
+				IF InRef.CBO_STATUS = 'CBS_PAYER_DEBIT_SUCCESS' THEN
+					SET headerStatus = 'ACCPT';
+				ELSE
+					SET headerStatus = 'TRJCT'; --TRJCT OR FRJCT
+				END IF;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.SIFStatus = headerStatus;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.SIFRejectReason = InRef.EXEC_DESC;
+				SET OutputRoot.DFDL.SIFIntReplyMsgValidation.HeaderBody.SettlementDate = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyyMMdd');
+				--------------record title is set to default --------------------------------
+				WHILE i <= len DO
+
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].EmployeeIDType = record.data[i].EMPLOYEE_ID_TYPE;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].EmployeeID = record.data[i].EMPLOYEE_ID;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].ReferenceNumber = record.data[i].REFERENCE_NUMBER;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].EmployeeName = record.data[i].EMPLOYEE_NAME;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].EmployeeBankCode = record.data[i].EMPLOYEE_BANK_CODE;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].EmployeeAccount = record.data[i].EMPLOYEE_ACC_NO;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].SalaryFrequency = record.data[i].SALARY_FREQUENCY;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].NoOfWorkingdays = record.data[i].NO_OF_WORKING_DAYS;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].NetSalary = record.data[i].NET_SALARY;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].BasicSalary = record.data[i].BASIC_SALARY;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].Extrahours = record.data[i].EXTRA_HOURS;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].Extraincome = record.data[i].EXTRA_INCOME;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].Deductions = record.data[i].DEDUCTIONS;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].SocialSecurityDeduct = record.data[i].SOCIAL_SECURITY_DEDUCTIONS;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].Notes_Comments = record.data[i].NOTES_COMMENTS;
+
+					IF record.data[i].STATUS = 'CBS_EMP_CREDIT_SUCCESS' THEN
+
+						SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].RecordStatus = 'ACPT';
+					ELSE
+						SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].RecordStatus = 'RJCT';
+					END IF;
+
+					IF record.data[i].STATUS = 'CBS_STLEACC_CREDIT_SUCCESS' THEN
+						SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].RecordStatus = '';
+					END IF;
+
+
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].RecordRejectReason = record.data[i].EXEC_DESC;
+					SET OutputRoot.DFDL.SIFIntReplyMsgValidation.RecordBody[i].RecordRejectNote = '';
+
+					SET i = i + 1;
+				END WHILE;
+				DECLARE CBOReqMessage BLOB ASBITSTREAM(OutputRoot.DFDL,InputRoot.Properties.Encoding,437);
+				SET Environment.CBOReqMessage = CAST(CBOReqMessage AS CHARACTER CCSID 437);
+				UPDATE Database.{SCHEMA_NAME}.WPS_SIF_HEADER_INFO AS S SET CBO_STATUS = 'SEND_TO_CBO_SIF_REPLY' WHERE S.SIF_CBO_FILE_NAME = InRef.SIF_CBO_FILE_NAME;
+				--INSERT INTO Database.{SCHEMA_NAME}.{PAYLOAD_TABLE} (MESSAGE_ID,MSG_ESB_TO_CBO,FLOW_NAME) VALUES (SUBSTRING(FileName BEFORE '.csv'),Environment.CBOReqMessage,'WPS');
+				PROPAGATE TO TERMINAL 'out';
+			END IF;
+			CALL writeToLogFile(flowName, 'wps_info', 'INFO','create final CVS file and send to CBO') INTO rc;			
+
+
+			MOVE InRef NEXTSIBLING;
+		END WHILE;		
+
+
+
+	END;
+END MODULE;

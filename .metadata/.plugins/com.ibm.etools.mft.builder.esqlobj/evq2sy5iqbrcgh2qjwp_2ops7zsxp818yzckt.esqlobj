@@ -1,0 +1,85 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE rc BOOLEAN;
+		DECLARE txnRef REFERENCE TO OutputRoot;
+
+		CREATE FIELD OutputRoot.XMLNSC.WpsSifStatusResponse;
+		DECLARE batchRef REFERENCE TO OutputRoot.XMLNSC.WpsSifStatusResponse;
+		/*initialising Log4j*/
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO',' ---WPS_Status_Report Flows starts---------------') INTO rc;
+
+		SET chlId = InputRoot.XMLNSC.WpsSifStatusRequest.Channel;
+		SET reference = InputRoot.XMLNSC.WpsSifStatusRequest.Reference;
+		CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO','OAB sends the Request for Batch WPS Status Report with channel: '|| chlId || ' And WPS SIF Reference: ' || reference) INTO rc;
+
+		SET Environment.chlId = chlId;
+		SET Environment.reference = reference;
+
+
+		SET ChlSifRefName = chlId||reference ;
+		SET batchStatus.hd[] = SELECT A.CBS_TXN_REF,A.ERROR_LIST,A.CBO_STATUS,A.CBS_FAULT_CODE,A.CBS_FAULT_STRING,A.WPS_SIF_HEADER_INFO_ID,A.CBS_PAY_REF FROM Database.{SCH_NAME}.{WPS_TABLE1} AS A WHERE A.CHL_REFERENCE = ChlSifRefName;
+		SET recordStatus.emp.rd[] = SELECT B.SIF_FILE_NAME,B.CBS_PAY_REF,B.REFERENCE_NUMBER,B.STATUS,B.CBS_FAULT_CODE,B.CBS_FAULT_STRING FROM Database.{SCH_NAME}.{WPS_TABLE2} AS B WHERE B.WPS_SIF_HEADER_INFO_ID = batchStatus.hd.WPS_SIF_HEADER_INFO_ID;
+
+		IF CARDINALITY(batchStatus.hd[])>0 OR CARDINALITY(recordStatus.rd[])>0 THEN
+			CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO','Employer or Employee Details are found in WPS SIF HEADER OR WPS SIF RECORD Tables') INTO rc;
+		ELSE
+			CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO','Employer or Employee Details are not found in WPS SIF HEADER OR WPS Record Table') INTO rc;
+
+		END IF;
+
+		SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+		SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+
+		SET batchRef.Channel = chlId;
+		SET batchRef.Reference = reference;
+		SET batchRef.CBSReference = batchStatus.hd.CBS_PAY_REF;
+		SET batchRef.Status = batchStatus.hd.CBO_STATUS;
+		IF batchStatus.hd.CBO_STATUS = 'CBO_TECH_VAL_FAILED' THEN
+			SET batchRef.ResponseCode = 'WPS99'; /*this should be error list in case of CBO failure*/
+			SET batchRef.ResponseText = batchStatus.hd.ERROR_LIST;
+		ELSE
+			SET batchRef.ResponseCode = batchStatus.hd.CBS_FAULT_CODE; /*this should be error list in case of CBO failure*/
+			SET batchRef.ResponseText = batchStatus.hd.CBS_FAULT_STRING;
+		END IF;
+
+		DECLARE recordRef REFERENCE TO recordStatus.emp.rd[>];
+		IF EXISTS(recordStatus.emp.rd[]) THEN
+
+			WHILE LASTMOVE(recordRef) DO
+				CREATE LASTCHILD OF batchRef AS txnRef NAME 'Employee';
+				SET txnRef.TransactionReference = recordRef.REFERENCE_NUMBER; /*This should be the transaction ref which is coming from channel*/
+				SET txnRef.CBOReference = recordRef.SIF_FILE_NAME; /*Adding the file name as reference suggested by zafer*/
+				SET txnRef.CBSReference = recordRef.CBS_PAY_REF;
+				SET txnRef.Status = recordRef.STATUS;
+				SET txnRef.ResponseCode = recordRef.CBS_FAULT_CODE;
+				SET txnRef.ResponseText = recordRef.CBS_FAULT_STRING;
+				MOVE recordRef NEXTSIBLING;
+			END WHILE;
+		ELSE
+
+			CREATE LASTCHILD OF batchRef AS txnRef NAME 'Employee';
+			SET txnRef.ResponseCode = 'WPS99';
+			SET txnRef.ResponseText = 'No Record found for given reference';
+		END IF;
+	END;

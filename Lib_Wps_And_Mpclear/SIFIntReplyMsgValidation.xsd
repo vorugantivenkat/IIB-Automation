@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions">
+
+
+        <xsd:include schemaLocation="SIFFormatValidation.xsd"/>
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+
+	<xsd:element ibmSchExtn:docRoot="true" name="SIFIntReplyMsgValidation">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+				<xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="HeaderTitle">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separator="," dfdl:separatorSuppressionPolicy="trailingEmpty">
+							<xsd:element default="EmployerID" ibmDfdlExtn:sampleValue="value1" name="EmployerCRNO" type="xsd:string"/>
+														                            <xsd:element default="PayerID" ibmDfdlExtn:sampleValue="value4" name="PayerCRNO" type="xsd:string"/>
+                            <xsd:element default="PayerBankShortName" ibmDfdlExtn:sampleValue="value5" name="PayerBankShortName" type="xsd:string"/>
+                            <xsd:element default="PayerAccNumber" ibmDfdlExtn:sampleValue="value6" name="PayerAccNo_IBAN" type="xsd:string"/>
+                                                        <xsd:element default="SalaryYear" ibmDfdlExtn:sampleValue="value8" name="SalaryYear" type="xsd:string"/>
+                            <xsd:element default="SalaryMonth" ibmDfdlExtn:sampleValue="value9" name="SalaryMonth" type="xsd:string"/>
+                            <xsd:element default="TotalSalaries" ibmDfdlExtn:sampleValue="value10" name="TotalSalaries" type="xsd:string"/>
+                            <xsd:element default="NoOfRecords" ibmDfdlExtn:sampleValue="value11" minOccurs="1" name="NoOfRecords" type="xsd:string"/>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <xsd:element default="PaymentType" name="PaymentType" type="xsd:string"/>
+                            <xsd:element default="SIFStatus" name="SIFStatus" type="xsd:string"/>
+                                                                                    <xsd:element default="SIFRejectReason" minOccurs="1" name="SIFRejectReason" type="xsd:string"/>
+                                                                                    <xsd:element default="SettlementDate" minOccurs="1" name="SettlementDate" type="xsd:string"/>
+                                                                                                    </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+                			            <xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="HeaderBody">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty">
+							<xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,20}" ibmDfdlExtn:sampleValue="value1" name="EmployerCRNO" type="xsd:string"/>
+														                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,20}" ibmDfdlExtn:sampleValue="value4" name="PayerCRNO" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,4}" ibmDfdlExtn:sampleValue="value5" name="PayerBankShortName" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,30}" ibmDfdlExtn:sampleValue="value6" name="PayerAccNo_IBAN" type="xsd:string"/>
+                                                        <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" name="SalaryYear" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" name="SalaryMonth" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" name="TotalSalaries" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\d{0,6}" dfdl:textNumberPattern="#0" name="NoOfRecords" type="xsd:integer"/>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="\w{0,20}" name="PaymentType" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,5}" name="SIFStatus" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\d{0,4}" minOccurs="0" name="SIFRejectReason" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,4000}" minOccurs="0" name="SettlementDate" type="xsd:string"/>
+                                                                            </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                <xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="RecordTitle">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorSuppressionPolicy="trailingEmpty">
+														<xsd:element default="EmployeeIDType" ibmDfdlExtn:sampleValue="value2" name="EmployeeIDType" type="xsd:string"/>
+							<xsd:element default="EmployeeID" ibmDfdlExtn:sampleValue="value3" name="EmployeeID" type="xsd:string"/>
+                                                        <xsd:element default="ReferenceNumber" name="ReferenceNumber" type="xsd:string"/>
+                            <xsd:element default="EmployeeName" ibmDfdlExtn:sampleValue="value4" name="EmployeeName" type="xsd:string"/>
+                                                                                    <xsd:element default="EmployeeBankCode" ibmDfdlExtn:sampleValue="value5" name="EmployeeBankCode" type="xsd:string"/>
+                                                                                                                                                                                                    <xsd:element default="EmployeeAccount" ibmDfdlExtn:sampleValue="value8" name="EmployeeAccount" type="xsd:string"/>
+                                                                                                                <xsd:element default="SalaryFrequency" ibmDfdlExtn:sampleValue="value10" name="SalaryFrequency" type="xsd:string"/>
+                                                                                    <xsd:element default="NoOfWorkingdays" ibmDfdlExtn:sampleValue="value11" minOccurs="1" name="NoOfWorkingdays" type="xsd:string"/>
+                                                                                    <xsd:element default="NetSalary" ibmDfdlExtn:sampleValue="value12" name="NetSalary" type="xsd:string"/>
+                                                                                    <xsd:element default="BasicSalary" ibmDfdlExtn:sampleValue="value13" name="BasicSalary" type="xsd:string"/>
+                                                                                    <xsd:element default="Extrahours" ibmDfdlExtn:sampleValue="value14" minOccurs="1" name="Extrahours" type="xsd:string"/>
+                                                                                    <xsd:element default="Extraincome" ibmDfdlExtn:sampleValue="value15" minOccurs="1" name="Extraincome" type="xsd:string"/>
+                                                                                    <xsd:element default="Deductions" ibmDfdlExtn:sampleValue="value16" minOccurs="1" name="Deductions" type="xsd:string"/>
+                                                                                    <xsd:element default="SocialSecurityDeduct" ibmDfdlExtn:sampleValue="value17" minOccurs="1" name="SocialSecurityDeduct" type="xsd:string"/>
+                                                                                                                <xsd:element default="Notes_Comments" ibmDfdlExtn:sampleValue="value19" minOccurs="1" name="Notes_Comments" type="xsd:string"/>
+                                                                                                                                                                                                                                                                                    <xsd:element default="RecordStatus" name="RecordStatus" type="xsd:string"/>
+                                                                                    <xsd:element default="RecordRejectReason" minOccurs="1" name="RecordRejectReason" type="xsd:string"/>
+                                                                                    <xsd:element default="RecordRejectNote" minOccurs="1" name="RecordRejectNote" type="xsd:string"/>
+                                                                            </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                <xsd:element dfdl:terminator="" maxOccurs="unbounded" name="RecordBody">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separatorPosition="infix" dfdl:separatorSuppressionPolicy="trailingEmpty" dfdl:terminator="%CR;%LF;">
+														<xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,10}" ibmDfdlExtn:sampleValue="value2" name="EmployeeIDType" type="xsd:string"/>
+                            							                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,20}" ibmDfdlExtn:sampleValue="value3" name="EmployeeID" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,35}" minOccurs="0" name="ReferenceNumber" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern=".[^,]{0,70}" ibmDfdlExtn:sampleValue="value4" name="EmployeeName" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,8}" ibmDfdlExtn:sampleValue="value5" minOccurs="1" name="EmployeeBankCode" type="xsd:string"/>
+                                                                                                                                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,30}" ibmDfdlExtn:sampleValue="value8" name="EmployeeAccount" type="xsd:string"/>
+                                                                                                                <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{1}" ibmDfdlExtn:sampleValue="value10" name="SalaryFrequency" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,3}" ibmDfdlExtn:sampleValue="value11" minOccurs="0" name="NoOfWorkingdays" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\d{0,18}\.\d{3}" ibmDfdlExtn:sampleValue="value12" name="NetSalary" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\d{0,18}\.\d{3}" ibmDfdlExtn:sampleValue="value13" name="BasicSalary" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" ibmDfdlExtn:sampleValue="value14" minOccurs="0" name="Extrahours" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" ibmDfdlExtn:sampleValue="value15" minOccurs="0" name="Extraincome" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" ibmDfdlExtn:sampleValue="value16" minOccurs="0" name="Deductions" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="" ibmDfdlExtn:sampleValue="value17" minOccurs="0" name="SocialSecurityDeduct" type="xsd:string"/>
+                                                                                                                <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,300}" dfdl:terminator="" ibmDfdlExtn:sampleValue="value19" minOccurs="0" name="Notes_Comments" type="xsd:string"/>
+                                                                                                                                                                                                                                                                                    <xsd:element dfdl:length="4" dfdl:lengthKind="delimited" minOccurs="0" name="RecordStatus" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\d{0,4}" minOccurs="0" name="RecordRejectReason" type="xsd:string"/>
+                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,4000}" minOccurs="0" name="RecordRejectNote" type="xsd:string"/>
+                                                                            </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+</xsd:schema>

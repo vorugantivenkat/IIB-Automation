@@ -1,0 +1,4 @@
+Original file name, Status, Reason Code, Reason Name, Errors List
+REP_20161004_1201_SIF_04102016_AIB_20161004_001,FAILED,112,,
+Invalid SIF Integration Reply File,510,Invalid date time in the reply file name
+Record, SIF04102016AIB20161004001-000001, 532, Status for on-us SIF record is not specified

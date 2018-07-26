@@ -1,0 +1,122 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '21' THEN
+
+			DECLARE MG ROW;
+			SET MG.ID[] = SELECT M.MND_GP_HDR_ID FROM Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS M WHERE M.MND_GP_HDR_MSGID = Environment.msgid;
+			SET Environment.MND_GP_HDR_ID = MG.ID.MND_GP_HDR_ID;
+
+		ELSEIF Environment.dbQueryCount = '22' THEN
+
+			DECLARE CollctAmt,SeqTp,FrqcyTp,DrtnFrDt,DrtnToDt,MaxAmt,RsnPrtry,CdtrNm ,CdtrOthrId ,CdtrOthrPrtry,CdtrAcctIBAN,
+			CdtrAcctOthrId,CdtrAgtBICFI,CdtrAgtBrnchId,DbtrNm,DbtrOthrId,DbtrSchmeNmPrtry,
+			DbtrAcctIBAN,DbtrAcctOthrId,DbtrAgtBICFI,DbtrAgtBrnchId,InitBy,AutoPost,RcurFrqcy,PrsntEach,NmPymts,Txpurp,Currency CHARACTER;
+
+			DECLARE orgref REFERENCE TO Environment.XMLNSC.*:Document.*:MndtInitnReq.*:Mndt;
+			DECLARE Cdtr REFERENCE TO Environment.XMLNSC.*:Document.*:MndtInitnReq.*:Mndt.*:Cdtr.*:Id.*:PrvtId.*:Othr;
+
+			SET SeqTp = orgref.*:Ocrncs.*:SeqTp ;
+			SET FrqcyTp = orgref.*:Ocrncs.*:Frqcy.*:Tp;
+			SET DrtnFrDt = orgref.*:Ocrncs.*:Drtn.*:FrDt;
+			SET DrtnToDt = orgref.*:Ocrncs.*:Drtn.*:ToDt;
+			SET MaxAmt = orgref.*:MaxAmt;
+			SET CollctAmt = orgref.*:ColltnAmt;
+			SET Currency  =  FIELDVALUE(orgref.*:ColltnAmt.(XMLNSC.Attribute)Ccy);
+			SET RsnPrtry = orgref.*:Rsn.*:Prtry;
+			SET CdtrNm = orgref.*:Cdtr.*:Nm;
+			SET CdtrOthrId = orgref.*:Cdtr.*:Id.*:PrvtId.*:Othr.*:Id;
+			SET CdtrAcctIBAN = orgref.*:CdtrAcct.*:Id.*:IBAN;
+			SET CdtrAcctOthrId = orgref.*:CdtrAcct.*:Id.*:Othr.*:Id;
+			SET CdtrAgtBICFI = orgref.*:CdtrAgt.*:FinInstnId.*:BICFI;
+			SET CdtrAgtBrnchId = orgref.*:CdtrAgt.*:BrnchId.*:Id;
+			SET DbtrNm = orgref.*:Dbtr.*:Nm;
+			SET DbtrOthrId = orgref.*:Dbtr.*:Id.*:PrvtId.*:Othr.*:Id;
+			SET DbtrSchmeNmPrtry= orgref.*:Dbtr.*:Id.*:PrvtId.*:Othr.*:Id.*:SchmeNm.*:Prtry;
+			SET DbtrAcctIBAN = orgref.*:DbtrAcct.*:Id.*:IBAN ;
+			SET DbtrAcctOthrId = orgref.*:DbtrAcct.*:Id.*:Othr.*:Id ;
+			SET DbtrAgtBICFI = orgref.*:DbtrAgt.*:FinInstnId.*:BICFI;
+			SET DbtrAgtBrnchId = orgref.*:DbtrAgt.*:BrnchId.*:Id ;
+			SET InitBy = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:initBy;
+			SET AutoPost = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:autoPost;	
+			SET RcurFrqcy = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:rcurFrqcy;
+			SET PrsntEach = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:prsntEach;
+			SET NmPymts = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:nmbrOfPaymnts;
+			SET Txpurp = orgref.*:SplmtryData.*:Envlp.*:mandateSupplementaryData.*:txPurp;
+
+			INSERT INTO Database.{SCHEMA_NAME}.{MANDATE_TABLE} (
+			MND_GP_HDR_MSGID,
+			MND_GP_HDR_CRE_DT_TM,
+			MNDT_REQID,
+			OCURNCS_SEQTYPE,
+			OCURNCS_FRQCY_TYPE,
+			OCURNCS_DRTN_FROMDATE,
+			OCURNCS_DRTN_TODATE,
+			MNDT_MAXAMT,
+			MNDT_COLLCTNAMT,
+			CURRENCY,
+			RSN_PRTRY,
+			CDTR_NAME,
+			CDTR_ID_PRVTID_OTHR_ID,
+			CDTR_ID_SCHMENM_PRTRY,
+			CDTRACCT_ID_IBAN_ID,
+			CDTRACCT_ID_OTHR_ID,
+			CDTRAGT_FINID_BICFI,
+			CDTRAGT_BRNCHID_ID,
+			DBTR_NAME,
+			DBTR_ID_PRVTID_OTHR_ID,
+			DBTR_ID_SCHMENM_PRTRY,
+			DBTRACCT_ID_IBAN_ID,
+			DBTRACCT_ID_OTHR_ID,
+			DBTRAGT_FINID_BICFI,
+			DBTRAGT_BRNCHID_ID,
+			SPLDT_ENVP_INITBY,
+			SPLDT_ENVP_AUTOPOSTPAY,
+			SPLDT_ENVP_RCURFRQCY,
+			SPLDT_ENVP_PRSNTEACH,
+			SPLDT_ENVP_NMPYMTS,
+			SPLDT_ENVP_TXPURP,
+			MND_INTERFACE_CODE,
+			STATUS
+			) VALUES
+			(Environment.msgid,
+			CURRENT_TIMESTAMP,
+			orgref.*:MndtReqId,
+			SeqTp,
+			FrqcyTp,
+			DrtnFrDt,
+			DrtnToDt,
+			MaxAmt,
+			CollctAmt,
+			COALESCE(Currency,'OMR'),
+			RsnPrtry,
+			CdtrNm,
+			CdtrOthrId,
+			COALESCE(Environment.Variables.CdtrOthrPrtry,'NA'),
+			COALESCE(CdtrAcctIBAN,'NA'),
+			CdtrAcctOthrId,
+			CdtrAgtBICFI,
+			CdtrAgtBrnchId,
+			DbtrNm,
+			DbtrOthrId,
+			DbtrSchmeNmPrtry,
+			DbtrAcctIBAN,
+			DbtrAcctOthrId,
+			DbtrAgtBICFI,
+			DbtrAgtBrnchId,
+			InitBy,
+			AutoPost,
+			RcurFrqcy,
+			PrsntEach,
+			NmPymts,
+			Txpurp,
+			'MANDTIN',
+			'MNI_RCVD'
+			);
+
+		ELSEIF Environment.dbQueryCount = '23' THEN			
+			UPDATE Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS A SET STATUS = Environment.Status WHERE A.MNDT_REQID = Environment.Variables.MandateReqId;
+		END IF;
+		RETURN TRUE;
+	END;
+

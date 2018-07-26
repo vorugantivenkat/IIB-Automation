@@ -1,0 +1,43 @@
+CREATE COMPUTE MODULE Mandate_Intiation_Inward_Main_ValidationFailRes
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+			
+		DECLARE envref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:MndtInitnReq;
+		
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns = ns1;
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns:ns2 = ns2;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr = '';
+		DECLARE chref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr;
+		SET chref.ns1:MsgId =Environment.msgid;
+		SET chref.ns1:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		-- WHILE (i<=nooftxns) DO
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls = '';
+		DECLARE trref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls;
+		SET trref.ns1:OrgnlMsgInf.ns1:MsgId = envref.ns:Mndt.ns:MndtReqId;
+		SET trref.ns1:OrgnlMsgInf.ns1:MsgNmId = 'MNDTINIT';
+		SET trref.ns1:AccptncRslt.ns1:Accptd = 'False'; ----Indicates whether the mandate request was accepted or rejected.
+		--SET trref.ns1:AccptncRslt.ns1:RjctRsn = 'Duplicate message Received';
+		SET trref.ns1:AccptncRslt.ns1:RjctRsn.ns1:Prtry = '-1';
+		SET trref.ns1:AccptncRslt.ns1:AddtlRjctRsnInf= 'Failed Validation';
+		SET trref.ns1:OrgnlMndt.ns1:OrgnlMndtId = envref.ns:Mndt.ns:MndtReqId;		
+		
+
+
+	END;
+END MODULE;

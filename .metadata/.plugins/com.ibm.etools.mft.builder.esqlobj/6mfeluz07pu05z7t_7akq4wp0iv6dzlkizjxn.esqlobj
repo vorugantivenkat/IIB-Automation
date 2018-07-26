@@ -1,0 +1,144 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE cboReqMessage BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET Environment.CboReqMessage = CAST(cboReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+		SET Environment.Properties = InputRoot.Properties;
+		DECLARE OriginalTxt REFERENCE TO InputRoot.XMLNSC.*:request.*:content;
+
+
+		IF CONTAINS(OriginalTxt,'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>') THEN
+			SET OriginalTxt = SUBSTRING(OriginalTxt AFTER '?>');
+		END IF;
+		CREATE LASTCHILD OF Environment DOMAIN 'XMLNSC' PARSE(OriginalTxt,InputProperties.Encoding,InputProperties.CodedCharSetId);
+
+		DECLARE REQ_TYPE CHARACTER FIELDVALUE(InputRoot.XMLNSC.*:request.*:type);
+		SET PackType = Environment.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:OrgnlMsgNmId;
+		SET PackType1 = Environment.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:OrgnlMsgNmId;
+		-- DIRECT CREIDIT Outward
+		-- It is pacs.008.001.05 FIToFICstmrCdtTrf
+		IF REQ_TYPE LIKE 'CR' THEN
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:GrpHdr.*:MsgId;
+			
+			SET Environment.OP[]= SELECT A.OPTIONAL_ID FROM Database.{SCH_NAME}.{DCO_HEADER_INFO} AS A WHERE A.DCO_GRP_HEADER_ID IN (SELECT B.DCO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCH_NAME}.{DCO_TXN_INFO} AS B WHERE B.MSG_ID=msgId);
+			IF Environment.OP.OPTIONAL_ID IS NOT NULL THEN
+				UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS B SET STATUS ='DCO_SEND_TO_CBO_PT' ,DESCRIPTION = 'Communication Error occured reverting status ' WHERE B.MSG_ID =msgId;
+			ELSE
+				UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS B SET STATUS ='DCO_SEND_TO_CBO_NPT' ,DESCRIPTION = 'Communication Error occured reverting status' WHERE B.MSG_ID =msgId;
+			END IF;
+		ELSEIF REQ_TYPE LIKE 'DB' THEN
+			--Direct Debit Outward
+			-- It is pacs.003.001.05 FIToFICstmrDrctDbt
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			PrOPAGATE TO TERMINAL 'out1';
+			
+		ELSEIF REQ_TYPE LIKE 'RV' THEN
+			-- Reversal Outward
+			--It is pacs.007.001.05 FIToFIPmtRvsl
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			PrOPAGATE TO TERMINAL 'out1';
+			
+		ELSEIF REQ_TYPE LIKE 'CN' THEN
+			--Cancillation OUTWARD
+			--It is camt.056.001.04 FIToFIPmtCxlReq
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFIPmtCxlReq.*:Assgnmt.*:Id;
+			UPDATE Database.{SCH_NAME}.{CANO_REVO_RETO_TXN_INFO} AS R SET STATUS = 'CANO_SEND_TO_CBO',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.MSG_ID = msgId ;
+		ELSEIF REQ_TYPE LIKE 'RT' THEN
+			--RETURN_OUTWARD
+			SET OutputRoot.XMLNSC = Environment.XMLNSC;
+			PrOPAGATE TO TERMINAL 'out1';
+			 
+		ELSEIF REQ_TYPE LIKE 'SR' OR REQ_TYPE LIKE 'CSR' THEN
+			SET msgId = Environment.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:GrpHdr.*:MsgId;
+			SET Assignid = Environment.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:Assgnmt.*:Id;
+			DECLARE Txn ROW;
+			SET Txn.detailsDC[]= SELECT A.PMT_ID_TXN_ID,A.STATUS FROM Database.{SCH_NAME}.{DC_TXN_TABLE} AS A WHERE A.MSG_ID=msgId;
+			SET Txn.detailsDD[]= SELECT A.PMT_ID_TXN_ID,A.STATUS FROM Database.{SCH_NAME}.{DD_TXN_TABLE} AS A WHERE A.MSG_ID=msgId;
+			SET Txn.detailsPRI[]= SELECT A.ORGNL_TX_ID,A.STATUS FROM Database.{SCH_NAME}.{PRI_TXN_INFO} AS A WHERE A.MSG_ID=msgId;
+			SET Txn.detailsREVI[]= SELECT A.ORGNL_TX_ID,A.STATUS FROM Database.{SCH_NAME}.{REVI_TXN_INFO} AS A WHERE A.MSG_ID=msgId;
+			SET Txn.detailsCANI[]= SELECT A.ORGNL_TX_ID,A.STATUS FROM Database.{SCH_NAME}.{CANI_TXN_INFO} AS A WHERE A.ASSIGN_ID=Assignid;
+
+		
+
+
+
+			IF PackType LIKE 'pacs.008.001.05'THEN
+				-- CREDIT_INWARD
+				DECLARE Inref REFERENCE TO Txn.detailsDC[>];
+				WHILE LASTMOVE(Inref) DO
+					IF Inref.STATUS ='DCI_SUCCESS' THEN
+						UPDATE Database.{SCH_NAME}.{DC_TXN_TABLE} AS R SET STATUS = 'DCI_CBS_CRDT_OC_SUCCESS',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.PMT_ID_TXN_ID= Inref.PMT_ID_TXN_ID AND R.MSG_ID = msgId ;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{DC_TXN_TABLE} AS R SET STATUS = 'DCI_CBS_CRDT_OC_FAILED',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.PMT_ID_TXN_ID= Inref.PMT_ID_TXN_ID AND R.MSG_ID = msgId ;
+					END IF;
+					MOVE Inref NEXTSIBLING;
+				END WHILE;
+
+			ELSEIF PackType LIKE 'pacs.003.001.05'THEN
+				-- DEBIT INWARD
+				DECLARE Inref REFERENCE TO Txn.detailsDD[>];
+				WHILE LASTMOVE(Inref) DO
+					IF Inref.STATUS ='DDI_SUCCESS' THEN
+						UPDATE Database.{SCH_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_CBS_DBT_OC_SUCCESS',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.PMT_ID_TXN_ID= Inref.PMT_ID_TXN_ID AND R.MSG_ID = msgId ;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{DD_TXN_TABLE} AS R SET STATUS = 'DDI_CBS_DBT_OC_FAILED',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.PMT_ID_TXN_ID= Inref.PMT_ID_TXN_ID AND R.MSG_ID = msgId ;
+					END IF;
+					MOVE Inref NEXTSIBLING;
+				END WHILE;
+
+			ELSEIF PackType LIKE 'pacs.004.001.05'THEN
+				--RETURN_INWARD
+				DECLARE Inref REFERENCE TO Txn.detailsPRI[>];
+				WHILE LASTMOVE(Inref) DO
+					IF Inref.STATUS ='RETI_SUCCESS' THEN
+						UPDATE Database.{SCH_NAME}.{PRI_TXN_INFO} AS R SET STATUS = 'RETI_CBS_SUCCESS_CBO_SEND',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.MSG_ID = msgId ;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{PRI_TXN_INFO} AS R SET STATUS = 'RETI_CBS_FAILED_CBO_SEND',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.MSG_ID = msgId ;
+					END IF;
+					MOVE Inref NEXTSIBLING;
+				END WHILE;
+			ELSEIF PackType LIKE 'pacs.007.001.05'THEN
+				--REVARSAL_INWARD
+				DECLARE Inref REFERENCE TO Txn.detailsREVI[>];
+				WHILE LASTMOVE(Inref) DO
+					IF Inref.STATUS ='REVI_SUCCESS' THEN
+						UPDATE Database.{SCH_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_DBT_OC_SUCCESS',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.MSG_ID = msgId ;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_DBT_OC_FAILED',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.MSG_ID = msgId ;
+					END IF;
+					MOVE Inref NEXTSIBLING;
+				END WHILE;
+
+			ELSEIF PackType1 LIKE 'camt.056.001.04'THEN
+				-- can_inward
+				DECLARE Inref REFERENCE TO Txn.detailsCANI[>];
+				WHILE LASTMOVE(Inref) DO
+
+					IF Inref.STATUS ='CANI_SUCCESS' THEN
+						UPDATE Database.{SCH_NAME}.{CANI_TXN_INFO} AS R SET STATUS = 'CANI_CBS_SUCCESS_CBO_SEND',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.ASSIGN_ID= Assignid ;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{CANI_TXN_INFO} AS R SET STATUS = 'CANI_CBS_FAILED_CBO_SEND',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.ORGNL_TX_ID= Inref.ORGNL_TX_ID AND R.ASSIGN_ID = Assignid ;
+					END IF;
+					MOVE Inref NEXTSIBLING;
+				END WHILE;
+			END IF;
+
+		END IF;
+
+
+	END;

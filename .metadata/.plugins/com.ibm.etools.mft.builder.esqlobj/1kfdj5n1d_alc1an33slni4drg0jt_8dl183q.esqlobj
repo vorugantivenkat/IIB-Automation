@@ -1,0 +1,236 @@
+CREATE COMPUTE MODULE CBO_Operation_Msgflow_Compute
+
+	DECLARE SCH_NAME EXTERNAL CHARACTER ;
+	DECLARE CHANNEL EXTERNAL CHARACTER ;
+	DECLARE USER EXTERNAL CHARACTER ;
+	DECLARE WORKSTATION EXTERNAL CHARACTER ;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER ;
+	DECLARE CANO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE CANO_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE DCO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DDO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DCO_GRP_HDR_INFO EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE txnstatus,txnEndid CHARACTER;
+	DECLARE TX,DX,SG ROW;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+			DECLARE grpStatus,msgID CHARACTER;
+			DECLARE groupRef REFERENCE TO InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls;
+			DECLARE txnref REFERENCE TO InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[>];
+			SET grpStatus = groupRef.*:OrgnlGrpInfAndSts.*:GrpCxlSts;
+			SET Environment.grpStatus=grpStatus;
+
+			IF EXISTS(InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[]) THEN
+				WHILE LASTMOVE(txnref) DO
+					SET txnstatus = txnref.ns9:TxCxlSts;
+					SET Environment.txnEndid = txnref.ns9:OrgnlTxId;
+					SET Environment.code = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts.*:CxlStsRsnInf.*:Rsn.*:Prtry;
+					SET Environment.reason = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts.*:CxlStsRsnInf.*:AddtlInf;
+					SET Environment.dbQueryCount = '18';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.ID.TXN_FOUND = 'DCO' AND txnstatus = 'ACCR' THEN
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || Environment.txnstatus || 'Double entry request send to CBS' ) INTO rc;
+						DECLARE CBS_TRAN_REF CHARACTER '171B' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS') || Environment.txnEndid ; -----Check once
+						SET Environment.CbsTranRef = CBS_TRAN_REF;
+						IF Environment.ID.ORIGIN_END_TO_END_ID IS NOT NULL THEN
+							SET OutputRoot.XMLNSC = NULL;
+							CALL doubleEntryposting();
+
+							SET Environment.dbQueryCount = '19';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+
+
+							PROPAGATE TO TERMINAL 'out';
+						END IF;
+--					ELSEIF Environment.ID.TXN_FOUND = 'DCO' AND txnstatus = 'ACCR' THEN
+--						SET Environment.dbQueryCount = '20';
+--						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+--						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_SUCCESS' ) INTO rc;
+					ELSEIF Environment.ID.TXN_FOUND = 'DDO' AND txnstatus = 'ACCR' THEN
+						SET Environment.dbQueryCount = '21';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_SUCCESS' ) INTO rc;
+					ELSEIF Environment.ID.TXN_FOUND = 'DCO' AND txnstatus = 'PDCR' THEN
+						SET Environment.dbQueryCount = '22';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| TX.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_FAILED' ) INTO rc;
+					ELSEIF Environment.ID.TXN_FOUND = 'DCO' AND txnstatus = 'RJCR' THEN
+						SET Environment.dbQueryCount = '23';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_FAILED' ) INTO rc;
+					ELSEIF Environment.ID.TXN_FOUND = 'DDO' AND txnstatus = 'PDCR' THEN
+						SET Environment.dbQueryCount = '24';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_FAILED' ) INTO rc;
+					ELSEIF Environment.ID.TXN_FOUND = 'DDO' AND txnstatus = 'RJCR' THEN
+						SET Environment.dbQueryCount = '25';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+						CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.ID.TXN_FOUND || 'with' || txnstatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_FAILED' ) INTO rc;
+						-- ELSE
+						-- UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS J SET STATUS = '----------' WHERE J.END_TO_END_ID = txnEndid; ------check once
+					END IF;
+					MOVE txnref NEXTSIBLING;
+				END WHILE;
+
+			ELSE --Group check else
+
+				SET Environment.msgID = groupRef.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+				SET Environment.code = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:CxlStsRsnInf.*:Rsn.*:Prtry;
+				SET Environment.reason = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:CxlStsRsnInf.*:AddtlInf;
+				SET Environment.dbQueryCount = '26';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				DECLARE recREF REFERENCE TO Environment.ID[>];
+				--WHILE LASTMOVE(recREF) DO
+				SET Environment.recREF = recREF;
+				SET Environment.dbQueryCount = '27';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.recREF.TXN_FOUND = 'DCO' AND grpStatus = 'ACCR' THEN
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Double entry request send to CBS' ) INTO rc;
+					DECLARE CBS_TRAN_REF CHARACTER '171B' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS') || Environment.ID.ORIGIN_END_TO_END_ID ; -----Check once
+					SET Environment.CbsTranRef = CBS_TRAN_REF;
+					IF Environment.ID.ORIGIN_END_TO_END_ID IS NOT NULL THEN
+
+						SET OutputRoot.XMLNSC = NULL;
+						CALL doubleEntryposting();
+						SET Environment.dbQueryCount = '28';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+
+
+						PROPAGATE TO TERMINAL 'out';
+					END IF;
+--				ELSEIF Environment.recREF.TXN_FOUND = 'DCO' AND grpStatus = 'ACCR' THEN
+--					SET Environment.dbQueryCount = '29';
+--					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+--					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_SUCCESS' ) INTO rc;
+
+				ELSEIF Environment.recREF.TXN_FOUND = 'DDO' AND grpStatus = 'ACCR' THEN
+					SET Environment.dbQueryCount = '30';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_SUCCESS' ) INTO rc;
+				ELSEIF Environment.recREF.TXN_FOUND = 'DCO' AND grpStatus = 'PDCR' THEN
+					SET Environment.dbQueryCount = '31';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_FAILED' ) INTO rc;
+				ELSEIF Environment.recREF.TXN_FOUND = 'DCO' AND grpStatus = 'RJCR' THEN
+					SET Environment.dbQueryCount = '32';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DCO_FAILED' ) INTO rc;
+				ELSEIF Environment.recREF.TXN_FOUND = 'DDO' AND grpStatus = 'PDCR' THEN
+					SET Environment.dbQueryCount = '33';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_FAILED' ) INTO rc;
+				ELSEIF Environment.recREF.TXN_FOUND = 'DDO' AND grpStatus = 'RJCR' THEN
+					SET Environment.dbQueryCount = '34';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' Response From CBO For Transcation In'|| Environment.recREF.TXN_FOUND || 'with' || grpStatus || 'Updated Status In' || CANO_TXN_INFO ||'As CANO_DDO_FAILED' ) INTO rc;
+				END IF; --group status check end if
+				--MOVE recREF NEXTSIBLING;
+				--END WHILE;
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'CANO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+	CREATE PROCEDURE doubleEntryposting ( )
+	BEGIN
+		
+		SET Environment.PurposeCodeDesc = Environment.ID.TXN_REASON || MappPurposeCodeWithDescription(Environment.ID.TXN_REASON);
+		DECLARE space1 NAMESPACE 'http://www.oab.com';
+--		SET OutputRoot.MQMD.ReplyToQ = 'IB.REPLY';
+		SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL ;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORKSTATION;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = Environment.CbsTranRef;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNELRESERVED;
+		-- SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.ID.TXN_REASON||'_CANO_DCO_CRDT_OC_CBS_SENT';
+
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = Environment.value.DC_STLMNT_ACC;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = Environment.TY.AMOUNT;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+		/*Naratives for Debitor*/
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference = Environment.TY.BATCH_REFERENCE;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1] = Environment.TY.ORDERING_CUSTOMER_NAME;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2] = Environment.PurposeCodeDesc;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3] = Environment.ID.ORIGIN_END_TO_END_ID;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4] = '';
+
+
+
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = Environment.TY.ORDERING_CUSTOMER_ACCOUNT;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = Environment.TY.AMOUNT;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+		/*Naratives for Creditor*/
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference = Environment.TY.BATCH_REFERENCE;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1] = Environment.TY.BENEF_NAME;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2] = Environment.PurposeCodeDesc;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3] = Environment.ID.ORIGIN_END_TO_END_ID;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]= '';
+
+
+		DECLARE cbsBlob BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET Environment.cbsMsg = CAST(cbsBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+	END;
+END MODULE;

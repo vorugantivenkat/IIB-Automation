@@ -1,0 +1,62 @@
+CREATE DATABASE MODULE Mandate_Intiation_Database
+	DECLARE MANDATE_MGMT_INFO EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.val.DB[] = SELECT A.MI_REFERENCE,A.MT_STATUS FROM Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS A WHERE A.MI_REFERENCE = Environment.refId;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO}(
+			MND_GP_HDP_MSGID,
+			MI_REFERENCE,
+			MND_GP_HDR_CRE_DT_TM,
+			LCLINSTRMT_CD,
+			RECURRINGFREQUENCY,
+			FREQUENCY,
+			FROMDATE,
+			TODATE,
+			COLLECTIONAMT,
+			MAXIMUMAMT,
+			MNDT_REASON,
+			CDTR_NAME,
+			CDTR_ID,
+			CDTR_IDTYPE,
+			CDTR_ACCOUNT,
+			CDTR_BICFI,
+			DBTR_NAME,
+			DBTR_ID,
+			DBTR_IDTYPE,
+			DBTR_ACCOUNT,
+			DBTR_BICFI,
+			MI_STATUS,DESCRIPTION)
+			VALUES
+			(Environment.MND_GP_HDP_MSGID ,
+			Environment.XMLNSC.inBody.Reference,
+			Environment.MND_GP_HDR_CRE_DT_TM,
+			'POS',
+			Environment.XMLNSC.inBody.RecurringFrequency,
+			Environment.XMLNSC.inBody.Frequency,
+			Environment.XMLNSC.inBody.FromDate,
+			Environment.XMLNSC.inBody.ToDate,
+			Environment.colAMT,
+			Environment.maxAMT,
+			Environment.XMLNSC.inBody.Reason,
+			Environment.XMLNSC.inBody.Creditor.Name,
+			Environment.XMLNSC.inBody.Creditor.Id,
+			Environment.XMLNSC.inBody.Creditor.IdType,
+			Environment.XMLNSC.inBody.Creditor.Account,
+			Environment.XMLNSC.inBody.Creditor.Bank,
+			Environment.XMLNSC.inBody.Debtor.Name,
+			Environment.XMLNSC.inBody.Debtor.Id,
+			Environment.XMLNSC.inBody.Debtor.IdType,
+			Environment.XMLNSC.inBody.Debtor.Account,
+			Environment.XMLNSC.inBody.Debtor.Bank,
+			'MNI_RCVD','Sending ISO request message to CBO');
+			ELSEIF Environment.dbQueryCount = '3' THEN
+				UPDATE Database.{SCHEMA_NAME}.{MANDATE_MGMT_INFO} AS A SET MI_STATUS = 'SENT_TO_CBO' WHERE A.MI_REFERENCE = Environment.XMLNSC.inBody.Reference;
+		END IF;
+
+		RETURN TRUE;
+	END;
+
+END MODULE;

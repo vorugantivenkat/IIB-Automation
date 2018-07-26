@@ -1,0 +1,51 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '14' THEN
+			
+			SET Environment.MD.ID[] = SELECT M.MND_GP_HDR_MSGID FROM Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS M WHERE M.MND_GP_HDR_MSGID = Environment.msgID;
+
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			
+			DECLARE UndrRef REFERENCE TO Root.XMLNSC.ns:Document.ns:MndtAmdmntReq.ns:UndrlygAmdmntDtls;
+			DECLARE msgRef  REFERENCE TO Root.XMLNSC.ns:Document.ns:MndtAmdmntReq;
+			DECLARE Currency CHARACTER UndrRef.*:Mndt.*:ColltnAmt.(XMLNSC.Attribute)Ccy;
+			IF Currency IS NULL THEN
+				SET Currency = UndrRef.*:Mndt.ns:MaxAmt.(XMLNSC.Attribute)Ccy;
+			ELSE 
+				SET Currency = 'OMR';
+			END IF;
+			
+			UPDATE Database.{SCHEMA_NAME}.{MANDATE_TABLE} AS A SET
+			MND_GP_HDR_MSGID 		= Environment.msgID ,
+			MND_GP_HDR_CRE_DT_TM 	= msgRef.ns:GrpHdr.ns:CreDtTm,
+			MNDTAM_LCLINSTRMT_CD 	= UndrRef.ns:Mndt.ns:Tp.ns:LclInstrm.ns:Cd,
+			OCURNCS_SEQTYPE 		= UndrRef.*:Mndt.*:Ocrncs.*:SeqTp,
+			OCURNCS_FRQCY_TYPE 		= UndrRef.*:Mndt.*:Ocrncs.*:Frqcy.*:Tp,
+			OCURNCS_DRTN_FROMDATE 	= UndrRef.*:Mndt.*:Ocrncs.*:Drtn.*:FrDt,
+			OCURNCS_DRTN_TODATE 	= UndrRef.*:Mndt.*:Ocrncs.*:Drtn.*:ToDt,
+			MNDT_MAXAMT 			= UndrRef.*:Mndt.*:MaxAmt,
+			MNDT_COLLCTNAMT 		= UndrRef.*:Mndt.*:ColltnAmt,
+			CURRENCY 				= Currency,
+			RSN_PRTRY 				= UndrRef.*:Mndt.*:Rsn.*:Prtry,
+			MNDTAM_RSN_PRTRY 		= UndrRef.*:Mndt.*:AmdmntRsn.*:Rsn.*:Prtry,
+			MNDTAM_ADDTLINF 		= UndrRef.*:Mndt.*:AmdmntRsn.*:AddtlInf,
+			CDTR_NAME 				= UndrRef.*:Mndt.*:Cdtr.*:Nm,
+			CDTR_ID_PRVTID_OTHR_ID 	= UndrRef.*:Mndt.*:Cdtr.*:Id.*:PrvtId.*:Othr.*:Id,
+			CDTR_ID_SCHMENM_PRTRY 	= UndrRef.ns:Mndt.ns:Cdtr.ns:Id.ns:PrvtId.*:Othr.*:SchmeNm.*:Prtry,
+			CDTRACCT_ID_OTHR_ID 	= UndrRef.*:Mndt.*:CdtrAcct.*:Id.*:Othr.*:Id,
+			CDTRAGT_FINID_BICFI 	= UndrRef.ns:Mndt.ns:CdtrAgt.ns:FinInstnId.ns:BICFI,
+			DBTR_NAME 				= UndrRef.*:Mndt.*:Dbtr.*:Nm,
+			DBTR_ID_PRVTID_OTHR_ID	= UndrRef.ns:Mndt.ns:Dbtr.ns:Id.ns:PrvtId.ns:Othr.ns:Id,
+			DBTR_ID_SCHMENM_PRTRY 	= UndrRef.ns:Mndt.ns:Dbtr.ns:Id.ns:PrvtId.ns:Othr.ns:SchmeNm.ns:Prtry,
+			DBTRACCT_ID_OTHR_ID 	= UndrRef.ns:Mndt.ns:DbtrAcct.ns:Id.ns:Othr.ns:Id,
+			DBTRAGT_FINID_BICFI 	= UndrRef.ns:Mndt.ns:DbtrAgt.ns:FinInstnId.ns:BICFI,
+			MNDTAM_ORGNLMNDTID 		= UndrRef.ns:OrgnlMndt.ns:OrgnlMndtId,
+			MNDTAM_ID 				= UndrRef.ns:OrgnlMndt.ns:OrgnlMndtId,
+			MND_INTERFACE_CODE 		= 'MANDTAM',
+			MSG_ID					= Environment.Variables.msgid,
+			STATUS 					= 'MNA_SUCCESS' WHERE A.MNDT_REQID = UndrRef.ns:OrgnlMndt.ns:OrgnlMndtId;
+		
+		END IF;
+		RETURN TRUE;
+	END;
+

@@ -1,0 +1,81 @@
+BROKER SCHEMA com.oab.CBOhandler
+DECLARE ps NAMESPACE 'urn:ats:mpc:envelope';
+DECLARE xsi NAMESPACE 'http://www.w3.org/2001/XMLSchema-instance';
+CREATE COMPUTE MODULE CBO_Outward_MSingle_Router_Compute
+	DECLARE KEYPATH EXTERNAL CHARACTER;
+	DECLARE KeyStore_pwd EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+
+		
+		DECLARE msgId CHARACTER;
+		DECLARE Signature,req_type,type CHARACTER;  
+
+
+		DECLARE msg_con BLOB ASBITSTREAM(InputRoot.XMLNSC ENCODING 541 CCSID 1208);
+		DECLARE msg_char CHARACTER CAST(msg_con AS CHARACTER CCSID 1208);
+
+		SET req_type = FIELDNAME(InputRoot.XMLNSC.[2].[2]);
+
+		IF req_type LIKE 'CstmrOpng%' THEN
+			SET msgId =  InputRoot.XMLNSC.*:Document.*:CstmrOpngReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.01';
+		ELSEIF req_type LIKE 'CstmrMntnc%'THEN
+			SET msgId = InputRoot.XMLNSC.*:Document.*:CstmrMntncReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.02';
+		ELSEIF req_type LIKE 'CstmrClsg%'THEN
+			SET msgId = InputRoot.XMLNSC.*:Document.*:CstmrClsgReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.03';
+		ELSEIF req_type LIKE 'AcntOpng%'THEN
+			SET msgId =  InputRoot.XMLNSC.*:Document.*:AcntOpngReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.06';
+		ELSEIF req_type LIKE 'AcntMntnc%' THEN
+			SET msgId = InputRoot.XMLNSC.*:Document.*:AcntMntncReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.07';
+		ELSEIF req_type LIKE 'AcntClsg%' THEN
+			SET msgId =  InputRoot.XMLNSC.*:Document.*:AcntClsgReq.*:MsgId.*:Id;
+			SET type = 'CSTMRREG.08';
+		END IF;
+		DECLARE rootref REFERENCE TO OutputRoot.XMLNSC;
+
+
+		CREATE FIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration NAME 'XmlDeclaration';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8';
+		--SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)StandAlone = 'yes';
+		--CREATE LASTCHILD OF OutputRoot.XMLNSC AS cibilfaultref NAMESPACE fault NAME 'CIBIL_Enq_FaultRes';
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS rootref NAMESPACE ps NAME 'envelope';
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:ps = ps;
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:xsi = xsi;
+
+		SET rootref.id = msgId;
+		SET rootref.type = type;
+		SET rootref.format = '';
+		
+		SET rootref.date = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+		DECLARE msgContentDate CHARACTER msg_char || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+		--SET msgContentDate = REPLACE(msgContentDate ,'"','\"');
+		
+		SET Signature= DigitalSignatureOABSign(msgContentDate,KEYPATH,KeyStore_pwd);
+
+		SET rootref.signature = Signature;
+		SET rootref.(XMLNSC.CDataField)content = msg_char;
+
+	END;
+END MODULE;

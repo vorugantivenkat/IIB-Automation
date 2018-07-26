@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+    <xsd:element name="WpsSifStatusRequest">
+    	<xsd:complexType>
+    		<xsd:sequence>
+    			<xsd:element name="Channel" minOccurs="1">
+    				<xsd:simpleType>
+    					<xsd:restriction base="xsd:string">
+    						<xsd:pattern value=".{0,10}"></xsd:pattern>    					</xsd:restriction>    				</xsd:simpleType>    			</xsd:element>    			<xsd:element name="Reference" minOccurs="1">
+    				<xsd:simpleType>
+    					<xsd:restriction base="xsd:string">
+    						<xsd:pattern value=".{0,16}"></xsd:pattern>    					</xsd:restriction>    				</xsd:simpleType>    			</xsd:element>    		</xsd:sequence>    	</xsd:complexType>    </xsd:element></xsd:schema>

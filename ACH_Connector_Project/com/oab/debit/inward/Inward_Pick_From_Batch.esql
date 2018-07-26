@@ -1,0 +1,547 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.debit.inward
+
+DECLARE fbchId SHARED CHARACTER;
+DECLARE fbchSeq SHARED INTEGER;
+/*Author : Adil
+Subsequent Modifications by : Lokesh
+Module Name : Direct_Debit_Inward
+Flow Name : Direct_Debit_Inward_Main
+Purpose : Inserting Group Header into Data Base,Storing input message in DB and forming CBS request message from batch.
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting,Http Response
+Dependency Database : Yes,DDI_GP_HEADER_INFO,DDI_TXN_INFO,DDI_SUPPLEMENTRY_DATA,DDI_TXN_CDTR_OTHER,DDI_TXN_DBTR_OTHER,DDI_TXN_REMIT_INFO,(TableName)
+Dependency XSD(REQUEST) : pacs.003.001.05.xsd
+Dependency XSD(RESPONSE) : pacs.002.001.06.xsd
+Dependency CBS : Yes,Simulator_CBS_DoubleEntryPosting
+Description :
+1. Store Header to Database.
+2. Pick individual transaction from Input Message and does the following. For each such transaction following is done.
+a. Validate automatically based on the namespace.
+b. If Validate is success, then store transaction info in Databse (Four tables are updated)
+c. Retrieve necessary information required for HTTP call ( getting account information ) from database using transaction id.
+If http is failure retry it for three times
+d. Retrieve necessary information required for DEP from database using transaction id.
+e. Construct CBS Request and send to CBS Queue.
+f. If Validate is failure, then store that particular transaction in Environment.
+3. When all the transactions are done, pull the information that is stored in the environment and send back to CBO.
+*/
+
+DECLARE ns NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.003.001.05';
+DECLARE ns1 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.002.001.06';
+DECLARE ns3 NAMESPACE 'http://www.Progressoft.com/ACH';
+
+CREATE COMPUTE MODULE Inward_Pick_From_Batch
+
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc ,bool BOOLEAN;
+	DECLARE DD_GRP_TABLE,BANK_PREFIX EXTERNAL CHARACTER;
+	DECLARE DD_TXN_TABLE EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE instgBICFI,srcMsg,retry CHARACTER;
+	DECLARE msgID,cboMsgId CHARACTER;
+	DECLARE finResRef REFERENCE TO OutputRoot.XMLNSC;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE VerifyMsgId() RETURNS BOOLEAN BEGIN
+		SET Environment.msgID = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:MsgId;
+		SET Environment.dbQueryCount = '1';
+
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+		--================| If the batch msg is duplicate then it is rejected and error message is sent to CBO |==============--
+		SET retry = InputRoot.MQRFH2.usr.Retry;
+		IF CARDINALITY(Environment.ID[]) > 0 AND retry = 'True' THEN
+			RETURN TRUE;
+		ELSEIF CARDINALITY(Environment.ID[]) > 0 THEN
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Duplicate Batch Message. Message with '|| Environment.msgID ||' already exists in Database') INTO rc;
+			CALL resMsg() INTO bool;
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry ='Duplicate Message Details';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf ='The same Message ID was processed earlier';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+			/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+			CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+			CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence;*/
+
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+		END IF;
+
+		DECLARE grpInstgBICFI CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE grpInstdBICFI CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE totalAmount CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:TtlIntrBkSttlmAmt;
+		DECLARE txnDate CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:IntrBkSttlmDt;
+		--DECLARE plcName CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:SplmtryData.ns:PlcAndNm;
+		--===============| Checking mandatory fields |==================--
+		IF LENGTH(grpInstgBICFI) > 0 AND LENGTH(grpInstdBICFI) > 0 AND LENGTH(totalAmount) > 0 AND
+			LENGTH(txnDate) > 0 THEN
+
+			DECLARE stlmtMthd CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:SttlmInf.ns:SttlmMtd;
+			--------- checking constraint PC1 -------------
+			IF stlmtMthd = 'CLRG' THEN
+				DECLARE inbodyRef REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt;
+				DECLARE grpCurncy CHARACTER inbodyRef.ns:GrpHdr.ns:TtlIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy;
+				DECLARE frststmlPrty CHARACTER inbodyRef.ns:DrctDbtTxInf[1].ns:SttlmPrty;
+
+				IF LENGTH(frststmlPrty) > 0 THEN
+					DECLARE TotalAmount DECIMAL inbodyRef.ns:GrpHdr.ns:TtlIntrBkSttlmAmt;
+					DECLARE no_Of_txns,len INTEGER;
+					SET no_Of_txns = inbodyRef.ns:GrpHdr.ns:NbOfTxs;
+					SET len = CARDINALITY(inbodyRef.ns:DrctDbtTxInf[]);
+					--------- checking constraint IC1 ------------
+					IF no_Of_txns = len THEN
+						DECLARE I INTEGER 1;
+						DECLARE Amount DECIMAL;
+						DECLARE sumofAmount DECIMAL 0.0;
+						WHILE I <= len DO
+
+							SET Amount = inbodyRef.ns:DrctDbtTxInf[I].ns:IntrBkSttlmAmt;
+							SET sumofAmount = sumofAmount + Amount ;
+							DECLARE curncy CHARACTER inbodyRef.ns:DrctDbtTxInf[I].ns:IntrBkSttlmAmt.(XMLNSC.Attribute)Ccy;
+							--------- checking constraint IC3 ------------
+							IF curncy = grpCurncy THEN
+								DECLARE stmlPrty CHARACTER inbodyRef.ns:DrctDbtTxInf[I].ns:SttlmPrty;
+								--------- checking constraint IC4 ------------
+								IF stmlPrty = frststmlPrty THEN
+									DECLARE chrgBrr CHARACTER inbodyRef.ns:DrctDbtTxInf[I].ns:ChrgBr;
+									--------- checking constraint PC2 ------------
+									IF chrgBrr = 'SLEV' THEN
+										IF I = len THEN
+											------------- checking constraint IC2 ------------
+											IF TotalAmount = sumofAmount THEN
+
+												RETURN TRUE;
+												--========| Message is rejected when any of the above constraint is failed |=========--
+											ELSE
+												CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint IC2 not satisfied') INTO rc;
+												CALL resMsg() INTO bool;
+												IF Environment.Exception = 'True' THEN
+													RETURN FALSE;
+												END IF;
+												SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+												SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint IC2 not satisfied';
+												SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = '"Group Header/Total Interbank Settlement Amount" must be equal to the sum of all occurrences of "Direct Debit Transaction Information/Interbank Settlement Amount"';
+												--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+												CALL resMsg1();
+												/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+												CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+												CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence; */
+
+												PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+												RETURN FALSE;
+												CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+											END IF;
+										ELSE
+											SET I = I + 1;
+										END IF;
+									ELSE
+										CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint PC2 not satisfied') INTO rc;
+										CALL resMsg() INTO bool;
+										IF Environment.Exception = 'True' THEN
+											RETURN FALSE;
+										END IF;
+										SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+										SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint PC2 not satisfied';
+										SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = '"Charge Bearer" should always contain "SLEV"';
+										--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+										CALL resMsg1();
+										/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+										CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+										CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence; */
+
+										PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+										RETURN FALSE;
+										CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+									END IF;
+
+								ELSE
+									CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint IC4 not satisfied') INTO rc;
+									CALL resMsg() INTO bool;
+									IF Environment.Exception = 'True' THEN
+										RETURN FALSE;
+									END IF;
+									SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+									SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint IC4 not satisfied';
+									SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = 'All occurrences of "Settlement Priority" should have the same value within the same batch';
+									--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+									/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+									CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+									CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence; */
+                                     CALL resMsg1();
+									PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+									RETURN FALSE;
+									CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+								END IF;
+
+							ELSE
+								CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint IC3 not satisfied') INTO rc;
+								CALL resMsg() INTO bool;
+								IF Environment.Exception = 'True' THEN
+									RETURN FALSE;
+								END IF;
+								SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+								SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint IC3 not satisfied';
+								SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = '"Direct Debit Transaction Information/Interbank Settlement Amount" must have the same Payments Clearing and Settlement currency as the currency of "Group Header/Total Interbank Settlement Amount"';
+								--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+								CALL resMsg1();
+								PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+								RETURN FALSE;
+								CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+							END IF;
+						END WHILE;
+					ELSE
+						CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint IC1 not satisfied') INTO rc;
+						CALL resMsg() INTO bool;
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint IC1 not satisfied';
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = '"Group Header/Number Of Transactions" must equal the number of occurrences of "Direct Debit Transaction Information"';
+						--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+						CALL resMsg1();
+						PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+						RETURN FALSE;
+						CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+					END IF;
+
+				ELSE
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Mandatory Fields Missing') INTO rc;
+					CALL resMsg() INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Message not valid';
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = 'Mandatory field "SttlmPrty" is missing';
+					--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+					CALL resMsg1();
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+					RETURN FALSE;
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+				END IF;
+
+			ELSE
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Constraint PC1 not satisfied') INTO rc;
+				CALL resMsg() INTO bool;
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Constraint PC1 not satisfied';
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = '"Settlement Method" should always be equal to "CLRG"';
+				--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+				CALL resMsg1();
+				/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+				CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+				CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence; */
+
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				RETURN FALSE;
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+			END IF;
+
+		ELSE
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Mandatory Fields Missing') INTO rc;
+			CALL resMsg() INTO bool;
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = 'Message not valid';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = 'Mandatory fields are missing';
+			--SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+			CALL resMsg1();
+			/*CREATE LASTCHILD OF OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:Envlp AS finResRef NAMESPACE ns3 NAME 'achSupplementaryData';
+			CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'batchSource' VALUE '20';
+			CREATE LASTCHILD OF finResRef NAMESPACE ns3 NAME 'sessionSequence' VALUE Environment.REQMsg.SplmtryData.ns:Envlp.ns3:achSupplementaryData.ns3:sessionSequence; */
+
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+		END IF;
+	END;
+
+
+
+	CREATE PROCEDURE CopyEntireMessage()RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+			DECLARE GRPREF REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr;
+			SET Environment.msgid = GRPREF.ns:MsgId;
+			CALL writeToLogFile(flowName, 'ddi_info', 'INFO','CBO request message received with Message Id '||Environment.msgid) INTO rc;
+			SET instgBICFI = InputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstgAgt.ns1:FinInstnId.ns1:BICFI;
+			DECLARE processMsg BOOLEAN;
+			--======| Calling VerifyMsgId procedure to check duplicate MsgId under GrpHdr |==========--
+			SET processMsg = VerifyMsgId();
+			IF processMsg = TRUE THEN
+
+				DECLARE inbodyRef REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt;
+				DECLARE itr,len,NoOfTxns INTEGER;
+				SET itr = 1;
+				SET len = CARDINALITY(inbodyRef.ns:DrctDbtTxInf[]);
+				DECLARE ddMsgCount INTEGER 1;
+				SET Environment.ddMsgCounter = ddMsgCount;
+				--============================================ Picking the header======================================
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				-- CALL resMsg();
+				-- SET OutputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr = inbodyRef.ns:GrpHdr;
+
+				DECLARE crt_date_time TIMESTAMP CURRENT_GMTTIMESTAMP;
+				SET Environment.crt_date_time = crt_date_time;
+				SET Environment.no_of_txns = GRPREF.ns:NbOfTxs;
+				SET Environment.ttl_settle_amt = CAST(GRPREF.ns:TtlIntrBkSttlmAmt AS DECIMAL );
+				DECLARE settle_date DATE GRPREF.ns:IntrBkSttlmDt;
+				SET Environment.settle_date = settle_date;
+				SET Environment.settle_method = GRPREF.SttlmInf.ns:SttlmnMtd;
+				SET Environment.clr_sys_prtry = GRPREF.ns:SttlmInf.ns:ClrSys.ns:Prtry;
+				SET Environment.lcl_inst_code = GRPREF.ns:PmtTpInf.ns:LclInstrm.ns:Cd;
+				SET Environment.ctgy_purp_prtry = GRPREF.ns:PmtTpInf.ns:CtgyPurp.ns:Prtry;
+				SET Environment.instg_agt_BICFI = GRPREF.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+				SET Environment.instg_agt_branchid_id = GRPREF.ns:InstgAgt.ns:BrnchId.ns:Id;
+				SET Environment.instd_agt_BICFI = GRPREF.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+				SET Environment.instd_agt_branchid_id = GRPREF.ns:InstdAgt.ns:BrnchId.ns:Id;
+				--=================|inserting grp header into DB|=================--
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Inserting header information to Header table') INTO rc;
+				IF retry IS NULL THEN
+					SET Environment.dbQueryCount = '2';
+					--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+				END IF;
+				-- DECLARE gpheaderpk INTEGER;
+				-- SET gpheaderpk = SELECT MAX(GP.DDI_GP_HEADER_ID) FROM Database.{DD_GRP_TABLE} AS GP;
+				-- --==============================================inserting supp data==============================================
+				-- DECLARE supdata CHARACTER inbodyRef.ns:SplmtryData.ns:Envlp.ns:*;
+				-- INSERT INTO Database.{SCHEMA_NAME}.{DD_SUPP_TABLE }(DDI_GP_HEADER_ID_SUPP_FK,PLACE_NAME,ENV_BATCH_SRC) VALUES (gpheaderpk,'ACHSupplementaryData',supdata);
+				--===============| picking individual txn separately |===================--
+				DECLARE pickinc INTEGER 1;
+				WHILE pickinc <= len DO
+					SET Environment.txnId = inbodyRef.ns:DrctDbtTxInf[pickinc].ns:PmtId.ns:TxId;
+					SET Environment.dbQueryCount = '8';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					IF Environment.status.STATUS IS NULL THEN
+						SET OutputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr = inbodyRef.ns:GrpHdr;
+						SET OutputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf = inbodyRef.ns:DrctDbtTxInf[pickinc];
+						SET OutputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:SplmtryData = inbodyRef.ns:SplmtryData;
+						SET Environment.MSG.TAXN= OutputRoot.XMLNSC;
+						PROPAGATE TO TERMINAL 'out' DELETE NONE;
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+					END IF;
+
+					SET pickinc = pickinc + 1;
+				END WHILE;
+
+				SET OutputRoot.XMLNSC = NULL;
+				--====================| picking from environment THE FAIL TXN |====================--
+				DECLARE failno INTEGER;
+				DECLARE L,H,P INTEGER 1;
+
+				IF CARDINALITY(Environment.FAIL.TXNS[]) > 0 THEN
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Forming CBO response message for rejected transactions') INTO rc;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:MsgId = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:MsgId;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstgAgt.ns1:FinInstnId.ns1:BICFI =
+
+					InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgId = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:MsgId;
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgNmId = 'pacs.003.001.05';
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+					--for failure txn
+
+
+					SET failno = CARDINALITY(Environment.FAIL.TXNS[]);
+
+					WHILE P <= failno DO
+						DECLARE temp,stsId CHARACTER;
+						SET temp = CAST(P AS CHARACTER);
+						SET stsId = cboMsgId || RIGHT('000'||temp,3);
+
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:StsId = Environment.FAIL.TXNS[P].ns1:StsId;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:OrgnlEndToEndId = Environment.FAIL.TXNS[P].ns1:OrgnlEndToEndId;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:OrgnlTxId = Environment.FAIL.TXNS[P].ns1:OrgnlTxId;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:TxSts = Environment.FAIL.TXNS[P].ns1:TxSts ;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = Environment.FAIL.TXNS[P].ns1:StsRsnInf.ns1:Rsn.ns1:Prtry;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:StsRsnInf.ns1:AddtlInf = Environment.FAIL.TXNS[P].ns1:StsRsnInf.ns1:AddtlInf;
+						SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts[P].ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = Environment.FAIL.TXNS[P].ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI;
+
+						SET P = P + 1;
+					END WHILE;
+
+					SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:SplmtryData.ns1:PlcAndNm = 'ACHSupplementaryData';
+					CALL writeToLogFile(flowName, 'ddi_info', 'INFO','Sending CBO response message for rejected transactions') INTO rc;
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				END IF;
+				--=============| SETTING ENVIRONMENT TO NULL |==================---
+				SET Environment.ddMsgCounter = NULL;
+				SET Environment.MSG.TAXN = NULL;
+				SET Environment.FAIL.TXNS = NULL;
+				CALL writeToLogFile(flowName, 'ddi_info', 'INFO',' -------------------------') INTO rc;
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'DDI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+
+	CREATE PROCEDURE resMsg() RETURNS BOOLEAN BEGIN
+		-- SET Environment.dbQueryCount = '3';
+		--
+		-- CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		-- IF Environment.Exception = 'True' THEN
+		-- RETURN FALSE;
+		-- END IF;
+
+		DECLARE currDay,currDate,estSeq CHARACTER;
+		SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd');
+		SET currDate = SUBSTRING(currDay FROM 5 FOR 2);
+
+		IF LENGTH(fbchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+			DECLARE prevIdDate CHARACTER;
+			SET prevIdDate = SUBSTRING(fbchId FROM 9 FOR 2); -- if contains, extracting date from it
+			IF prevIdDate = currDate THEN
+				SET fbchSeq = fbchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+			ELSE
+				SET fbchSeq = 1; -- if dates are not same then starting new sequence from 1
+			END IF;
+		ELSE
+			SET fbchSeq = 1;
+		END IF;
+		DECLARE j,alpha CHARACTER;
+		SET j = CAST(fbchSeq AS CHARACTER);
+		SET fbchId = BANK_PREFIX || CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd') || 'FLD' || CAST(RIGHT('000'||j,3) AS CHARACTER);
+		SET alpha = random(3);
+		SET cboMsgId = 'OMAB' || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns = ns1;
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns:ns3 = ns3;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:MsgId = cboMsgId;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstgAgt.ns1:FinInstnId.ns1:BICFI = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgId = InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrDrctDbt.ns:GrpHdr.ns:MsgId;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgNmId = 'pacs.003.001.05';
+	END;
+	CREATE PROCEDURE resMsg1() BEGIN
+		DECLARE supRef REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt;
+		CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns1 NAME 'SplmtryData';
+		CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns1 NAME 'Envlp';
+		CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns3 NAME 'supplementaryData';
+		CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns3 NAME 'Items';
+		SET supRef.ns3:Item = '20';
+		SET supRef.ns3:Item.(XMLNSC.Attribute)Key = 'batchSource';
+		
+		SET supRef.ns3:Item[2] = '1';
+		SET supRef.ns3:Item[2].(XMLNSC.Attribute)Key = 'session';
+	END;
+END MODULE;
+
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";
+CREATE PROCEDURE random(IN Length INTEGER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";

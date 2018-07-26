@@ -1,0 +1,81 @@
+
+
+BROKER SCHEMA com.oab.cancellation.outward
+--DECLARE ns6 NAMESPACE 'http://www.oab.com';
+/*Author : Upender Kuncham
+Subsequent Modifications by : Upender Kuncham
+Module Name : Cancellation_Outward
+Flow Name : Cancellation_Response_From_CBS
+Dependency Module :
+Dependency Database :
+Dependency XSD(Request Message) : camt.056.001.04.xsd,CAN_OAB_REQUEST.xsd
+Dependency XSD(Response Message) : camt.029.001.05.xsd,ACH_CANCELLATIONOUTWARD_RESPONSE.xsd
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+We Update Database based Upon the Response That we Received From CBS
+*/
+
+CREATE COMPUTE MODULE Cancellation_Outward_Response_From_CBS
+	-- DECLARE CANO_HEADER_INFO EXTERNAL CHARACTER ;
+	DECLARE CANO_TXN_INFO EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER ;
+	DECLARE DSN_NAME EXTERNAL CHARACTER ;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.txnRef = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			SET Environment.payRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			DECLARE result REFERENCE TO InputRoot.XMLNSC.*:Reply.*:Header;
+			IF Environment.txnRef LIKE '171A%' OR Environment.txnRef LIKE '171B%' THEN
+				IF result.*:replyStatus = 'FIN' THEN
+					SET Environment.dbQueryCount = '16';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Response From CBS For Transaction With transactionReference' || Environment.txnRef || 'Was Success Updated Status in CANO_REVO_RETO_TXN_INFO AsCANO_DCO_CBS_CRDT_OC_SUCCESS' ) INTO rc;
+				ELSE
+					SET Environment.faultString = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+					SET Environment.faultCode = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultCode;
+					SET Environment.dbQueryCount = '17';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Response From CBS For Transaction With transactionReference' || Environment.txnRef || 'Was Failed Updated Status in CANO_REVO_RETO_TXN_INFO CANO_DCO_CBS_CRDT_OC_PENDING' ) INTO rc;
+				END IF;
+			END IF;
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'CANO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+END MODULE;

@@ -1,0 +1,214 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		CALL writeToLogFile(flowName, 'ACH_STATUS', 'INFO',' ---ACH_Status_Report Flows starts---------------') INTO rc;
+		SET Environment.channel = InputRoot.XMLNSC.AchBatchStatusRequest.Batch.Channel;
+		SET Environment.reference = InputRoot.XMLNSC.AchBatchStatusRequest.Batch.Reference;
+		SET Mdule = InputRoot.XMLNSC.AchBatchStatusRequest.Batch.Module;
+		CALL writeToLogFile(flowName, 'ACH_STATUS', 'INFO','OAB sends the Request for Batch Status Report with cahnnel'|| channel || 'And Batch Reference' || Environment.reference) INTO rc;
+		-- SET Environment.dbQueryCount = '1';
+		--
+		-- CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		--
+
+		IF Mdule = 'DC' THEN --- If The Batch Transaction Found in DDO Table
+			CALL writeToLogFile(flowName, 'ACH_STATUS', 'INFO','Batch Transaction Details are found in DCO table') INTO rc;
+			SET grpheaderId.DC[] = SELECT H.DCO_GRP_HEADER_ID,H.STATUS,H.CBS_PAY_REF,H.FAULT_CODE,H.FAULT_STRING FROM Database.{SCH_NAME}.{DCO_GRP_HDR} AS H WHERE H.CHANNEL = Environment.channel AND H.BATCH_REFERENCE = Environment.reference;
+			IF grpheaderId.DC.DCO_GRP_HEADER_ID IS NOT NULL THEN
+				SET transStatusDetails.DC[] = SELECT T.END_TO_END_ID,T.STATUS,T.TXN_REF,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING,T.CBO_GRP_STATUS,T.DESCRIPTION,T.CBO_TXN_STATUS FROM Database.{SCH_NAME}.{DCO_TXN} AS T WHERE T.DCO_GRP_HDR_ID_TXN_INFO_FK = grpheaderId.DC.DCO_GRP_HEADER_ID;
+			ELSE
+				SET grpheaderId.DC[] = SELECT H.DCI_GP_HEADER_ID FROM Database.{SCH_NAME}.{DCI_GRP_HDR} AS H WHERE H.MSG_ID = Environment.reference;
+				SET transStatusDetails.DC[] = SELECT T.PMT_ID_ENDTOEND_ID, T.CBS_TRAN_REF, T.PMT_ID_TXN_ID,T.STATUS,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING,T.CBO_GRP_STATUS,T.DESCRIPTION,T.CBO_TXN_STATUS FROM Database.{SCH_NAME}.{DCI_TXN} AS T WHERE T.DCI_GP_HDR_ID_TXN_FK = grpheaderId.DC.DCI_GP_HEADER_ID;
+			END IF;
+			DECLARE transStatusRef REFERENCE TO transStatusDetails.DC[>];
+			DECLARE groupRef REFERENCE TO grpheaderId.DC;
+			CALL batchResMsg(transStatusRef, groupRef);
+		ELSEIF Mdule = 'DD' THEN
+			CALL writeToLogFile(flowName, 'ACH_STATUS', 'INFO','Batch Transaction Details are found in DDO table') INTO rc;
+			SET grpheaderId.DD[] = SELECT H.DDO_GRP_HEADER_ID,H.STATUS FROM Database.{SCH_NAME}.{DDO_GRP_HDR} AS H WHERE H.CHANNEL = Environment.channel AND H.BATCH_REFERENCE = Environment.reference;
+			IF grpheaderId.DD.DDO_GRP_HEADER_ID IS NOT NULL THEN
+				SET transStatusDetails.DD[] = SELECT T.END_TO_END_ID,T.TXN_REF,T.STATUS,T.CBS_TRAN_REF,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING FROM Database.{SCH_NAME}.{DDO_TXN} AS T WHERE T.DDO_GRP_HDR_ID_TXN_INFO_FK = grpheaderId.DD.DDO_GRP_HEADER_ID;
+			ELSE
+				SET grpheaderId.DD[] = SELECT H.DDI_GP_HEADER_ID FROM Database.{SCH_NAME}.{DDI_GRP_HDR} AS H WHERE H.MSG_ID= Environment.reference;
+				SET transStatusDetails.DD[] = SELECT T.PMT_ID_ENDTOEND_ID,T.PMT_ID_TXN_ID,T.STATUS,T.CBS_TRAN_REF,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING FROM Database.{SCH_NAME}.{DDI_TXN} AS T WHERE T.DDI_GP_HDR_ID_TXN_FK = grpheaderId.DD.DDI_GP_HEADER_ID;
+			END IF;
+
+			DECLARE transStatusRef REFERENCE TO transStatusDetails.DD[>];
+			DECLARE groupRef REFERENCE TO grpheaderId.DD;
+			CALL batchResMsg(transStatusRef, groupRef);
+
+		END IF;
+	END;
+
+	CREATE PROCEDURE batchResMsg( IN transRef REFERENCE , IN groupRef REFERENCE)BEGIN ---this procedure generates the response message for Batch Status
+
+
+	SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+	SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+
+	DECLARE batchRef,txnRef REFERENCE TO OutputRoot.XMLNSC;
+	SET OutputRoot.XMLNSC.AchBatchStatusResponse = '';
+	DECLARE statusRes REFERENCE TO OutputRoot.XMLNSC.AchBatchStatusResponse;
+	CREATE LASTCHILD OF statusRes AS batchRef NAME 'Batch';
+	SET batchRef.Channel = Environment.channel;
+	SET batchRef.Reference = Environment.reference;
+	SET batchRef.CBSReference = groupRef.CBS_PAY_REF;
+	SET batchRef.Status = groupRef.STATUS;
+	SET batchRef.ResponseCode = 'ACH000';
+	SET batchRef.ResponseText = groupRef.FAULT_STRING;
+
+	IF EXISTS(transStatusDetails.[]) THEN
+		WHILE LASTMOVE(transRef) DO
+			/* THIS IS FOR ALL CANO_RTO_REVO */
+			CALL writeToLogFile(flowName, 'ACH_STATUS', 'INFO','Batch Transaction Details are found in  CANO_REVO_RETO table') INTO rc;
+			SET transStatusCANRETOTEVO.CAN[] = SELECT T.CBS_FAULT_STRING,T.CBS_FAULT_CODE,T.STATUS,T.TRAN_REF,T.CBS_TRAN_REF,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING FROM Database.{SCH_NAME}.{CANO_REVO_RETO_TXN_INFO} AS T WHERE T.ORIGIN_END_TO_END_ID = transRef.END_TO_END_ID OR T.ORIGIN_END_TO_END_ID LIKE '%'||transRef.PMT_ID_TXN_ID; --T.GRP_HDR_ID_TXN_INFO_FK = grpheaderId.CAN.GRP_HEADER_ID;
+			DECLARE StatusRefROREVOCANO REFERENCE TO transStatusCANRETOTEVO.CAN[>];
+			/* this is to find the (DCI && DDI )transaction in cancel */
+			SET transStatusCANI.CANI[] = SELECT T.CANC_ID,T.STATUS,T.CBS_TRAN_REF,T.TXN_ID,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING FROM Database.{SCH_NAME}.{CANI_TXN_INFO} AS T WHERE T.ORGNL_TX_ID = transRef.PMT_ID_TXN_ID; --T.GRP_HDR_ID_TXN_INFO_FK = grpheaderId.CAN.GRP_HEADER_ID;
+			DECLARE StatusRefCani REFERENCE TO transStatusCANI.CANI[>];
+
+
+			CREATE LASTCHILD OF batchRef AS txnRef NAME 'Transaction';
+			/* this is check the transation in reti*/
+			IF transRef.STATUS = 'DCO_SUCCESS' OR transRef.STATUS = 'DDI_SUCCESS' THEN
+				SET transStatusReti.RETI[] = SELECT T.RTR_ID,T.TXN_ID,T.DESCRIPTION,T.STATUS,T.CBS_TRAN_REF,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING,T.CBO_GRP_STATUS ,T.CBO_TXN_STATUS FROM Database.{SCH_NAME}.{RETI_TXN_INFO} AS T WHERE T.ORGNL_TX_ID=transRef.END_TO_END_ID ; --T.DDO_GRP_HDR_ID_TXN_INFO_FK = grpheaderId.DD.DDO_GRP_HEADER_ID;
+				DECLARE transStatusRefReti REFERENCE TO transStatusReti.RETI[>];
+				WHILE LASTMOVE(transStatusRefReti) DO
+					IF transStatusRefReti.STATUS='RETI_CBS_FAILED_CBO_SEND' OR transStatusRefReti.STATUS='RETI_FAILED' THEN
+						SET txnRef.Status = transStatusRefReti.STATUS;
+						SET txnRef.TransactionReference = transStatusRefReti.RTR_ID;
+						SET txnRef.CBSReference = transStatusRefReti.CBS_PAY_REF;
+						SET txnRef.CBOReference = transStatusRefReti.TXN_ID;
+						SET txnRef.ResponseCode = transStatusRefReti.FAULT_CODE;
+						SET txnRef.ResponseText =transStatusRefReti.FAULT_STRING;
+					ELSE
+						SET txnRef.Status = transStatusRefReti.STATUS;
+						SET txnRef.TransactionReference = transStatusRefReti.RTR_ID;
+						SET txnRef.CBSReference = transStatusRefReti.CBS_PAY_REF;
+						SET txnRef.CBOReference = transStatusRefReti.TXN_ID;
+
+					END IF;
+					MOVE transStatusRefReti NEXTSIBLING;
+				END WHILE;
+			END IF ;
+			/* this is check the transation in revi*/
+			IF transRef.STATUS = 'DDO_SUCCESS' OR transRef.STATUS='DCI_SUCCESS' THEN
+				SET transStatusRevi.REVI[] = SELECT T.RVSL_ID,T.TXN_ID,T.DESCRIPTION,T.STATUS,T.CBS_TRAN_REF,T.CBS_PAY_REF,T.FAULT_CODE,T.FAULT_STRING,T.CBO_GRP_STATUS ,T.CBO_TXN_STATUS FROM Database.{SCH_NAME}.{REVI_TXN_INFO} AS T WHERE T.ORGNL_TX_ID=transRef.END_TO_END_ID OR T.ORGNL_TX_ID=transRef.PMT_ID_TXN_ID; --T.DDO_GRP_HDR_ID_TXN_INFO_FK = grpheaderId.DD.DDO_GRP_HEADER_ID;
+				DECLARE transStatusRefRevi REFERENCE TO transStatusRevi.REVI[>];
+				WHILE LASTMOVE(transStatusRefRevi) DO
+					IF transStatusRefRevi.STATUS='REVI_DBT_OC_FAILED' OR transStatusRefRevi.STATUS='REVI_FAILED' THEN
+						SET txnRef.Status = transStatusRefRevi.STATUS;
+						SET txnRef.TransactionReference = transStatusRefRevi.RVSL_ID;
+						SET txnRef.CBSReference = transStatusRefRevi.CBS_PAY_REF;
+						SET txnRef.CBOReference = transStatusRefRevi.TXN_ID;
+						SET txnRef.ResponseCode = transStatusRefRevi.FAULT_CODE;
+						SET txnRef.ResponseText =transStatusRefRevi.FAULT_STRING;
+					ELSE
+						SET txnRef.Status = transStatusRefRevi.STATUS;
+						SET txnRef.TransactionReference = transStatusRefRevi.RVSL_ID;
+						SET txnRef.CBSReference = transStatusRefRevi.CBS_PAY_REF;
+						SET txnRef.CBOReference = transStatusRefRevi.TXN_ID;
+					END IF;
+					MOVE transStatusRefRevi NEXTSIBLING;
+				END WHILE;
+			END IF ;
+			/* this is check the transation in cancel outward*/
+			WHILE LASTMOVE(StatusRefROREVOCANO) DO
+				IF StatusRefROREVOCANO.STATUS ='CANO_DCO_CBS_CRDT_OC_PENDING' OR StatusRefROREVOCANO.STATUS='REVO_CBS_CRDT_OC_FAILED 'THEN
+					SET txnRef.Status = StatusRefROREVOCANO.STATUS;
+					SET txnRef.TransactionReference = StatusRefROREVOCANO.TRAN_REF;
+					SET txnRef.CBSReference =StatusRefROREVOCANO.CBS_PAY_REF;
+					SET txnRef.CBOReference = StatusRefROREVOCANO.TXN_ID;
+					SET txnRef.ResponseCode = StatusRefROREVOCANO.CBS_FAULT_CODE;
+					SET txnRef.ResponseText =StatusRefROREVOCANO.CBS_FAULT_STRING;
+				ELSEIF StatusRefROREVOCANO.STATUS = 'RETO_CBS_CRDT_OC_FAILED' THEN
+					SET txnRef.Status = StatusRefROREVOCANO.STATUS;
+					SET txnRef.TransactionReference = StatusRefROREVOCANO.TRAN_REF;
+					SET txnRef.CBSReference =StatusRefROREVOCANO.CBS_PAY_REF ;
+					SET txnRef.CBOReference = StatusRefROREVOCANO.TXN_ID;
+					SET txnRef.ResponseCode = StatusRefROREVOCANO.FAULT_CODE;
+					SET txnRef.ResponseText =StatusRefROREVOCANO.FAULT_STRING;
+					/*
+					ELSEIF StatusRefROREVOCANO.STATUS = 'RETO_DDO_REJECT' OR StatusRefROREVOCANO.STATUS = 'REVO_CBO_FAILED' OR StatusRefROREVOCANO.STATUS ='RETO_DCI_REJECT' THEN
+					-- SET txnRef.Status = StatusRefROREVOCANO.STATUS;
+					-- DECLARE ResponseCode INTEGER;
+					-- DECLARE ResonString CHARACTER;
+					--SET txnRef.TransactionReference = StatusRefROREVOCANO.TRAN_REF;
+					-- SET txnRef.ResponseCode = StatusRefROREVOCANO.FAULT_CODE;
+					-- SET ResonString = SUBSTRING(StatusRefROREVOCANO.CBO_GRP_STATUS AFTER ' ');
+					-- SET ResponseCode = SUBSTRING(StatusRefROREVOCANO.DESCRIPTION AFTER ':');
+					-- SET txnRef.ResponseText =StatusRefROREVOCANO.ResponseCode;
+					*/
+					ELSEIF StatusRefROREVOCANO.STATUS='CANO_DDO_FAILED' OR StatusRefROREVOCANO.STATUS='CANO_DCO_FAILED' THEN
+					SET txnRef.Status = StatusRefROREVOCANO.STATUS;
+					SET txnRef.TransactionReference = StatusRefROREVOCANO.TRAN_REF;
+					SET txnRef.CBOReference = StatusRefROREVOCANO.TXN_ID;
+					SET txnRef.ResponseCode = StatusRefROREVOCANO.FAULT_CODE;
+					SET txnRef.ResponseText =StatusRefROREVOCANO.FAULT_STRING;
+				ELSE
+					SET txnRef.Status = StatusRefROREVOCANO.STATUS;
+					SET txnRef.TransactionReference = StatusRefROREVOCANO.TRAN_REF;
+					SET txnRef.CBSReference =StatusRefROREVOCANO.CBS_PAY_REF;
+					SET txnRef.CBOReference = StatusRefROREVOCANO.TXN_ID;
+				END IF;
+				MOVE StatusRefROREVOCANO NEXTSIBLING;
+			END WHILE;
+			/* this is check the transation in cancel inward*/
+
+			WHILE LASTMOVE(StatusRefCani) DO
+				IF StatusRefCani.STATUS='CANI_CBS_FAILED_CBO_SEND' OR StatusRefCani.STATUS='CANI_FAILED' THEN
+					SET txnRef.Status = StatusRefCani.STATUS;
+					SET txnRef.TransactionReference = StatusRefCani.CANC_ID;
+					SET txnRef.CBSReference =StatusRefCani.CBS_PAY_REF ;
+					SET txnRef.CBOReference = StatusRefCani.TXN_ID;
+					SET txnRef.ResponseCode =StatusRefCani.FAULT_CODE;
+					SET txnRef.ResponseText =StatusRefCani.FAULT_STRING;
+				ELSE
+					SET txnRef.Status = StatusRefCani.STATUS;
+					SET txnRef.TransactionReference = StatusRefCani.CANC_ID;
+					SET txnRef.CBSReference =StatusRefCani.CBS_PAY_REF ;
+					SET txnRef.CBOReference = StatusRefCani.TXN_ID;
+				END IF;
+				MOVE StatusRefCani NEXTSIBLING;
+			END WHILE;
+
+			IF transRef.STATUS = 'DCO_CBS_DBT_OC_FAILED' OR transRef.STATUS='DCO_CBS_CRDT_DCSETLACC_FAILED' OR transRef.STATUS='DCO_CBS_CRDT_OC_FAILED' OR transRef.STATUS='DCI_CBS_CRDT_OC_FAILED' OR transRef.STATUS='DDI_CBS_DBT_OC_FAILED' OR transRef.STATUS= 'DDI_FAILED' OR transRef.STATUS= 'DCI_FAILED' THEN
+				SET txnRef.Status = transRef.STATUS;
+				SET txnRef.TransactionReference = transRef.TXN_REF;
+				SET txnRef.CBSReference = transRef.CBS_PAY_REF;
+				SET txnRef.CBOReference = transRef.TXN_ID;
+				SET txnRef.ResponseCode = transRef.FAULT_CODE;
+				SET txnRef.ResponseText = transRef.FAULT_STRING;
+			ELSE
+				IF txnRef.Status IS NULL THEN
+					SET txnRef.Status = transRef.STATUS;
+					SET txnRef.TransactionReference = COALESCE(transRef.TXN_REF,transRef.PMT_ID_ENDTOEND_ID);
+					SET txnRef.CBSReference = transRef.CBS_PAY_REF;
+					SET txnRef.CBOReference = transRef.TXN_ID;
+				END IF;
+			END IF;
+
+			MOVE transRef NEXTSIBLING;
+		END WHILE;
+	ELSE
+		CREATE NEXTSIBLING OF batchRef AS txnRef NAME 'Transaction';
+		SET txnRef.ResponseCode = 'ACH99';
+		SET txnRef.ResponseText = 'Record not found for the given reference';
+	END IF;
+	PROPAGATE TO TERMINAL 'out';
+END;

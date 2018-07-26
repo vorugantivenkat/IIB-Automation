@@ -1,0 +1,15 @@
+package com.test;
+
+public class TestDecodwe {
+
+	public static void main(String[] args) {
+		try {
+			String url = "QW5pbA==";
+
+			
+			 System.out.println(Base64.encodeBase64String(StringUtils.getBytesUtf8(url)));
+			
+		} catch (Exception E) {
+		}
+	}
+}

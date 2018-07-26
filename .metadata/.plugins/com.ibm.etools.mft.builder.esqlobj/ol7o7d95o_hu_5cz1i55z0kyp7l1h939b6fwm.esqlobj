@@ -1,0 +1,4 @@
+CREATE PROCEDURE random(IN Length INTEGER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";

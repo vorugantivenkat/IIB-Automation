@@ -1,0 +1,49 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE excDesc CHARACTER getExceptionDesc(InputRoot,OutputRoot,InputExceptionList);
+			
+		DECLARE txnIn CHARACTER Environment.CANC.TXN.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf.ns13:OrgnlTxId;
+		DECLARE dbTxn CHARACTER Environment.CANC.DBTXNS.PMT_ID_TXN_ID;
+		DECLARE txn CHARACTER;
+		SET txn = COALESCE(txnIn,dbTxn);
+		
+		
+		DECLARE rejRsn CHARACTER;
+		
+		IF excDesc IS NOT NULL THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET EXEC_DESC = excDesc WHERE J.ORGNL_TX_ID = txn;
+			COMMIT;
+		ELSE
+			DECLARE i INTEGER;
+			SET i = Environment.failno;
+		
+			SET Environment.FAIL.TXNS[i].OrgnlTxId = txn;
+			SET Environment.FAIL.TXNS[i].TxCxlSts = 'RJCR';			
+			SET Environment.FAIL.TXNS[i].Prtry = Environment.TxnFail.Rsn;
+			SET Environment.FAIL.TXNS[i].AddtlInf = Environment.TxnFail.AddtlInf;
+			--SET rejRsn = Environment.TxnFail.Rsn;
+			--UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET EXEC_DESC = rejRsn WHERE J.ORGNL_TX_ID = txn;
+		   -- COMMIT;
+		    SET Environment.TxnFail = NULL;
+			
+			SET i = i + 1;
+		    SET Environment.failno = i;
+		END IF;
+		
+	END;

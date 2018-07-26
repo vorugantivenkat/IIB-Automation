@@ -1,0 +1,497 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.reversal.outward
+/* Author : Upender
+Subsequent Modifications by : Mahidhar
+Module Name : Reversal_Outward
+Flow Name : Reversal_Outward_Main.msgflow
+Purpose : validate and Data insertion
+Dependency Module : Handler_CBO.
+Dependency Database : DC_CONFIG_VALUES,CANO_REVO_RETO_GRPHDR_INFO,CANO_REVO_RETO_TXN_INFO,DCO_GROUP_HEADER_INFO
+Dependency XSD(Request Message) : OAB_PaymentReversal_Request.xsd,pacs.007.001.05.
+Dependency XSD(Response Message) : PaymentReversal_ResMsgToOAB.xsd
+Dependency CBS :
+Description : In this Flow We get reveseral request ,,
+*/
+--DECLARE res NAMESPACE 'www.oab.com/CBSresponse';
+--DECLARE nsreq NAMESPACE 'www.oab.com/revo_request';
+DECLARE ns10 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.007.001.05';
+DECLARE ns11 NAMESPACE 'http://www.Progressoft.com/ACH';
+--DECLARE ns3 NAMESPACE 'www.oab.com/revo_response';
+
+DECLARE bchSeq SHARED INTEGER;
+DECLARE bchId SHARED CHARACTER;
+DECLARE bool BOOLEAN;
+CREATE COMPUTE MODULE ReversalOut_pick_from_batch
+	DECLARE rc BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel; --Getting Flowname to write logfile
+	DECLARE CANO_REVO_RETO_GRPHDR_INFO EXTERNAL CHARACTER; ---Table used to get details of Reveseral tranasaction details:CANO_REVO_RETO_GRPHDR_INFO
+	DECLARE CANO_REVO_RETO_TXN_INFO EXTERNAL CHARACTER; --Table used to insert the Transation Details :CANO_REVO_RETO_TXN_INFO
+	DECLARE DCO_TXN_INFO EXTERNAL CHARACTER; --Table used to Search the transaction details:DCO_TXN_INFO
+	DECLARE DCO_GROUP_HEADER_INFO EXTERNAL CHARACTER; --Table used to get the Ordering Customer details :DCO_GROUP_HEADER_INFO
+	DECLARE DC_CONFIG_VALUES EXTERNAL CHARACTER; --Table for getting the configurable deatils:DC_CONFIG_VALUES.
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER; --schema name of the database: esbach
+	DECLARE DDI_TXN_INFO EXTERNAL CHARACTER; --Table used to Search the transaction details:DDI_TXN_INFO
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER; --log4j configuration file path
+	DECLARE DDI_GP_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE seqCount INTEGER 1;
+	DECLARE count INTEGER 3;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE Bool BOOLEAN doRequestProcess();
+		
+		RETURN Bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	CREATE PROCEDURE doRequestProcess() RETURNS BOOLEAN
+	BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC.inData = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+
+			DECLARE TranRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation.*:Transaction; -- Storing Entire Transaction details
+			DECLARE inHeaderRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation; -- Storing Entire Batch Message details
+
+			DECLARE Chl_Btch_Ref CHARACTER; --Storing batch Reference of Message
+			SET Environment.Variables.Chl_Btch_Ref = inHeaderRef.Channel || inHeaderRef.BatchReference ; --'1223160916B08899'; ESB Generated Field
+			SET Chl_Btch_Ref = inHeaderRef.Channel || inHeaderRef.BatchReference ; --used as ref for db query
+			/* ====================================================
+			Checking for duplicate check on message level
+			====================================================*/
+			CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO',' --------------START---------------') INTO rc;
+			CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Message received for Rersaloutward') INTO rc;
+
+			DECLARE gpheaderpk ROW; -- storing Transaction Group header Details
+			DECLARE End_To_End_Id,Origin_End_To_End_Id CHARACTER;
+			SET End_To_End_Id = Chl_Btch_Ref || TranRef.TransactionReference; -- End_to_End of particular Transaction
+			SET Environment.Variables.Origin_End_To_End_Id = inHeaderRef.Channel||inHeaderRef.OriginalReference||TranRef.OriginalTransactionReference; --end_to_end id from DCO or DDI table
+
+			SET Environment.dbQueryCount = '1';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			--Storing ENDTOENDID value to env
+			SET Environment.Variables.EndtoEndID = End_To_End_Id;
+			SET Environment.Variables.ReasonofReversal = TranRef.Reason;
+			CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','group header inserted and Inserting Transaction info details' ) INTO rc;
+			/*SET Environment.dbQueryCount = '2';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+			END IF; */
+			/*===========================================================
+			checking the original transaction id in Direct Credit outward
+			and Direct Debit inward table .
+			=============================================================*/
+			SET Environment.dbQueryCount = '3';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+			SET Environment.dbQueryCount = '4';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			IF CARDINALITY(Environment.DB2.ID[]) > 0 THEN --2
+				CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction found in DirectCreditOutward Table and checking status for END_TO_END_ID :' || End_To_End_Id ) INTO rc;
+
+				SET Environment.dbQueryCount = '5';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				DECLARE Grpfk CHARACTER Environment.RECS.DCO_GRP_HDR_ID_TXN_INFO_FK;
+				SET Environment.Variables.Grpfk = Environment.RECS.DCO_GRP_HDR_ID_TXN_INFO_FK;
+				DECLARE Origin_MsgId CHARACTER Environment.RECS.MSG_ID;
+				DECLARE Orgin_TxnId CHARACTER Environment.RECS.TXN_ID;
+
+				SET Environment.dbQueryCount = '6';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF Environment.RECS.STATUS = 'DCO_SUCCESS' THEN --2.1
+					--transaction found and status success from DCO_TXN_INFO
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction status is DCO_SUCCESS and calling prepareISO  ') INTO rc;
+					SET Environment.Variables.TXN_FOUND = 'DCO';
+
+					CALL genMessageID()INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET Environment.dbQueryCount = '10';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					CALL prepareISOReq();
+
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','updating DB status to REVO_CBO_SENT for E2E_ID :' || End_To_End_Id ) INTO rc;
+				ELSE --2.1.
+					--Transaction found but status is not success send failure response back to OAB
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction status is not success and updating status to REVO_ORGTXN_FAILED E2E_ID' || End_To_End_Id) INTO rc;
+
+					SET Environment.dbQueryCount = '11';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+					CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchBatchCancelation';
+					SET achRef.faultCode = 'ACH001' || 'FAILED';
+					SET achRef.faultString = 'Transaction was not happend';
+
+					PROPAGATE TO TERMINAL 'out1';
+
+				END IF ; --2.1
+
+			ELSE -- 2
+
+				DECLARE Orginalbatchtran CHARACTER;
+				SET Environment.Variables.Orginalbatchtran = TranRef.OriginalTransactionReference;
+				CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','checking DDI table for transaction id :' || Orginalbatchtran) INTO rc;
+
+				SET Environment.dbQueryCount = '12';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF CARDINALITY(Environment.RECS[]) > 0 AND Environment.RECS.STATUS = 'DDI_SUCCESS' THEN --2.1
+					--success case
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction found in DDI and Status DDI_SUCCESS ,calling genMessageID() and PepareISO()') INTO rc;
+					SET Environment.Variables.TXN_FOUND = 'DDI';
+					CALL genMessageID () INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET Environment.dbQueryCount = '13';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+
+					CALL prepareISOReq();
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Database table updated to REVO_CBO_SENT') INTO rc;
+				ELSE --2.2
+					--Failure Case
+					CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','Transaction not found or status is not DDISUCCESS Updating table to REVO_ORGTXN_FAILED') INTO rc;
+
+					SET Environment.dbQueryCount = '14';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+					SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+					DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+					CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchBatchCancelation';
+					SET achRef.faultCode = 'ACH001' || 'FAILED';
+					SET achRef.faultString = 'Transaction not found';
+
+					PROPAGATE TO TERMINAL 'out1';
+
+				END IF; --2.2
+			END IF; --2
+
+		ELSE --main else block
+
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'REVO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+
+
+	END;
+
+	CREATE PROCEDURE prepareISOReq ( )
+	BEGIN
+		-----------------------ISO Message Generation-----------------------------------------
+		CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','in PepareISO()') INTO rc;
+		DECLARE inputRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation;
+		DECLARE MessageID,settlementDate CHARACTER;
+		DECLARE RecsRef REFERENCE TO Environment.RECS[>];
+		DECLARE ConfigRef REFERENCE TO Environment.Config.RECS[>];
+
+		SET settlementDate = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+		SET OutputRoot.XMLNSC.ns10:Document.(XMLNSC.NamespaceDecl)xmlns = ns10;
+		SET OutputRoot.XMLNSC.ns10:Document.(XMLNSC.NamespaceDecl)xmlns:ns11 = ns11;
+		SET OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:GrpHdr = '';
+		DECLARE isogrpheader REFERENCE TO OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:GrpHdr;
+		SET isogrpheader.ns10:MsgId = Environment.Variables.bchId;
+		DECLARE dte CHARACTER CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET isogrpheader.ns10:CreDtTm = dte;
+		SET isogrpheader.ns10:NbOfTxs = '1';
+		-- IF Environment.Variables.TXN_FOUND = 'DCO' THEN
+		--
+		-- SET isogrpheader.ns1:TtlRvsdIntrBkSttlmAmt = RecsRef.AMOUNT;
+		-- ELSE --for DDI
+		-- SET isogrpheader.ns1:TtlRvsdIntrBkSttlmAmt = RecsRef.INTERBANK_SETTLE_AMNT;
+		-- END IF;
+		SET isogrpheader.ns10:IntrBkSttlmDt = settlementDate;
+		SET isogrpheader.ns10:SttlmInf.ns10:SttlmMtd = ConfigRef.STML_MTHD; --Settlement method value from Configtable
+		SET isogrpheader.ns10:SttlmInf.ns10:ClrSys.ns10:Prtry ='ACH'; --ConfigRef.CLRSYS_PRPRTRY;
+		SET isogrpheader.ns10:InstgAgt.ns10:FinInstnId.ns10:BICFI= ConfigRef.INSTAGT_FN_BICFI; --OAB BANK CODE
+
+		IF Environment.Variables.TXN_FOUND = 'DCO' THEN
+			SET isogrpheader.ns10:InstdAgt.ns10:FinInstnId.ns10:BICFI= RecsRef.BENEF_BANK; -- BENEF BANK CODE or INSTD_AGT_FIN_ID_BICFI
+
+		ELSE --for DDI
+			SET isogrpheader.ns10:InstdAgt.ns10:FinInstnId.ns10:BICFI= RecsRef.CGTRAGT_FIN_ID_BICFI; -- BENEF BANK CODE or INSTD_AGT_FIN_ID_BICFI
+		END IF;
+
+		SET OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:OrgnlGrpInf ='';
+		DECLARE isotxn REFERENCE TO OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:OrgnlGrpInf;
+
+		IF Environment.Variables.TXN_FOUND = 'DCO' THEN
+
+			SET isotxn.ns10:OrgnlMsgId = RecsRef.MSG_ID;
+			SET isotxn.ns10:OrgnlMsgNmId ='pacs.008.001.05';
+
+		ELSE --for DDI
+			SET isotxn.ns10:OrgnlMsgId = RecsRef.MSG_ID;
+			SET isotxn.ns10:OrgnlMsgNmId ='pacs.003.001.05';
+		END IF;
+		--SET isotxn.ns1:RvslRsnInf.ns1:AddtlInf='reversa';
+
+		SET OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:TxInf ='';
+		DECLARE isotxni REFERENCE TO OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl.ns10:TxInf;
+		SET isotxni.ns10:RvslId = Environment.Variables.TXN_ID; --generated by ESB
+
+
+		IF Environment.Variables.TXN_FOUND = 'DCO' THEN
+			SET isotxni.ns10:OrgnlTxId = RecsRef.TXN_ID;
+			SET isotxni.ns10:RvsdIntrBkSttlmAmt= RecsRef.AMOUNT;
+			SET isotxni.ns10:RvsdIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy = 'OMR';
+		ELSE --for DDI
+			SET isotxni.ns10:OrgnlTxId = RecsRef.PMT_ID_TXN_ID;
+			SET isotxni.ns10:RvsdIntrBkSttlmAmt= RecsRef.INTERBANK_SETTLE_AMNT;
+			SET isotxni.ns10:RvsdIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy = 'OMR';
+		END IF;
+
+		SET isotxni.ns10:RvslRsnInf.ns10:Rsn.ns10:Prtry= '111'; --Txn Reason from request
+		SET isotxni.ns10:RvslRsnInf.ns10:AddtlInf = Environment.Variables.ReasonofReversal;
+
+
+		SET OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl = '';
+		DECLARE SupRef REFERENCE TO OutputRoot.XMLNSC.ns10:Document.ns10:FIToFIPmtRvsl;
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns10 NAME 'SplmtryData';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns10 NAME 'Envlp';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns11 NAME 'supplementaryData';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns11 NAME 'Items';
+		SET SupRef.ns11:Item = '2';
+		SET SupRef.ns11:Item.(XMLNSC.Attribute)key = 'batchSource';
+
+		PROPAGATE TO TERMINAL 'out';
+	END;
+	--Procedure to Calculating MessageID
+
+	CREATE PROCEDURE genMessageID ( ) RETURNS BOOLEAN
+	BEGIN
+		--generating Batch Sequence(MsgID) which is in the format BankCode(4digit)+CurrentDate(yyMMdd)+Sequence(001)-----------------
+		CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','in genMessageID()') INTO rc;
+		DECLARE ConfigRef REFERENCE TO Environment.Config.RECS[>];
+		DECLARE currDate,previousDate CHARACTER;
+		SET currDate = CAST(CURRENT_DATE AS CHARACTER FORMAT 'YYYYMMdd');
+		SET Environment.Variables.estSeq =ConfigRef.BANK_PREFIX;
+
+		SET Environment.dbQueryCount = '14A';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+
+
+		IF Environment.recCount =1 AND bchSeq > 0 THEN
+			SET bchSeq = bchSeq + 1;
+		ELSE
+			SET Environment.dbQueryCount = '14B';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+			SET previousDate = SUBSTRING(Environment.DD.V.MSG_RCV_TIMESTAMP FROM 1 FOR 8);
+
+			IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+				IF seqCount = 1 THEN
+					IF previousDate = currDate THEN
+						SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+					ELSE
+						SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+						SET seqCount = seqCount + 1;
+					END IF;
+				ELSE
+					SET bchSeq = bchSeq + 1;
+				END IF;
+
+			ELSE -- if there is no previous BatchID value in shared variable
+				DECLARE DB ROW;
+
+				SET Environment.dbQueryCount = '7';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF CARDINALITY(Environment.DB.V[]) > 0 AND previousDate = currDate THEN --- checking in DB, MsgId column whether there is a sequence with current date
+
+					SET Environment.dbQueryCount = '8';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					SET Environment.dbQueryCount = '9';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					DECLARE maxIdSeq,maxIdChar CHARACTER;
+					SET maxIdChar = CAST(Environment.DB.NM.MSG_ID AS CHARACTER);
+					SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+					DECLARE newSeq INTEGER;
+					SET newSeq = CAST(maxIdSeq as INTEGER);
+
+					SET bchSeq = newSeq + 1; -- if there incrementing by 1
+
+				ELSE -- if not there then starting with 1
+					SET bchSeq = 1;
+					SET seqCount = seqCount + 1;
+				END IF;
+			END IF;
+		END IF;
+
+		DECLARE j,alpha CHARACTER;
+		SET j = CAST(bchSeq AS CHARACTER);
+		SET alpha = random(count);
+		SET bchId = ConfigRef.BANK_PREFIX || '1' || 'M' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+		SET Environment.Variables.bchId = bchId;
+		SET Environment.Variables.TXN_ID = Environment.Variables.bchId||'001';
+		CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','BatchID:'|| Environment.Variables.bchId) INTO rc;
+		CALL writeToLogFile(flowName, 'REVO_INFO', 'INFO','TXN_ID or REVERSALID:'|| Environment.Variables.TXN_ID) INTO rc;
+
+	END;
+END MODULE;
+
+
+
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+
+
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";
+
+CREATE PROCEDURE random(IN Length INTEGER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";

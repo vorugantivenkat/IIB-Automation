@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element ibmSchExtn:docRoot="true" name="SIF_SYNCBACK_ACK">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+                				                                <xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="Orig_File_header">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separator=",">
+							<xsd:element ibmDfdlExtn:sampleValue="head_value1" name="HeaderVal" type="xsd:string"/>
+                            																												                                                                                                                                                                </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>			
+                				                                                                <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;%WSP*;" maxOccurs="unbounded" name="Orig_File_Record">
+					<xsd:complexType>
+						<xsd:sequence dfdl:separator=","> 
+                            							                            														                                                                                                                                                                                            <xsd:element ibmDfdlExtn:sampleValue="value1" name="RecordVal" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+                			                                            <xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="Sync_Back_Header">
+					<xsd:complexType>
+						<xsd:sequence>
+							<xsd:element ibmDfdlExtn:sampleValue="head_value1" name="RecordId" type="xsd:string"/>
+                            																												                                                                                                            <xsd:element name="RefNumber" type="xsd:string"/>
+                            <xsd:element name="Status" type="xsd:string"/>
+                            <xsd:element name="ReasonCode" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+                <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;" maxOccurs="unbounded" name="Sync_Back_Record">
+					<xsd:complexType>
+						<xsd:sequence> 
+							<xsd:element ibmDfdlExtn:sampleValue="value1" name="RecordId" type="xsd:string"/>
+                            														                                                                                                            <xsd:element minOccurs="0" name="RefNumber" type="xsd:string"/>
+                            <xsd:element name="Status" type="xsd:string"/>
+                            <xsd:element maxOccurs="1" minOccurs="0" name="ReasonCode" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>
+            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+
+</xsd:schema>

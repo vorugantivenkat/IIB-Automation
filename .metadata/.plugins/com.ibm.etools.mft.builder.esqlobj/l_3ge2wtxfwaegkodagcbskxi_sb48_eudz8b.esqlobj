@@ -1,0 +1,107 @@
+CREATE COMPUTE MODULE Database_retry_Compute
+	 	DECLARE DCO_TABLE1 EXTERNAL CHARACTER ;
+	 	DECLARE DCO_TABLE2 EXTERNAL CHARACTER ;
+	 	DECLARE DCO_TABLE3 EXTERNAL CHARACTER ;
+	 	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	 	DECLARE CHANNEL EXTERNAL CHARACTER;
+	 	DECLARE USER EXTERNAL CHARACTER;
+	 	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	 	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	 	DECLARE TransRefId CHARACTER;
+	 	DECLARE cbsPayRef CHARACTER;
+	 	DECLARE urn NAMESPACE 'www.oab.com/dco_request';
+	 	--DECLARE NS1 NAMESPACE 'http://www.oab.com';
+	 	CREATE FUNCTION Main() RETURNS BOOLEAN
+	 	BEGIN
+	 		-- CALL CopyMessageHeaders();
+	 		CALL CopyEntireMessage();
+	 		RETURN FALSE;
+ 		END;
+
+ 		CREATE PROCEDURE CopyMessageHeaders() BEGIN
+ 			DECLARE I INTEGER 1;
+ 			DECLARE J INTEGER;
+ 			SET J = CARDINALITY(InputRoot.*[]);
+ 			WHILE I < J DO
+ 				SET OutputRoot.*[I] = InputRoot.*[I];
+ 				SET I = I + 1;
+ 			END WHILE;
+ 		END;
+
+ 		CREATE PROCEDURE CopyEntireMessage() BEGIN
+ 			DECLARE inMessage CHARACTER;
+ 			SET OutputRoot.Properties = InputRoot.Properties;
+ 			SET OutputRoot.MQMD = InputRoot.MQMD;
+ 			SET OutputRoot.MQRFH2.usr.dbQueryCount = InputRoot.XMLNSC.MSG.ExceptionDetails.dbQueryCount;
+ 			DECLARE actMsg CHARACTER REPLACE(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg,'<xmlns:ns>http://www.oab.com</xmlns:ns>','');
+ 			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+ 			--CREATE LASTCHILD OF Environment DOMAIN 'XMLNS' PARSE(srcMsg, InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+ 			--DECLARE CacheQueueBlob BLOB CAST(InputRoot.BLOB.BLOB AS BLOB CCSID 1208);
+ 			--SET CacheQueueBlob = CAST (xmlString AS BLOB);
+ 			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+ 			SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;		
+ 			-- SET OutputRoot.XMLNSC = Environment.XMLNS;
+ 			DECLARE inRef REFERENCE TO OutputRoot.XMLNSC;
+ 			DECLARE dbCount CHARACTER OutputRoot.MQRFH2.usr.dbQueryCount;
+ 			IF dbCount = '1' OR dbCount = '2' OR dbCount = '3' OR dbCount = '4' OR dbCount = '5' OR dbCount = '6' OR dbCount = '7' OR dbCount = '8' THEN
+ 				DECLARE chlBatchRef CHARACTER;
+ 				DECLARE record ROW;
+ 				SET chlBatchRef = inRef.ACHDirectCredit.Channel || inRef.ACHDirectCredit.BatchReference;
+ 				SET record.id [] = SELECT J.DCO_GRP_HEADER_ID FROM Database.{SCH_NAME}.{DCO_TABLE1} AS J WHERE J.CHL_BTCH_REF = chlBatchRef;
+ 				DELETE FROM Database.{SCH_NAME}.{DCO_TABLE2} AS J WHERE J.DCO_GRP_HDR_ID_TXN_INFO_FK = record.id.DCO_GRP_HEADER_ID;
+ 				DELETE FROM Database.{SCH_NAME}.{DCO_TABLE1} AS K WHERE K.CHL_BTCH_REF = chlBatchRef;
+ 				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_DCO_Q_REQ';
+ 				PROPAGATE TO TERMINAL 'out1';
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '9' THEN
+ 				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_DCO_Q_RES';
+ 				PROPAGATE TO TERMINAL 'out1';
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '10' THEN
+ 				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_DCO_Q_RES';
+ 				PROPAGATE TO TERMINAL 'out1';
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '11' THEN
+ 				DECLARE checkStatus ROW;
+ 				DECLARE cbstxnRef CHARACTER;
+ 				SET TransRefId = inRef.*:Reply.*:Header.*:transactionReference;
+ 				SET cbsPayRef = inRef.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+ 				SET checkStatus.id[] = SELECT A.DC_STLMNT_ACC,K.STATUS,K.AMOUNT,K.END_TO_END_ID FROM Database.{SCH_NAME}.{DCO_TABLE3} AS A,Database.{SCH_NAME}.{DCO_TABLE2} AS K WHERE K.CBS_TRAN_REF = TransRefId;
+ 				DECLARE txnRef REFERENCE TO checkStatus.id[>];
+ 				WHILE LASTMOVE(txnRef) DO
+ 					IF txnRef.STATUS = 'DCO_CBS_DBT_OC_SENT' THEN
+ 						SET cbstxnRef = '151' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(txnRef.END_TO_END_ID AS CHARACTER);
+ 						SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+-- 						SET OutputRoot.MQMD.ReplyToQ = 'IB.REPLY';
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = cbstxnRef;
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNEL_RESERVED;
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = txnRef.DC_STLMNT_ACC; --'3101196774700';--
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '+' || CAST(txnRef.AMOUNT AS CHARACTER);
+ 						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = 'OMR';
+ 						UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT',DESCRIPTION = 'Batch Debit Operation was Success and Transaction sent to CBS for credit',CBS_TRAN_REF = cbstxnRef,CBS_PAY_REF = cbsPayRef WHERE R.END_TO_END_ID = txnRef.END_TO_END_ID AND R.STATUS = 'DCO_CBS_DBT_OC_SENT';
+ 						UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SETACC_CRDT_UNDER_PROCESS' WHERE R.CBS_TRAN_REF = TransRefId;
+ 						PROPAGATE TO TERMINAL 'out';
+ 					END IF;
+ 					MOVE txnRef NEXTSIBLING;
+ 				END WHILE;
+ 				UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SETACC_CRDT_ALL_TXNS_PROCESSED' WHERE R.CBS_TRAN_REF = TransRefId;
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '12' THEN
+ 				UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET STATUS = 'DCO_CBS_SETACC_CRDT_ALL_TXNS_PROCESSED' WHERE R.CBS_TRAN_REF = TransRefId;
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '13' OR dbCount = '14' OR dbCount = '15' OR dbCount = '16' OR dbCount = '17' THEN
+ 				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_DCO_Q_RES';
+ 				PROPAGATE TO TERMINAL 'out1';
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			ELSEIF dbCount = '18' OR dbCount = '18C' OR dbCount = '19' OR dbCount = '20' OR dbCount = '21' OR dbCount = '22' OR dbCount = '22C' OR dbCount = '22D' OR dbCount = '23' OR dbCount = '24' OR dbCount = '25' THEN
+ 				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DCO_Q_RES';
+ 				PROPAGATE TO TERMINAL 'out1';
+ 				PROPAGATE TO TERMINAL 'out2';
+ 			END IF;
+ 		END;
+ 	END MODULE;

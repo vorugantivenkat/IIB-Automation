@@ -1,0 +1,110 @@
+
+
+BROKER SCHEMA com.oab.debit.inward
+/*Author : Adil
+Subsequent Modifications by : Adil
+Module Name : Direct_Debit_Inward
+Flow Name : Direct_Debit_Inward_Main
+Purpose : Inserting Group Header into Data Base,Storing input message in DB and forming CBS request message from batch.
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting,Http Response
+Dependency Database : Yes,DDI_GP_HEADER_INFO,DDI_TXN_INFO,DDI_SUPPLEMENTRY_DATA,DDI_TXN_CDTR_OTHER,DDI_TXN_DBTR_OTHER,DDI_TXN_REMIT_INFO,(TableName)
+Dependency XSD(REQUEST) : pacs.003.001.05.xsd
+Dependency XSD(RESPONSE) : pacs.002.001.06.xsd
+Dependency CBS : Yes,Simulator_CBS_DoubleEntryPosting
+Description :
+1. Store Header to Database.
+2. Pick individual transaction from Input Message and does the following. For each such transaction following is done.
+a. Validate automatically based on the namespace.
+b. If Validate is success, then store transaction info in Databse (Four tables are updated)
+c. Retrieve necessary information required for HTTP call ( getting account information ) from database using transaction id.
+If http is failure retry it for three times
+d. Retrieve necessary information required for DEP from database using transaction id.
+e. Construct CBS Request and send to CBS Queue.
+f. If Validate is failure, then store that particular transaction in Environment.
+3. When all the transactions are done, pull the information that is stored in the environment and send back to CBO.
+*/
+
+PATH com.oab.exceptionhandler;
+CREATE COMPUTE MODULE Inward_FailureClub
+	DECLARE DD_TXN_TABLE EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+
+		DECLARE cboResStatusMsg CHARACTER '';
+		DECLARE inc INTEGER;
+		SET inc = Environment.ddMsgCounter ;
+
+		DECLARE Exc_Desc CHARACTER getExceptionDesc(InputRoot,OutputRoot,InputExceptionList);
+
+		IF Exc_Desc IS NOT NULL THEN
+			DECLARE bodyref REFERENCE TO Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf;
+			DECLARE pmt_etoe_id CHARACTER bodyref.ns:PmtId.ns:EndToEndId;
+			DECLARE pmt_txn_id CHARACTER bodyref.ns:PmtId.ns:TxId;		
+
+
+			UPDATE Database.{SCHEMA_NAME}.{DD_TXN_TABLE} AS R SET EXEC_DESC = Exc_Desc WHERE R.PMT_ID_ENDTOEND_ID = pmt_etoe_id AND R.PMT_ID_TXN_ID = pmt_txn_id;
+			COMMIT;
+		END IF;
+
+		IF Environment.TxnFail.Rsn IS NOT NULL THEN
+			
+			SET Environment.FAIL.TXNS[inc].ns1:StsId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:InstrId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlEndToEndId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:EndToEndId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlTxId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:TxId;
+			SET Environment.FAIL.TXNS[inc].ns1:TxSts = 'RJCT';
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = Environment.TxnFail.Rsn;
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:AddtlInf = Environment.TxnFail.Add;
+			SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+			--SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:ClrSysMmbId.ns1:MmbId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:CdtrAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+	
+		ELSE
+			
+		IF Environment.usr.cbsResponseStatus = 'CBS Not Reachable' THEN
+			SET cboResStatusMsg =Environment.usr.cbsResponseStatus;
+
+			SET Environment.FAIL.TXNS[inc].ns1:StsId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:InstrId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlEndToEndId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:EndToEndId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlTxId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:TxId;
+			SET Environment.FAIL.TXNS[inc].ns1:TxSts = 'RJCT';
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = cboResStatusMsg;
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:AddtlInf = cboResStatusMsg;
+			SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+			--SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:ClrSysMmbId.ns1:MmbId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:CdtrAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+
+		ELSEIF Environment.usr.cbsResponseStatus <> 'FIN' THEN		
+
+
+			SET cboResStatusMsg ='Rejected at CBS';
+
+			SET Environment.FAIL.TXNS[inc].ns1:StsId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:InstrId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlEndToEndId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:EndToEndId;
+			SET Environment.FAIL.TXNS[inc].ns1:OrgnlTxId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:PmtId.ns:TxId;
+			SET Environment.FAIL.TXNS[inc].ns1:TxSts = 'RJCT';
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = cboResStatusMsg;
+			SET Environment.FAIL.TXNS[inc].ns1:StsRsnInf.ns1:AddtlInf = cboResStatusMsg;
+			SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+			--SET Environment.FAIL.TXNS[inc].ns1:InstdAgt.ns1:FinInstnId.ns1:ClrSysMmbId.ns1:MmbId = Environment.MSG.TAXN.ns:Document.ns:FIToFICstmrDrctDbt.ns:DrctDbtTxInf.ns:CdtrAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+
+		END IF;
+END IF;
+	SET Environment.ddMsgCounter = Environment.ddMsgCounter + 1;
+
+END;
+END MODULE;

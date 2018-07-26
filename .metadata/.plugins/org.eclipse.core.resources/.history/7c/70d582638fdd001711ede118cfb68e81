@@ -1,0 +1,192 @@
+BROKER SCHEMA com.oab.CBOhandler
+CREATE COMPUTE MODULE InwardACH_Request_Router_Compute
+
+	DECLARE rc BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		/*
+		Decrypt Logic need to be included
+		*/
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		--For Responses that are coming from CBO
+		DECLARE OrignalPacNm,OrignalMsgID,mndtPac CHARACTER;
+		DECLARE REQ_TYPE CHARACTER FIELDVALUE(InputRoot.XMLNSC.*:request.*:type);
+		DECLARE OriginalTxt REFERENCE TO InputRoot.XMLNSC.*:request.*:content;
+
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO',' ----------START--------') INTO rc;
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request type :' || REQ_TYPE) INTO rc;
+		--Checking for Direct Credit outward message initiated from portal .
+		DECLARE instgBICFI CHARACTER;
+		SET instgBICFI = SUBSTRING(SUBSTRING(OriginalTxt BEFORE '</InstgAgt>')AFTER '<InstgAgt>');
+		SET instgBICFI = SUBSTRING(SUBSTRING(instgBICFI BEFORE '</BICFI>')AFTER '<BICFI>');
+		IF instgBICFI = 'OMABOMRU' AND REQ_TYPE LIKE 'CR' THEN
+			--backing up the message and ending the process
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'DCO_PORTAL_REQ';
+			SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+			PROPAGATE TO TERMINAL 'out';
+			RETURN FALSE;
+		END IF;
+
+
+		IF CONTAINS(OriginalTxt,'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>') THEN
+			SET OriginalTxt = SUBSTRING(OriginalTxt AFTER '?>');
+		END IF;
+
+		CREATE LASTCHILD OF Environment DOMAIN 'XMLNSC' PARSE(OriginalTxt,InputProperties.Encoding,InputProperties.CodedCharSetId);
+		DECLARE REF REFERENCE TO Environment.XMLNSC;
+
+		IF REQ_TYPE LIKE 'SR' THEN
+			--for responses that comes for outward from CBO
+			DECLARE ResRef REFERENCE TO Environment.XMLNSC.*:Document.*:FIToFIPmtStsRpt;
+			SET OrignalPacNm = ResRef.*:OrgnlGrpInfAndSts.*:OrgnlMsgNmId;
+			SET OrignalMsgID = ResRef.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+			SET mndtPac = Environment.XMLNSC.*:Document.*[3];
+
+
+
+			IF OrignalPacNm LIKE 'pacs.008.001.05' THEN
+				--It is pacs.008.001.05 FIToFICstmrCdtTrf Direct Credit
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DCO_Q_RES';
+				CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived for Direct Credit MsgId ' || OrignalMsgID) INTO rc;
+
+			ELSEIF OrignalPacNm LIKE 'pacs.003.001.05' THEN
+				--It is pacs.003.001.05 for Direct Debit outward Response from CBO
+
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDO_Q_RES';
+				CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived for Direct Debit MsgId ' || OrignalMsgID) INTO rc;
+
+			ELSEIF OrignalPacNm LIKE 'pacs.007.001.05' THEN
+				--It is pacs.007.001.05 for Reversal outward Response from CBO
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_REVO_Q_RES';
+				CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived for Direct Debit MsgId ' || OrignalMsgID) INTO rc;
+
+			ELSEIF OrignalPacNm LIKE 'pacs.004.001.05' THEN
+				--It is pacs.004.001.05 for Return outward Response from CBO
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_RETO_Q_RES';
+				CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived for Direct Debit MsgId ' || OrignalMsgID) INTO rc;
+				-- ELSEIF mndtPac LIKE MndtIntReq THEN
+				-- SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_RETO_Q_RES'; -- queuename need to update
+				-- ELSEIF mndtPac LIKE MndtAmdmnt THEN
+				-- SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_RETO_Q_RES'; -- queuename need to update
+				-- ELSEIF mndtPac LIKE MndtCxlReq THEN
+				-- SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_RETO_Q_RES'; -- queuename need to update
+			ELSE
+				--It is Status report for inward status report we sent to cbo
+				SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_STATUS_REPORTS_Q';
+				CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived For status report we sent' || OrignalMsgID) INTO rc;
+
+
+			END IF;
+
+		ELSEIF REQ_TYPE LIKE 'CSR' THEN
+			/*It is pacs.029.001.05 is for Cancellation Outward response from CBO */
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_CANO_Q_RES';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Response MessageReceived for Cancellation outward MsgId ' || OrignalMsgID) INTO rc;
+		ELSEIF REQ_TYPE LIKE 'TX_REPORT' THEN
+			/*It is Final response from CBO*/
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_TXN_REPORTS_Q';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Final Status Report Recieved MsgId ' || OrignalMsgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'MNDTRESP' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_MNDT_RES';
+		ELSEIF REQ_TYPE LIKE 'MNDTINIT' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_MINT_IN_REQ';
+
+		ELSEIF REQ_TYPE LIKE 'MNDTAMEND' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_MAME_IN_REQ';
+		ELSEIF REQ_TYPE LIKE 'MNDTTERM' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_MTER_IN_REQ';
+
+
+		END IF;
+		--For Inward Request from CBO to OAB
+
+		DECLARE msgID CHARACTER ;
+		SET msgID = SUBSTRING(OriginalTxt BEFORE '</MsgId>');
+		SET msgID = SUBSTRING(msgID AFTER '<MsgId>');
+		set OutputRoot.XMLNSC = Environment.XMLNSC;
+
+		IF REQ_TYPE LIKE 'CR' THEN
+			--It is pacs.008.001.05 FIToFICstmrCdtTrf
+			--Direct Credit Inward
+
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DCI_Q_REQ';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for DirectCreditInward MSGID :' || msgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'DB' THEN
+			--It is pacs.003.001.05 FIToFICstmrDrctDbt
+
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDI_Q_REQ';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for DirectDebitInward MSGID :' || msgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'CN' THEN
+			--It is camt.056.001.04 FIToFIPmtCxlReq
+			SET msgID = SUBSTRING(OriginalTxt BEFORE '</Id>');
+			SET msgID = SUBSTRING(msgID AFTER '<Id>');
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_CANI_Q_REQ';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for CancellationInward MSGID :' || msgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'RV' THEN
+			--It is pacs.007.001.05 FIToFIPmtRvsl
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_REVI_Q_REQ';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for ReversalInward MSGID :' || msgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'RT' THEN
+			--It is pacs.004.001.05 PmtRtr
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_RETI_Q_REQ';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for ReturnInward MSGID :' || msgID) INTO rc;
+
+		ELSEIF REQ_TYPE LIKE 'MndtAccptncRpt' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_MNDT_RES';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Request Received for MandateInward MSGID :' || msgID) INTO rc;
+			-- ELSE
+			-- SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'UNKNOWN_CBO_Q';
+
+		END IF;
+
+
+
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO',' -----------END----------') INTO rc;
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+END MODULE;
+
+
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";

@@ -1,0 +1,7 @@
+<psys:request xmlns:psys="urn:iso:std:psys:request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:psys:request request.xsd ">
+  <id>{id}</id>
+  <type>{type}</type>
+  <format>{format}</format>
+  <date>{date}</date>
+  <content><![CDATA[{content}]]></content>
+</psys:request>

@@ -1,0 +1,384 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		
+		RETURN bool;
+
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+
+			CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+			IF ( rc = FALSE ) THEN
+				DECLARE msg CHARACTER ;
+				SET msg = 'Log4J Initialization failed.';
+			END IF;
+			DECLARE headerRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation;
+			DECLARE bodyRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation.*:Transaction;
+			--Getting the required details from the incoming message.
+			SET Environment.retBatchRef = headerRef.*:BatchReference;
+			SET retTxnRef = bodyRef.*:TransactionReference;
+			SET Environment.orgBchRef = headerRef.*:OriginalReference;
+			SET orgTxnRef = bodyRef.*:OriginalTransactionReference;
+			SET chl = headerRef.*:Channel;
+			SET Environment.RsnCodeDescription=bodyRef.*:Reason;
+
+
+			SET Environment.dbQueryCount = '1';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			SET Environment.RETO_GRP_HDR_ID = Environment.RETO_GP_HDR.Values.GRP_HEADER_ID;
+			---Need to write the logic to seperate out the Outward and inward original messagge id's
+			--Checking the original transaction details in the Direct Debit Outward table
+			SET Environment.orgTxnIdDDO = chl || Environment.orgBchRef || orgTxnRef; --This logic for Returning outward messages
+
+			SET Environment.dbQueryCount = '2';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			--Checking the original transaction details in the Direct Credit Inward table
+			SET Environment.orgTxnIdDCI = orgTxnRef; -- This logic is for returning inward message.
+
+			SET Environment.dbQueryCount = '3';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			SET Environment.endID = chl || Environment.retBatchRef || retTxnRef;
+			SET Environment.amount = COALESCE(Environment.DDOTxnInfo.Values.AMOUNT,Environment.DCITxnInfo.Values.INTERBANK_SETTLE_AMT);
+			SET Environment.creditorCustAcc = COALESCE(Environment.DDOTxnInfo.Values.ORDERING_CUSTOMER_ACCOUNT,Environment.DCITxnInfo.Values.CDTR_ACCT_OTHR_ID);
+			SET Environment.crdtBankBIC = COALESCE(Environment.DDOTxnInfo.Values.PAYER_BANK,Environment.DCITxnInfo.Values.DBTR_ACCT_FIN_ID_BICFI);
+			--SET optionalId = DDOTxnInfo.Values.OPT_ID;
+			DECLARE flag BOOLEAN;
+
+			IF Environment.DDOTxnInfo.Values.END_TO_END_ID IS NOT NULL THEN --Checking transaction available or not in Direct Debit Outward table.
+				IF Environment.DDOTxnInfo.Values.STATUS = 'DDO_SUCCESS' THEN
+					SET Environment.Status = 'RETO_RCVD';
+					--SET Environment.Description = 'Return Outward Transaction has been recived';
+					SET Environment.TxnFound = 'Direct Debit Outward';
+					CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', 'Transcation Found In DDO_TXN_INFO Table With Status DDO_Success' ) INTO rc;
+					SET Environment.dbQueryCount = '4';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL insertTxn('DDO',orgTxnIdDDO)INTO flag;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					RETURN FALSE;
+
+				ELSE
+					SET Environment.Status = 'Trans_Not_found_DDO';
+					--SET Environment.Description = 'Original Transaction was failed';
+					SET Environment.TxnFound = 'Direct Debit Outward';
+					CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', 'Transcation Found In DDO_TXN_INFO Table  With Status as Transcation Incomplete' ) INTO rc;
+					SET Environment.dbQueryCount = '5';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL insertTxn('DDO',orgTxnIdDDO)INTO flag;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					RETURN FALSE;
+				END IF;
+			ELSEIF Environment.DCITxnInfo.Values.PMT_ID_ENDTOEND_ID IS NOT NULL THEN --Checking transaction available or not in Direct Debit Outward table.
+				IF Environment.DCITxnInfo.Values.STATUS = 'DCI_SUCCESS' THEN
+					SET Environment.Status = 'RETO_RCVD';
+					SET Environment.Description = 'Return Outward Transaction has been recived';
+					SET Environment.TxnFound = 'Direct Credit Inward';
+					CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', 'Transcation Found In DDI_TXN_Table With Status DDI_Success' ) INTO rc;
+
+					SET Environment.dbQueryCount = '6';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL insertTxn('DCI',orgTxnIdDCI)INTO flag;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					RETURN FALSE;
+
+				ELSE
+					SET Environment.Status = 'Trans_Not_found_DCI';
+					SET Environment.Description = 'Original Transaction was failed';
+					SET Environment.TxnFound = 'Direct Credit Inward';
+					CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', 'Transcation Found In DCI_TXN_INFO Table  With Status as Transcation Incomplete' ) INTO rc;
+
+					SET Environment.dbQueryCount = '7';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+
+					CALL insertTxn('DCI',orgTxnIdDCI)INTO flag;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					RETURN FALSE;
+				END IF;
+				--END IF;j
+			ELSE
+				SET Environment.Status = 'RETO_NO_RECORD_FOUND';
+				SET Environment.Description = 'Original Transaction not found';
+				CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', 'Transcation was not found in both tables' ) INTO rc;
+
+				SET Environment.dbQueryCount = '8';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				CALL insertTxn('RET','Failure')INTO flag;
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				RETURN FALSE;
+			END IF; -- CHECKING MULTIPLE TABLES
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'RETO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+
+	END;
+	CREATE PROCEDURE insertTxn(IN txnFound CHARACTER,IN orignalTxnId CHARACTER) RETURNS BOOLEAN BEGIN
+		DECLARE bodyRef REFERENCE TO InputRoot.XMLNSC.*:AchBatchCancelation.*:Transaction;
+		-- DECLARE orgMsgId CHARACTER COALESCE(Environment.orgBchRef,DCITxnInfo.Values.MSG_ID);
+		-- DECLARE orgTxnId CHARACTER COALESCE(DDOTxnInfo.Values.TXN_ID,DCITxnInfo.Values.TXN_ID);
+		--DECLARE crdtBankBIC CHARACTER COALESCE(DDOTxnInfo.Values.PAYER_BANK,DCITxnInfo.Values.DBTR_ACCT_FIN_ID_BICFI);
+		--SET optionalId = DDOTxnInfo.Values.OPT_ID;
+		--SET creditorCustAcc = COALESCE(DDOTxnInfo.Values.ORDERING_CUSTOMER_ACCOUNT,DCITxnInfo.Values.CDTR_ACCT_ID_IBAN);
+		--SET amount = COALESCE(DDOTxnInfo.Values.AMOUNT,DCITxnInfo.Values.INTERBANK_SETTLE_AMT);
+		--SET Environment.endID = retBatchRef || bodyRef.TransactionReference;
+		-- DECLARE FK CHARACTER Environment.RETO_GRP_HDR_ID;
+		-- INSERT INTO Database.{SCHEMA_NAME}.{RETO_TXN_INFO} (
+		-- GRP_HDR_ID_TXN_INFO_FK, --Header sequence Id
+		-- TXN_RCVD_BY,
+		-- USER_REF,
+		-- TRAN_REF, --Retun transaction reference
+		-- END_TO_END_ID, --Return batch Ref + transaction ref
+		-- ORIGIN_END_TO_END_ID, --Eighther DDO batch Reference + transaction reference
+		-- TXN_REASON,
+		-- TXN_FOUND,
+		-- OPTIONAL_ID,
+		-- ORIG_MSG_ID, --Eighther DDO batch Reference Or DCI message ID
+		-- ORIG_TXN_ID, --Eighther DDO Batch + transaction reference or DCI (transactio ID or end to end id)
+		-- CREDITOR_BANK_BICFI,
+		-- DEBTOR_ACC_NO,
+		-- TXN_AMOUNT,
+		-- STATUS,
+		-- DESCRIPTION
+		-- )
+		-- VALUES(FK,'Return Outward',bodyRef.UserReference,bodyRef.TransactionReference,Environment.endID,
+		-- orignalTxnId,bodyRef.Reason,Environment.TxnFound,optionalId,Environment.orgBchRef,orignalTxnId,Environment.crdtBankBIC,
+		-- Environment.creditorCustAcc,Environment.amount,Environment.Status,Environment.Description);
+
+		CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Details are inserted in the CANO_REVO_RETO_TXN_INFO-----' ) INTO rc;
+		---Sending back acknowledgment to OAB saying that the return outward transaction is received.
+
+		SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+		SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+		DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'ACHBatchCancellation';
+		SET achRef.faultCode = 'ACH001'; --Trannsaction is received and is under processing.
+		SET achRef.faultString = 'Return request has been received for the Return Id is' || Environment.endID || 'originalTxnID';
+		CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Acknoweledgment Sent to OAB due to failure status of transactions in DCI_TXN_INFO Table And Updated Status in CANO_REVO_RETO_TXN_INFO  as RETO_DDI_ORIGIN_TXN_NOT_HPND-----' ) INTO rc;
+		PROPAGATE TO TERMINAL 'out';
+
+		IF Environment.Status = 'RETO_RCVD' THEN
+			DECLARE bool BOOLEAN;
+			IF txnFound = 'DDO' THEN
+				-- IF optionalId = 'PassThru' THEN ---the optional odentifier will be there only for direct Debit outward transactions
+				-- UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS='Passthru exits this transaction',DESCRIPTION = 'do not Perform any operations' WHERE J.END_TO_END_ID = Environment.endID;
+				-- SET OutputRoot.XMLNSC.space1:Reply.space1:Header.space1:transactionReference = '191' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMDDHHmmssSSS');
+				-- SET OutputRoot.XMLNSC.space1:Reply.space1:Header.space1:txnEndtoEndId = Environment.endID;
+				-- CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------OptionalId is Found in this transactions That why we didnt Perform any Debit Operations here-----' ) INTO rc;
+				-- PROPAGATE TO TERMINAL 'out4';
+				-- ELSE
+				CALL DoubleEntryPosting() INTO bool;
+				RETURN bool;
+				-- END IF;
+			ELSE --If transaction found in DCI
+				CALL DoubleEntryPosting() INTO bool;
+				RETURN bool;
+			END IF;
+		ELSEIF Environment.Status = 'Trans_Not_found_DDO' THEN
+			SET Environment.dbQueryCount = '9';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+			SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+			DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'ACHBatchCancellation';
+			SET achRef.faultCode = 'ACH001';
+			SET achRef.faultString = 'Transcation not found in DDo Table:' || Environment.endID;
+			CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Acknoweledgment Sent to OAB due to failure status of transactions in DDO_TXN_INFO Table And Updated Status in CANO_REVO_RETO_TXN_INFO  as RETO_DDO_ORIGIN_TXN_NOT_HPND----' ) INTO rc;
+			PROPAGATE TO TERMINAL 'out';
+
+
+		ELSEIF Environment.Status = 'Trans_Not_found_DCI' THEN
+			SET Environment.dbQueryCount = '10';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+			SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+			DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'ACHBatchCancellation';
+			SET achRef.faultCode = 'ACH005'; --Means Original transaction Not found
+			SET achRef.faultString = 'Transcation not found in DCI Table:' || Environment.endID;
+			CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Acknoweledgment Sent to OAB due to failure status of transactions in DCI_TXN_INFO Table And Updated Status in CANO_REVO_RETO_TXN_INFO  as RETO_DDI_ORIGIN_TXN_NOT_HPND-----' ) INTO rc;
+			PROPAGATE TO TERMINAL 'out';
+
+		ELSE
+			SET Environment.dbQueryCount = '11';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+			SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+			DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'ACHBatchCancellation';
+			SET achRef.faultCode = 'ACH005';
+			SET achRef.faultString = 'Transcation not found in both DDO and DDI Table';
+			CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Acknoweledgment Sent to OAB No Transactions Found in both DDO_TXN_INFO And DCI_TXN_INFO Tables And Updated Status in CANO_REVO_RETO_TXN_INFO  as RETO_NO_RECORD_FOUND-----' ) INTO rc;
+			PROPAGATE TO TERMINAL 'out';
+		END IF;
+	END;
+
+	CREATE PROCEDURE DoubleEntryPosting() RETURNS BOOLEAN BEGIN
+
+
+		SET Environment.dbQueryCount = '12';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+
+		DECLARE setleAccount CHARACTER;
+
+		IF Environment.TxnFound = 'Direct Credit Inward' THEN
+			SET setleAccount = Environment.SET.ACC.DC_STLMNT_ACC;
+			SET Environment.Status = 'RETO_DCI_CBS_SENT';
+			CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Double Entry Request Send to CBS And Update Status in Database As' || Environment.Status ) INTO rc;
+		ELSE
+			SET setleAccount = Environment.SET.ACC.DD_STLMNT_ACC;
+			SET Environment.Status = 'RETO_DDO_CBS_SENT';
+			CALL writeToLogFile(flowname, 'return_out_debug', 'INFO', ' -------Double Entry Request Send to CBS And Update Status in Database As' || Environment.Status ) INTO rc;
+		END IF;
+
+		
+		/*Calling function to get reason codedescription*/
+		SET Environment.RsnCodeDesc = Environment.RsnCodeDescription || MappPurposeCodeWithDescription(Environment.RsnCodeDescription);
+
+		SET Environment.CBS_TRAN_REF = '190' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS');
+		SET OutputRoot.MQMD.ReplyToQ = 'CBS_RETO_RES';
+		SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL ;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORKSTATION;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = Environment.CBS_TRAN_REF;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNELRESERVED;
+
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.Status;
+
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = Environment.creditorCustAcc;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = Environment.amount;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+		/*User Ref and Narratives for Debitor*/
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference=Environment.msg.id.MsgID;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1]=Environment.DCITxnInfo.Values.CDTR_NAME;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2]=Environment.DCITxnInfo.Values.CDTR_ACCT_FIN_ID_BICFI;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3]=Environment.RsnCodeDesc;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4]=Environment.DCITxnInfo.Values.PMT_ID_TXN_ID;
+
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = setleAccount;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = Environment.amount;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+		/*User Ref and Narratives for Creditor*/
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference=Environment.msg.id.MsgID;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1]=Environment.DCITxnInfo.Values.CDTR_NAME;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2]=Environment.DCITxnInfo.Values.CDTR_ACCT_FIN_ID_BICFI;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3]=Environment.RsnCodeDesc;
+		SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]=Environment.DCITxnInfo.Values.PMT_ID_TXN_ID;
+
+		DECLARE cbsBlob BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		SET Environment.cbsMsg = CAST(cbsBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+		SET Environment.dbQueryCount = '13';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+
+
+		PROPAGATE TO TERMINAL 'out1';
+
+	END;
+	CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+	CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+	IN LOGGER_NAME CHARACTER,
+	IN LEVEL CHARACTER,
+	IN TEXT CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";

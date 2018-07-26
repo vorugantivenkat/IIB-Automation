@@ -1,0 +1,60 @@
+
+
+BROKER SCHEMA com.oab.DirectCreditOutward
+
+
+
+CREATE DATABASE MODULE DirectCredit_Outward_Response_From_CBO_Database
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER ; --Table for inserting the group header deatils: DCO_GROUP_HEADER_INFO.
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER ; --Table for inserting the transaction deatils: DCO_TXN_INFO.
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER ; --Table for getting the configurable deatils:DC_CONFIG_VALUES.
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSN_NAME EXTERNAL CHARACTER;
+	DECLARE PAYLOAD_TABLE EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '18' THEN
+			SET Environment.STATUS[] = SELECT J.END_TO_END_ID, J.TXN_REF, J.PURP_OF_TRANSFER, J.BENEF_NAME FROM Database.{SCH_NAME}.{DCO_TABLE2} AS J WHERE J.MSG_ID = Environment.msgID AND J.TXN_ID = Environment.txn_id;
+		ELSEIF Environment.dbQueryCount = '19' THEN
+			SET Environment.values[] = SELECT A.OPTIONAL_ID,A.BATCH_REFERENCE,A.ORDERING_CUSTOMER_NAME FROM Database.{SCH_NAME}.{DCO_TABLE1} AS A,Database.{SCH_NAME}.{DCO_TABLE2} AS B WHERE A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK AND B.END_TO_END_ID = Environment.STATUS.END_TO_END_ID AND B.MSG_ID = Environment.msgID;
+--		ELSEIF Environment.dbQueryCount = '20' THEN
+--			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET STATUS = 'DCO_CBO_FAILED_PT',DESCRIPTION = 'Transaction was Failed with Reason:' || Environment.Txn_reason ,CBO_TXN_STATUS = Environment.status || ' '|| Environment.Txn_reasoncode,CBO_GRP_STATUS = Environment.grpStatus WHERE B.END_TO_END_ID = Environment.end_id;
+--        ELSEIF Environment.dbQueryCount = '19A' THEN
+--        	UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET DESCRIPTION = 'Transaction was Failed with Reason:' || Environment.Txn_reason,CBO_TXN_STATUS = Environment.status || ' '|| Environment.Txn_reasoncode,CBO_GRP_STATUS = Environment.grpStatus || ' ' || Environment.reasoncode WHERE B.END_TO_END_ID = Environment.STATUS.END_TO_END_ID;
+		ELSEIF Environment.dbQueryCount = '21' THEN 
+			SET Environment.TXNS[] = SELECT J.END_TO_END_ID,J.AMOUNT,J.PURP_OF_TRANSFER,J.TXN_REF,A.ORDERING_CUSTOMER_ACCOUNT,C.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DCO_TABLE2} AS J,Database.{SCH_NAME}.{DCO_TABLE1} AS A,Database.{SCH_NAME}.{DCO_TABLE3} AS C WHERE A.DCO_GRP_HEADER_ID = J.DCO_GRP_HDR_ID_TXN_INFO_FK AND J.END_TO_END_ID = Environment.end_id;
+		ELSEIF Environment.dbQueryCount = '22' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET STATUS = 'DCO_CBS_CRDT_OC_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage,DESCRIPTION = 'Reason:' || Environment.Txn_reason,CBS_TRAN_REF = Environment.txnRef,CBO_TXN_STATUS = Environment.status || ' '|| Environment.Txn_reasoncode ,CBO_GRP_STATUS = Environment.grpStatus WHERE B.END_TO_END_ID = Environment.STATUS.END_TO_END_ID;
+        
+		ELSEIF Environment.dbQueryCount = '23' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_TECHVALIDATION_SUCCESS',CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus,DESCRIPTION = 'Transaction Validation Success at CBO ' WHERE R.END_TO_END_ID = Environment.end_id;
+
+		ELSEIF Environment.dbQueryCount = '24' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_ACCEPTEDSETTLEMENT_SUCCESS',DESCRIPTION = 'Transaction was Accept Settlement in process at CBO ',CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE R.END_TO_END_ID = Environment.end_id;
+		ELSEIF Environment.dbQueryCount = '25' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_SUCCESS',CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus ,DESCRIPTION = 'Transaction was Success at CBO i.e successfully credited to Beneficiary' WHERE R.END_TO_END_ID = Environment.end_id;
+		ELSEIF Environment.dbQueryCount = '18C' THEN
+			--UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBO_FAILED',CBO_GRP_STATUS = Environment.grpStatus || ' '|| Environment.reasoncode ,CBO_TXN_STATUS = Environment.grpStatus || ' '|| Environment.reasoncode,DESCRIPTION = 'Transaction was Failed with Reason:' || Environment.reason WHERE R.MSG_ID = Environment.msgID;
+		
+			DECLARE SQL1 CHARACTER 'SELECT DISTINCT GP.DCO_GRP_HDR_ID_TXN_INFO_FK FROM '||SCH_NAME||'.'||DCO_TABLE2||' GP WHERE GP.MSG_ID = ?';
+			
+			SET Environment.DCO_Txn_fk[] = PASSTHRU( SQL1 TO Database.{DSN_NAME} VALUES (Environment.msgID));
+			
+			SET Environment.OC[]= SELECT A.PURPOSE_OF_TRANSFER, A.ORDERING_CUSTOMER_ACCOUNT,A.BATCH_REFERENCE,A.ORDERING_CUSTOMER_NAME 
+								  FROM Database.{SCH_NAME}.{DCO_TABLE1} AS A
+								  WHERE A.DCO_GRP_HEADER_ID =Environment.DCO_Txn_fk.DCO_GRP_HDR_ID_TXN_INFO_FK;
+			
+			SET Environment.TotalAmount = SELECT  SUM(A.AMOUNT) FROM Database.{SCH_NAME}.{DCO_TABLE2} AS A WHERE A.MSG_ID = Environment.msgID ;
+			SET Environment.DCsettlementAccount[]= SELECT C.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DCO_TABLE3} AS C ;
+		ELSEIF Environment.dbQueryCount = '22C' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET STATUS = 'DCO_CBS_CRDT_OC_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage,DESCRIPTION = 'Reason:' || Environment.reason,CBS_TRAN_REF = Environment.txnRef,CBO_TXN_STATUS = Environment.status || ' '|| Environment.Txn_reasoncode ,CBO_GRP_STATUS = Environment.grpStatus || ' ' || Environment.reasoncode WHERE B.MSG_ID = Environment.msgID;
+		ELSEIF Environment.dbQueryCount	= '22D' THEN
+			DECLARE ReasonCode,ReasonString CHARACTER;
+			SET ReasonCode   = COALESCE(Environment.Txn_reasoncode,Environment.reasoncode);
+			SET ReasonString = COALESCE(Environment.Txn_reason,Environment.reason);
+			UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS B SET DESCRIPTION = 'Reason:' || ReasonString, CBO_TXN_STATUS = Environment.status || ' '|| ReasonCode, CBO_GRP_STATUS = Environment.grpStatus || ' ' || ReasonCode WHERE B.END_TO_END_ID = Environment.end_id OR B.MSG_ID = Environment.msgID;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

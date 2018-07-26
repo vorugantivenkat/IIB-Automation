@@ -1,0 +1,203 @@
+BROKER SCHEMA com.oab.db.retry
+
+CREATE COMPUTE MODULE WPS_Retry_flow_Compute
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE ADD_TAB EXTERNAL CHARACTER;
+	DECLARE DC_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE Payer_BIC EXTERNAL CHARACTER;
+	DECLARE urn NAMESPACE 'http://www.oab.com';
+	DECLARE SifFileName CHARACTER;
+
+	DECLARE i INTEGER 1;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE inMessage CHARACTER;
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.MQMD = InputRoot.MQMD;
+		SET OutputRoot.MQRFH2.usr.dbQueryCount = InputRoot.XMLNSC.MSG.ExceptionDetails.dbQueryCount;
+		DECLARE actMsg CHARACTER REPLACE(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg,'<xmlns:ns>http://www.oab.com</xmlns:ns>','');
+		DECLARE dbCount CHARACTER OutputRoot.MQRFH2.usr.dbQueryCount;
+		SET SifFileName = SUBSTRING(InputRoot.XMLNSC.MSG.ExceptionDetails.filename BEFORE '.csv');
+		IF dbCount = '1' OR dbCount = '2' OR dbCount = '3' OR dbCount = '4' OR dbCount = '5' OR dbCount = '6' OR dbCount = '7' THEN
+			DECLARE Headerid ROW;
+			SET Headerid.tx[] = SELECT K.WPS_SIF_HEADER_INFO_ID FROM Database.{SCH_NAME}.{WPS_TABLE1} AS K WHERE K.SIF_CHL_FILE_NAME = SifFileName;
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE2} AS J WHERE J.WPS_SIF_HEADER_INFO_ID = Headerid.tx.WPS_SIF_HEADER_INFO_ID;
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS J WHERE J.SIF_CHL_FILE_NAME = SifFileName;
+			SET OutputRoot.BLOB.BLOB = CAST(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg AS BLOB);
+			SET OutputLocalEnvironment.Destination.File.Name = InputRoot.XMLNSC.MSG.ExceptionDetails.filename;
+			SET OutputLocalEnvironment.Destination.File.Directory = 'C:\oab\var\wps\Sif_In';
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF dbCount = '8' OR dbCount = '8A' OR dbCount = '8B'  OR dbCount = '9' OR dbCount = '10' OR dbCount = '11' OR dbCount = '12' OR dbCount = '13' THEN
+			SET OutputRoot.BLOB.BLOB = CAST(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg AS BLOB);
+			SET OutputLocalEnvironment.Destination.File.Name = InputRoot.XMLNSC.MSG.ExceptionDetails.filename;
+			SET OutputLocalEnvironment.Destination.File.Directory = 'C:\oab\var\wps\Sif_Ack_Rep_SyncBack';
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF dbCount = '14' OR dbCount = '15' OR dbCount = '16' THEN
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE2} AS M WHERE M.SIF_FILE_NAME = SifFileName;
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS M WHERE M.SIF_CBO_FILE_NAME = SifFileName;
+			SET OutputRoot.BLOB.BLOB = CAST(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg AS BLOB);
+			SET OutputLocalEnvironment.Destination.File.Name = InputRoot.XMLNSC.MSG.ExceptionDetails.filename;
+			SET OutputLocalEnvironment.Destination.File.Directory = 'C:\oab\var\wps\Sif_Ack_Rep_SyncBack';
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF dbCount = '17' OR dbCount = '18' OR dbCount = '35' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'WPS_CBO_Q';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '19' OR dbCount = '20' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			DECLARE recordRef REFERENCE TO InputRoot.XMLNSC.WpsSifProcess.Employee[>];
+			WHILE LASTMOVE(recordRef) DO
+				--SET SifFileName = SUBSTRING(InputRoot.XMLNSC.MSG.ExceptionDetails.filename BEFORE '.csv');
+				DECLARE count INTEGER 1;
+				UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS R SET EMPLOYEE_ID_TYPE = recordRef.IdType,
+				EMPLOYEE_ID = recordRef.EmployeeId,
+				EMPLOYEE_NAME = recordRef.EmployeeName,
+				EMPLOYEE_BANK_CODE = recordRef.EmployeeBIC,
+				EMPLOYEE_ACC_NO = recordRef.EmployeeAccount,
+				SALARY_FREQUENCY = recordRef.SalaryFrequency,
+				NO_OF_WORKING_DAYS = recordRef.NumberOfWorkingDays,
+				NET_SALARY = recordRef.NetSalary,
+				BASIC_SALARY = recordRef.BasicSalary,
+				EXTRA_HOURS = recordRef.ExtraHours,
+				EXTRA_INCOME = recordRef.ExtraIncome,
+				DEDUCTIONS = recordRef.Deductions,
+				SOCIAL_SECURITY_DEDUCTIONS = recordRef.SocialSecurityDeductions,
+				NOTES_COMMENTS = recordRef.NotesComments,
+				REFERENCE_NUMBER = recordRef.ReferenceNumber
+				WHERE R.EMPLOYEE_ID = recordRef.Id;
+				DECLARE data ROW;
+				SET data.tx[] = SELECT J.STATUS FROM Database.{SCH_NAME}.{WPS_TABLE2} AS J WHERE J.EMPLOYEE_ID = recordRef.Id;
+				IF data.tx.STATUS <> 'CBS_EMP_CREDIT_REQ_SENT' THEN
+					SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+					--SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24R'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					IF Payer_BIC = recordRef.Bank THEN
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24E'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					ELSE
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24S'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					END IF;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = recordRef.EmployeeAccount;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = recordRef.NetSalary;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+					SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+					UPDATE Database.{SCH_NAME}.{WPS_TABLE2} AS R SET TXN_REF_ID = Environment.var.hedTxRefId,STATUS = 'CBS_EMP_CREDIT_REQ_SENT' WHERE  R.EMPLOYEE_ID = recordRef.EmployeeId;
+					PROPAGATE TO TERMINAL 'out2';
+				END IF;
+				SET count = count + 1;
+				MOVE recordRef NEXTSIBLING;
+			END WHILE;
+		ELSEIF dbCount = '21' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'WPS_CBO_Q';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '22' OR dbCount = '23' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_WPS_RES';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '24' OR dbCount = '25' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			DECLARE cbsPayRef,txRefId CHARACTER;
+			SET cbsPayRef = Environment.MyData.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			SET txRefId = Environment.MyData.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			DECLARE ref ROW;
+			SET ref.header[] = SELECT S.SIF_CBO_FILE_NAME,S.NO_OF_RECORDS,S.PAYER_BANK_SHORT_NAME,S.PAYER_ACCOUNT_NO FROM Database.{WPS_TABLE1} AS S WHERE S.CBS_TXN_REF = txRefId;
+			SET ref.records[] = SELECT * FROM Database.{SCH_NAME}.{WPS_TABLE2} AS S WHERE S.SIF_FILE_NAME = ref.header.SIF_CBO_FILE_NAME;
+			SET ref.config[] = SELECT t.DC_STLMNT_ACC FROM Database.DC_CONFIG_VALUES AS t;
+			SET ref.st[] = SELECT s.STATUS FROM Database.{SCH_NAME}.{WPS_TABLE2} AS s WHERE s.RECORD_ID = ref.records[i].RECORD_ID;
+			WHILE CARDINALITY(ref.records[]) >= i DO
+				IF Payer_BIC = ref.records[i].EMPLOYEE_BANK_CODE AND ref.st.STATUS <> 'CBS_EMP_CREDIT_REQ_SENT' THEN
+					SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24E'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS')||CAST(i AS CHARACTER);
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = ref.records[i].EMPLOYEE_ACC_NO;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = ref.records[i].NET_SALARY;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+					--SET recTxId = OutputRoot.XMLNSC.nsdp:Request.nsdp:Header.nsdp:transactionReference;
+					SET Environment.var.recTxId = ref.records[i].RECORD_ID;
+					SET Environment.var.TXN_REF_ID = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+					UPDATE Database.{WPS_TABLE2} AS S SET CBS_PAY_REF = cbsPayRef, TXN_REF_ID = Environment.var.TXN_REF_ID,STATUS = 'CBS_EMP_CREDIT_REQ_SENT' WHERE S.RECORD_ID = ref.records[i].RECORD_ID;
+					PROPAGATE TO TERMINAL 'out2';
+				ELSEIF Payer_BIC <> ref.records[i].EMPLOYEE_BANK_CODE AND ref.st.STATUS <> 'CBS_STLEACC_CREDIT_REQ_SENT' THEN
+
+					SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24S'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS')||CAST(i AS CHARACTER);
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = ref.config.DC_STLMNT_ACC;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = ref.records[i].NET_SALARY;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+					--SET recTxId = OutputRoot.XMLNSC.nsdp:Request.nsdp:Header.nsdp:transactionReference;
+					SET Environment.var.recTxId = ref.records[i].RECORD_ID;
+					SET Environment.var.TXN_REF_ID = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+					UPDATE Database.{WPS_TABLE2} AS S SET CBS_PAY_REF = cbsPayRef, TXN_REF_ID = Environment.var.TXN_REF_ID,STATUS = 'CBS_STLEACC_CREDIT_REQ_SENT' WHERE S.RECORD_ID = ref.records[i].RECORD_ID;
+					PROPAGATE TO TERMINAL 'out2';
+				END IF;
+
+				SET i = i + 1;
+			END WHILE;
+		ELSEIF dbCount = '26' OR dbCount = '27' OR dbCount = '28' OR dbCount = '29' OR dbCount = '30' OR dbCount = '27A' OR dbCount = '28A' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_WPS_RES';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '31' OR dbCount = '32' THEN
+			DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+			CREATE LASTCHILD OF Environment.MyData DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			DELETE FROM Database.{SCH_NAME}.{ADD_TAB} AS k WHERE k.EMPLOYER_CR_NO = Environment.MyData.XMLNSC.EmployerId AND k.PAYER_CR_NO = Environment.MyData.XMLNSC.PayerId;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_WPS_ADD_Q_REQ';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '33' OR dbCount = '34' THEN
+			SET OutputRoot.BLOB.BLOB = CAST(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg AS BLOB);
+			SET OutputLocalEnvironment.Destination.File.Name = InputRoot.XMLNSC.MSG.ExceptionDetails.filename;
+			SET OutputLocalEnvironment.Destination.File.Directory = 'C:\oab\var\wps\CBO_Response';
+			PROPAGATE TO TERMINAL 'out';
+
+		END IF;
+	END;
+END MODULE;

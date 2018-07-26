@@ -1,0 +1,4 @@
+Employer ID, Payer ID, Payer Bank Short Name, Payer Account Number, Salary Year, Salary Month, Total Salaries, Number of Records,Payment Type
+52687239,123456,OAB,3101060496500,2017,5,1000.000,1,Salary
+Employee ID Type, Employee ID,Reference Number, Employee Name, Employee Bank Code, Employee Account,Salary Frequency, Number of Working days, Net Salary, Basic Salary, Extra hours, Extra income, Deductions, Social Security Deductions, Notes / Comments
+P,123,8899,Upender Kuncham,OMABOMRU,3101196774700,M,30,500.000,100.000,,,,,this is the first sif file process

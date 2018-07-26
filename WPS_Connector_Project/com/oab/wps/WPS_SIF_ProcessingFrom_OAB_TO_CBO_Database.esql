@@ -1,0 +1,102 @@
+BROKER SCHEMA com.oab.wps
+CREATE DATABASE MODULE WPS_SIF_ProcessingFrom_OAB_TO_CBO_Database
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.values[] = SELECT T.WPS_SIF_HEADER_INFO_ID,T.EMPLOYEER_CRNO,T.PAYER_CRNO,T.ESB_STATUS,T.CBO_STATUS FROM Database.{SCH_NAME}.{WPS_TABLE1} AS T WHERE T.SIF_CHL_FILE_NAME = Environment.chlFileName ;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE2} AS T WHERE T.WPS_SIF_HEADER_INFO_ID = Environment.values.WPS_SIF_HEADER_INFO_ID;
+			DELETE FROM Database.{SCH_NAME}.{WPS_TABLE1} AS T WHERE T.WPS_SIF_HEADER_INFO_ID = Environment.values.WPS_SIF_HEADER_INFO_ID;
+			
+
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			SET Environment.wpsHeaderId = SELECT MAX(G.WPS_SIF_HEADER_INFO_ID) FROM Database.{SCH_NAME}.{WPS_TABLE1} AS G; ---We are getting the maximum WPS_SIF_HEADER_INFO_ID based upon these we reterive the recently insered filename from database
+			SET Environment.NM[] = SELECT A.SIF_CBO_FILE_NAME FROM Database.{SCH_NAME}.{WPS_TABLE1} AS A WHERE A.WPS_SIF_HEADER_INFO_ID = Environment.wpsHeaderId ;
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			INSERT INTO Database.{SCH_NAME}.{WPS_TABLE1}
+			(SIF_CHL_FILE_NAME,
+			SIF_CBO_FILE_NAME,
+			EMPLOYEER_CRNO,
+			PAYER_CRNO,
+			PAYER_BANK_SHORT_NAME,
+			PAYER_ACCOUNT_NO,
+			SALARY_YEAR,
+			SALARY_MONTH,
+			TOTAL_SALARIES,
+			NO_OF_RECORDS,
+			Payment_Type,
+			ESB_STATUS,
+			CHL_REFERENCE
+			)
+			VALUES(Environment.chlFileName,
+			Environment.var.filename,
+			Environment.inRefHeader.EmployerID,
+			Environment.inRefHeader.PayerID,
+			Environment.inRefHeader.PayerBankShortName,
+			Environment.inRefHeader.PayerAccNo_IBAN,
+			Environment.inRefHeader.SalaryYear,
+			Environment.inRefHeader.SalaryMonth,
+			Environment.inRefHeader.TotalSalaries,
+			Environment.inRefHeader.NoOfRecords,
+			Environment.inRefHeader.PaymentType,
+			'SIF_RCVD',
+			Environment.ChlRefernce
+			);
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			SET Environment.OrginalMsg.HeaderRowId = SELECT MAX(SIF.WPS_SIF_HEADER_INFO_ID) FROM Database.{SCH_NAME}.{WPS_TABLE1} AS SIF;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+					INSERT INTO Database.{SCH_NAME}.{WPS_TABLE2}
+			(
+			SIF_FILE_NAME,
+			EMPLOYEE_ID_TYPE,
+			REFERENCE_NUMBER,
+			EMPLOYEE_ID,
+			EMPLOYEE_NAME,
+			EMPLOYEE_BANK_CODE,
+			EMPLOYEE_ACC_NO,
+			SALARY_FREQUENCY,
+			NO_OF_WORKING_DAYS,
+			NET_SALARY,
+			BASIC_SALARY,
+			EXTRA_HOURS,
+			EXTRA_INCOME,
+			DEDUCTIONS,
+			SOCIAL_SECURITY_DEDUCTIONS,
+			NOTES_COMMENTS,
+			RECORD_ID,
+			WPS_SIF_HEADER_INFO_ID,
+			STATUS,
+			CHL_REFERENCE
+			)
+			VALUES (Environment.var.filename,
+			Environment.inRefBody.EmployeeIDType,
+			Environment.inRefBody.ReferenceNumber,
+			Environment.inRefBody.EmployeeID,
+			Environment.inRefBody.EmployeeName,
+			Environment.inRefBody.EmployeeBankCode,
+			Environment.inRefBody.EmployeeAccount_IBAN,
+			Environment.inRefBody.SalaryFrequency,
+			Environment.inRefBody.NoOfWorkingdays,
+			Environment.inRefBody.NetSalary,
+			Environment.inRefBody.BasicSalary,
+			Environment.inRefBody.Extrahours,
+			Environment.inRefBody.Extraincome,
+			Environment.inRefBody.Deductions,
+			Environment.inRefBody.SocialSecurityDeduct,
+			Environment.inRefBody.Notes_Comments,
+			Environment.recordId,
+			Environment.OrginalMsg.HeaderRowId,
+			'SIF_RCVD',
+			Environment.ChlRefernce
+			);
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			UPDATE Database.{SCH_NAME}.{WPS_TABLE1} AS S SET CBO_STATUS = 'SEND_TO_CBO_SIF' WHERE S.SIF_CBO_FILE_NAME = Environment.var.filename;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

@@ -1,0 +1,192 @@
+
+BROKER SCHEMA com.oab.CBOhandler
+
+
+DECLARE psy NAMESPACE 'urn:iso:std:psys:request';
+CREATE COMPUTE MODULE OutwardACH_Request_Router_Compute
+
+	DECLARE rc BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE KEYPATH EXTERNAL CHARACTER;
+	DECLARE KEYSTOREPASSWORD EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		
+		/*COPYING THE MQMD TO ENVIRONMENT TO BE USE IN GET NODE PROPERTIES*/
+		SET Environment.MQMD = InputRoot.MQMD;
+		
+		DECLARE msgId,Signature,Req_type CHARACTER;
+		DECLARE rootref REFERENCE TO OutputRoot.XMLNSC;
+
+		DECLARE REQ_TYPE CHARACTER ;
+		DECLARE MSG_TYPE CHARACTER FIELDNAME(InputRoot.XMLNSC.*:*.[3]);
+		--FIELDNAME(InputRoot.XMLNSC.*:*.[3]);
+
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO',' ---------START---------') INTO rc;
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO',' ---In CBO ACH Outward Router--') INTO rc;		
+
+
+		IF MSG_TYPE LIKE 'Encoding' THEN
+			--Got XML Declaration
+			SET MSG_TYPE = FIELDNAME(InputRoot.XMLNSC.*:*[2].*[2]);
+
+		END IF;
+		
+
+
+		DECLARE msg_con BLOB ASBITSTREAM(InputRoot.XMLNSC ENCODING 541 CCSID 1208);
+		DECLARE msg_char CHARACTER CAST(msg_con AS CHARACTER CCSID 1208);
+
+		CREATE FIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration NAME 'XmlDeclaration';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8';
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS rootref NAMESPACE psy NAME 'request';
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:psy = psy;
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:xsi = xsi;
+
+
+		IF MSG_TYPE LIKE 'FIToFICstmrCdtTrf' THEN
+			--It is pacs.008.001.05 FIToFICstmrCdtTrf
+			--Direct Credit
+
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'CR';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Direct Credit request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'FIToFICstmrDrctDbt' THEN
+			--It is pacs.003.001.05 FIToFICstmrDrctDbt
+			--Direct Debit
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'DB';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Direct Debt request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtCxlReq' THEN
+			--It is camt.056.001.04 FIToFIPmtCxlReq
+			--Cancillation
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFIPmtCxlReq.*:Assgnmt.*:Id;
+			SET rootref.id = msgId;
+			SET rootref.type = 'CN';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Cancellation Outward ID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtRvsl' THEN
+			--It is pacs.007.001.05 FIToFIPmtRvsl
+			--Reversal
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFIPmtRvsl.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'RV';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Reversal outward request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'PmtRtr' THEN
+			--It is pacs.004.001.05 PmtRtr
+			--Return
+			SET msgId = InputRoot.XMLNSC.*:Document.*:PmtRtr.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'RT';
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Return Outward request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'RsltnOfInvstgtn' THEN
+			--It is camt.029.001.05 RsltnOfInvstgtn
+			--Cancillation Response RsltnOfInvstgtn.ns4:Assgnmt.ns4:Id
+			SET msgId = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:Assgnmt.*:Id;
+			SET rootref.id = msgId;
+			SET rootref.type = 'CSR';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Cancellation Ressponse request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'FIToFIPmtStsRpt' THEN
+			--It is pacs.002.001.006 FIToFIPmtStsRpt
+			--Payment Status report
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'SR';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Inward Payment StatusReport to CBO request MsgID :'|| msgId) INTO rc;
+
+		ELSEIF MSG_TYPE LIKE 'MndtInitnReq' THEN
+			--It is pain.009.001.04 MndtInitnReq
+			--Mandate Initiation
+			SET msgId = InputRoot.XMLNSC.*:Document.*:MndtInitnReq.*:GrpHdr.*:MsgId; --populate according to the input request
+			SET rootref.id = msgId;
+			SET rootref.type = 'MNDTINIT';
+			-- SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1] = 'jndi://jms_MmsOutward';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','MandateInitiation request MsgID :'|| msgId) INTO rc;
+			--It is assumtion, Mandate document not provided
+
+		ELSEIF MSG_TYPE LIKE 'MndtAmdmntReq' THEN
+			--It is pain.010.001.04 MndtAmdmntReq
+			--Mandate Amendment
+			SET msgId = InputRoot.XMLNSC.*:Document.*:MndtAmdmntReq.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'MNDTAMEND';
+			-- SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1] = 'jndi://jms_MmsOutward';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Mandate Amendment request MsgID :'|| msgId) INTO rc;
+			--It is assumtion, Mandate document not provided
+
+		ELSEIF MSG_TYPE LIKE 'MndtCxlReq' THEN
+			--It is pain.011.001.04 MndtCxlReq
+			--Mandate Termination
+			SET msgId = InputRoot.XMLNSC.*:Document.*:MndtCxlReq.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'MNDTTERM';
+			-- SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1] = 'jndi://jms_MmsOutward';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Mandate Termination request MsgID :'|| msgId) INTO rc;
+			--It is assumtion, Mandate document not provided
+
+		ELSEIF MSG_TYPE LIKE 'MndtAccptncRpt' THEN
+			--It is pain.012.001.04 MndtAccptncRpt
+			--Mandate Response
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'MDR';
+
+			CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO','Direct Credit request MsgID :'|| msgId) INTO rc;
+			--It is assumtion, Mandate document not provided
+
+		END IF;
+
+
+		SET rootref.format = 'MX';
+
+		SET rootref.date = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss'); --'<?xml version="1.0" encoding="UTF-8"?>'
+		DECLARE msgContentDate CHARACTER msg_char || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+		--SET msgContentDate = REPLACE(msgContentDate ,'"','\"');
+
+		SET Signature= DigitalSignatureOABSign(msgContentDate,KEYPATH,KEYSTOREPASSWORD);
+
+		SET rootref.signature = Signature;
+		SET rootref.(XMLNSC.CDataField)content = msg_char;
+
+		CALL writeToLogFile(flowName, 'CBOROUTER_INFO', 'INFO',' ----------END----------') INTO rc;
+
+	END;
+END MODULE;
+
+CREATE PROCEDURE DigitalSignatureOABSign ( IN msgContent CHARACTER,IN keystoreFile CHARACTER,IN keystorePass CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.digitalsign.sign.getDigitalsign";
+
+

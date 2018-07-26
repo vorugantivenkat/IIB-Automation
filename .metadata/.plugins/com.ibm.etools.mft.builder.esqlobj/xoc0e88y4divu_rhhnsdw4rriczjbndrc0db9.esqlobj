@@ -1,0 +1,15 @@
+CREATE PROCEDURE stringValidation (IN text CHARACTER)
+RETURNS BOOLEAN
+BEGIN
+	IF NOT CONTAINS(text, 'Node throwing exception') AND
+		NOT CONTAINS(text, 'Caught exception and rethrowing') AND
+		NOT CONTAINS(text, 'Error detected, rethrowing') AND
+		NOT CONTAINS(text, 'Error occured in procedure') AND
+		NOT LENGTH(text) = 1 THEN
+
+		RETURN TRUE;
+	ELSE
+		RETURN FALSE;
+	END IF;
+
+END;

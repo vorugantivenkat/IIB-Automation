@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions">
+
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+        <xsd:element ibmSchExtn:docRoot="true" name="ADD_WPS_ERROR_RESPONSE">
+    <xsd:complexType>
+      <xsd:sequence dfdl:initiator="">
+        <xsd:element dfdl:length="6" dfdl:lengthKind="delimited" minOccurs="0" name="Indicator" type="xsd:string"/>
+        <xsd:element minOccurs="0" name="RecordNumber" type="xsd:string"/>
+        <xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="." minOccurs="0" name="Error" type="xsd:string"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element ibmSchExtn:docRoot="true" name="ADD_OAB_WPS_RESPONSE">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+				<xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="header">
+					<xsd:complexType>
+						<xsd:sequence>
+														<xsd:element ibmDfdlExtn:sampleValue="head_value2" name="OriginalFileName" type="xsd:string"/>							
+							<xsd:element ibmDfdlExtn:sampleValue="head_value3" name="Status" type="xsd:string"/>							
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value4" name="Error" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>			
+				<xsd:element dfdl:terminator="%CR;%LF;%WSP*;" maxOccurs="1" name="record">
+					<xsd:complexType>
+						<xsd:sequence> 
+														<xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,23}" ibmDfdlExtn:sampleValue="value2" name="OriginalFileName" type="xsd:string"/>
+							<xsd:element dfdl:lengthKind="delimited" dfdl:lengthPattern="\w{0,7}" ibmDfdlExtn:sampleValue="value3" name="Status" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="delimited" dfdl:terminator="" ibmDfdlExtn:sampleValue="value4" minOccurs="0" name="Error" type="xsd:string"/>
+                                                                                                                                                                                                    </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+                			            <xsd:element minOccurs="0" ref="ADD_WPS_ERROR_RESPONSE"/>
+            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+
+</xsd:schema>

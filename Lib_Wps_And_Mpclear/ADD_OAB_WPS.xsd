@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions">
+
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element ibmSchExtn:docRoot="true" name="ADD_OAB_WPS">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+                				                <xsd:element dfdl:terminator="%CR;%LF;%WSP*;" name="header">
+					<xsd:complexType>
+						<xsd:sequence>
+														<xsd:element default="" ibmDfdlExtn:sampleValue="head_value2" name="EmployerNumberType" type="xsd:string"/>							
+							<xsd:element default="" ibmDfdlExtn:sampleValue="head_value3" name="Employer_CR_NO" type="xsd:string"/>							
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value4" name="PayerNumberType" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value5" name="Payer_CR_NO" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value6" name="EmployerName" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value7" name="PayerName" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value8" name="PayerAccountNumber_IBAN" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value9" name="PayerBankShortName" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value10" name="PayerBranch" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value11" name="EmployerType" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value12" name="EmployerBusinessType" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value13" name="EmployerBranchesCount" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value14" name="EmployerGrade" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value15" name="EmployerEmail" type="xsd:string"/>
+                            <xsd:element default="" ibmDfdlExtn:sampleValue="head_value16" name="EmployerAddress" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value17" name="EmployerPhoneNumber" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value18" name="EmployerPostalCode" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value19" name="Employer_POBox" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value20" name="EmployerSignatory1" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value21" name="EmployerSignatory2" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value22" name="EmployerSignatory3" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>			
+                				                <xsd:element dfdl:occursCountKind="implicit" dfdl:terminator="%CR;%LF;%WSP*;" maxOccurs="unbounded" name="record">
+					<xsd:complexType>
+						<xsd:sequence> 
+																					                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,3}" ibmDfdlExtn:sampleValue="head_value2" name="EmployerNumberType" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,20}" ibmDfdlExtn:sampleValue="head_value3" name="Employer_CR_NO" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,3}" ibmDfdlExtn:sampleValue="head_value4" name="PayerNumberType" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,20}" ibmDfdlExtn:sampleValue="head_value5" name="Payer_CR_NO" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value6" name="EmployerName" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value7" name="PayerName" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,30}" ibmDfdlExtn:sampleValue="head_value8" name="PayerAccountNumber_IBAN" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,4}" ibmDfdlExtn:sampleValue="head_value9" name="PayerBankShortName" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,12}" ibmDfdlExtn:sampleValue="head_value10" name="PayerBranch" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,7}" ibmDfdlExtn:sampleValue="head_value11" name="EmployerType" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value12" name="EmployerBusinessType" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="\w{0,3}" ibmDfdlExtn:sampleValue="head_value13" name="EmployerBranchesCount" type="xsd:string"/>
+                            <xsd:element dfdl:length="1" dfdl:lengthKind="explicit" ibmDfdlExtn:sampleValue="head_value14" name="EmployerGrade" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="([\w\.-]*@[a-zA-Z]+\.[a-zA-Z]{2,4}){0,254}" ibmDfdlExtn:sampleValue="head_value15" minOccurs="0" name="EmployerEmail" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,254}" ibmDfdlExtn:sampleValue="head_value16" minOccurs="0" name="EmployerAddress" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,20}" ibmDfdlExtn:sampleValue="head_value17" minOccurs="0" name="EmployerPhoneNumber" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,14}" ibmDfdlExtn:sampleValue="head_value18" minOccurs="0" name="EmployerPostalCode" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,16}" ibmDfdlExtn:sampleValue="head_value19" minOccurs="0" name="Employer_POBox" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value20" minOccurs="0" name="EmployerSignatory1" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value21" minOccurs="0" name="EmployerSignatory2" type="xsd:string"/>
+                            <xsd:element dfdl:lengthKind="pattern" dfdl:lengthPattern="[\w\s]{0,70}" ibmDfdlExtn:sampleValue="head_value22" minOccurs="0" name="EmployerSignatory3" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+                			            </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+
+</xsd:schema>

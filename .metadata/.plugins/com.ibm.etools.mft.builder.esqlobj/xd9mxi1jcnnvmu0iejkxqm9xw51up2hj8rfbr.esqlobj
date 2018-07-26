@@ -1,0 +1,45 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '14' THEN
+			SET Environment.checkDb.Values[] = SELECT J.GRP_HDR_ID_TXN_INFO_FK,J.TRAN_REF,J.MSG_ID,J.TXN_FOUND,J.ORIGIN_END_TO_END_ID,J.TXN_REASON FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J WHERE J.MSG_ID = Environment.msgId AND J.TXN_ID= Environment.txnId; -- AND J.STATUS = 'RETO_TXN_CBO_SENT';
+			SET Environment.checkDb.Values1[]= SELECT S.GRP_CHANNEL,S.GRP_ORGIN_BATCH FROM Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS S WHERE S.GRP_HEADER_ID = Environment.checkDb.Values.GRP_HDR_ID_TXN_INFO_FK;
+			SET TOTALLENGTH = LENGTH(Environment.checkDb.Values1.GRP_CHANNEL)+LENGTH(Environment.checkDb.Values1.GRP_ORGIN_BATCH);
+			SET ORIGIN_END_ID_LENGTH = LENGTH(Environment.checkDb.Values.ORIGIN_END_TO_END_ID)-TOTALLENGTH;
+			--UPDATE Database.{SCHEMA_NAME}.{PAYLOAD_TABLE} AS K SET MSG_CBO_TO_ESB = Environment.srcMsg WHERE K.MESSAGE_ID = Environment.msgId;
+			SET Environment.Narratives[] = SELECT N.CDTR_NAME,N.CDTR_ACCT_FIN_ID_BICFI,N.DCI_GP_HDR_ID_TXN_FK FROM Database.{SCHEMA_NAME}.{DCI_TXN_INFO} AS N WHERE N.PMT_ID_TXN_ID = SUBSTRING(Environment.checkDb.Values.ORIGIN_END_TO_END_ID FROM TOTALLENGTH+1 FOR ORIGIN_END_ID_LENGTH);
+			SET Environment.msg.id[] = SELECT S.MSG_ID FROM Database.{SCHEMA_NAME}.{DCI_GP_HEADER_INFO} AS S WHERE S.DCI_GP_HEADER_ID =Environment.Narratives.DCI_GP_HDR_ID_TXN_FK;
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = Environment.Status, CBO_STATUS = Environment.grpStatus,
+			DESCRIPTION = 'Group was Success at CBO' WHERE J.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '16' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = Environment.Status,CBO_STATUS = Environment.grpStatus,
+			DESCRIPTION = 'Group was Success at CBO' WHERE J.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS = Environment.Status,
+			DESCRIPTION = 'Transaction was Success at CBO',CBO_STATUS = Environment.txnStatus WHERE J.TXN_ID = Environment.txnId;
+		ELSEIF Environment.dbQueryCount = '18' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = 'RETO_DDO_REJECT',CBO_STATUS = Environment.grpStatus,
+			DESCRIPTION = 'Group was Rejected at CBO' WHERE J.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '19' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = 'RETO_DCI_REJECT',CBO_STATUS = Environment.grpStatus
+			WHERE J.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '20' THEN
+			SET Environment.retoTxnDet.Values[] = SELECT J.TXN_AMOUNT,J.TXN_REASON,J.DEBTOR_ACC_NO,J.TXN_FOUND,J.OPTIONAL_ID,A.DC_STLMNT_ACC,A.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J,Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS A WHERE J.TXN_ID= Environment.txnId AND J.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '21' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET CBS_TRAN_REF = Environment.cbsTranRef, CBS_REQUEST = Environment.cbsMsg, STATUS = Environment.Status,DESCRIPTION = Environment.rejRsn WHERE J.TXN_ID = Environment.txnId;
+		ELSEIF Environment.dbQueryCount = '22' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = 'RETO_DDO_PENDING',CBO_STATUS = Environment.grpStatus, --updating the reto header table with grouo status
+			DESCRIPTION = 'Transaction was Success at CBO' WHERE J.MSG_ID = Environment.msgId;
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS = 'RETO_DDO_PENDING',
+			CBO_STATUS = Environment.txnStatus, DESCRIPTION = 'Transaction was Success at CBO'
+			WHERE J.TXN_ID = Environment.txnId;
+		ELSEIF Environment.dbQueryCount = '23' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS J SET STATUS = 'RETO_DCI_PENDING',CBO_STATUS = Environment.grpStatus, --updating the reto header table with grouo status
+			DESCRIPTION = 'Transaction was Success at CBO' WHERE J.MSG_ID = Environment.msgId;
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J SET STATUS = 'RETO_DCI_PENDING',CBO_STATUS = Environment.txnStatus, --updating the reto header table with grouo status
+			DESCRIPTION = 'Transaction was Success at CBO' WHERE J.TXN_ID = Environment.txnId;
+
+		END IF;
+		RETURN TRUE;
+	END;
+

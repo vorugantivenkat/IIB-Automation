@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="www.oab.com/ddo_request" xmlns:req="www.oab.com/ddo_request">
+  <xsd:element name="msg">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="msg_header" minOccurs="1">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="source_sys_code" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="source_sys_id" minOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="[\w]{16}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="interface_code" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="source_sys_timestamp" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="total_txn" minOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="[\d]{1,15}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="total_amt" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="pay_instrmcode" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="pay_catpur" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="instgagt_bicfi" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="instgagt_clrsysmmbid" minOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="[\d]{1,35}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="instgagt_branchid" minOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="[\d]{1,35}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="instdagt_bicfi" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="instdagt_clrsysmmbid" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="instdagt_branchid" minOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="sup_data" minOccurs="1">
+                <xsd:complexType>
+                  <xsd:sequence>
+                    <xsd:element name="envlp">
+                      <xsd:complexType>
+                        <xsd:sequence>
+                          <xsd:element name="placeandname">
+                            <xsd:complexType/>
+                          </xsd:element>
+                          <xsd:element name="batch_source">
+                            <xsd:complexType/>
+                          </xsd:element>
+                        </xsd:sequence>
+                      </xsd:complexType>
+                    </xsd:element>
+                  </xsd:sequence>
+                </xsd:complexType>
+              </xsd:element>
+              <xsd:element name="other_info" minOccurs="0">
+                <xsd:complexType/>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+        <xsd:element name="msg_data" minOccurs="1" maxOccurs="unbounded">
+          <xsd:complexType>
+            <xsd:sequence>
+            	<xsd:element name="instr_id" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="end_to_end_id" minOccurs="1">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="DrctDbtTx" minOccurs="1">
+            		<xsd:complexType>
+            			<xsd:sequence>
+            				<xsd:element name="MndtRltdInf"
+            					minOccurs="1">
+            					<xsd:complexType>
+            						<xsd:sequence>
+            							<xsd:element name="MndtId"
+            								minOccurs="1">
+            								<xsd:simpleType>
+            									<xsd:restriction
+            										base="xsd:string">
+            										<xsd:pattern
+            											value="[\w]{1,20}">
+            										</xsd:pattern>
+            									</xsd:restriction>
+            								</xsd:simpleType>
+            							</xsd:element>
+            							<xsd:element name="FrstColltnDt"
+            								type="xsd:date" minOccurs="1" />
+            						</xsd:sequence>
+            					</xsd:complexType>
+            				</xsd:element>
+            			</xsd:sequence>
+            		</xsd:complexType>
+            	</xsd:element>
+            	<xsd:element name="amount" type="xsd:string"
+            		minOccurs="1" />
+            	<xsd:element name="currency" type="xsd:string" minOccurs="1"></xsd:element>
+            	<xsd:element name="sttlm_prty" type="xsd:string"
+            		minOccurs="0" />
+            	<xsd:element name="instdagt_bicfi" type="xsd:string"
+            		minOccurs="0" />
+            	<xsd:element name="instdagt_clrsysmmbid"
+            		type="xsd:string" minOccurs="1" />
+            	<xsd:element name="instdagt_branchid" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="dbtr_name" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,140}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="dbtr_id" minOccurs="0">
+            		<xsd:complexType>
+            			<xsd:sequence>
+            				<xsd:element name="prvtid" minOccurs="1">
+            					<xsd:simpleType>
+            						<xsd:restriction
+            							base="xsd:string">
+            							<xsd:pattern
+            								value="[\w]{1,35}">
+            							</xsd:pattern>
+            						</xsd:restriction>
+            					</xsd:simpleType>
+            				</xsd:element>
+            				<xsd:element name="prtry" minOccurs="1">
+            					<xsd:simpleType>
+            						<xsd:restriction
+            							base="xsd:string">
+            							<xsd:pattern
+            								value="[\w]{1,35}">
+            							</xsd:pattern>
+            						</xsd:restriction>
+            					</xsd:simpleType>
+            				</xsd:element>
+            			</xsd:sequence>
+            		</xsd:complexType>
+            	</xsd:element>
+            	<xsd:element name="dbtr_iban" minOccurs="1">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,30}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="dbtr_acctnr" minOccurs="1">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,34}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="dbtr_bicfi" type="xsd:string"
+            		minOccurs="0" />
+            	<xsd:element name="dbtr_memid" type="xsd:string"
+            		minOccurs="1" />
+            	<xsd:element name="dbtr_branchid" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="cdtr_name" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,140}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="cdtr_id" minOccurs="1">
+            		<xsd:complexType>
+            			<xsd:sequence>
+            				<xsd:element name="prvtid" minOccurs="1">
+            					<xsd:simpleType>
+            						<xsd:restriction
+            							base="xsd:string">
+            							<xsd:pattern
+            								value="[\w]{1,35}">
+            							</xsd:pattern>
+            						</xsd:restriction>
+            					</xsd:simpleType>
+            				</xsd:element>
+            				<xsd:element name="prtry" minOccurs="1">
+            					<xsd:simpleType>
+            						<xsd:restriction
+            							base="xsd:string">
+            							<xsd:pattern
+            								value="[\w]{1,35}">
+            							</xsd:pattern>
+            						</xsd:restriction>
+            					</xsd:simpleType>
+            				</xsd:element>
+            			</xsd:sequence>
+            		</xsd:complexType>
+            	</xsd:element>
+            	<xsd:element name="cdtr_iban" minOccurs="1">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\d]{1,30}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="cdtr_acctnr" minOccurs="1">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,34}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="cdtr_bicfi" type="xsd:string"
+            		minOccurs="0" />
+            	<xsd:element name="cdtr_memid" type="xsd:string"
+            		minOccurs="1" />
+            	<xsd:element name="cdtr_branchid" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="txn_purp" minOccurs="0">
+            		<xsd:simpleType>
+            			<xsd:restriction base="xsd:string">
+            				<xsd:pattern value="[\w]{1,35}"></xsd:pattern>
+            			</xsd:restriction>
+            		</xsd:simpleType>
+            	</xsd:element>
+            	<xsd:element name="rmtinf" minOccurs="0">
+            		<xsd:complexType>
+            			<xsd:sequence>
+            				<xsd:element name="ustrd">
+            					<xsd:simpleType>
+            						<xsd:restriction
+            							base="xsd:string">
+            							<xsd:pattern
+            								value="[\w]{1,140}">
+            							</xsd:pattern>
+            						</xsd:restriction>
+            					</xsd:simpleType>
+            				</xsd:element>
+            			</xsd:sequence>
+            		</xsd:complexType>
+            	</xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+      <xsd:attribute name="type" type="xsd:string"/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

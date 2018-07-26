@@ -1,0 +1,15 @@
+package com.test;
+
+public class TestDecodwe {
+
+	public static void main(String[] args) {
+		try {
+			String url = "https%3A%2F%2Fmywebsite%2Fdocs%2Fenglish%2Fsite%2Fmybook.do"
+					+ "%3Frequest_type%3D%26type%3Dprivate";
+
+			System.out.println(url + "Hello World!------->"
+					+ new String(url.getBytes("UTF-8"), "ASCII"));
+		} catch (Exception E) {
+		}
+	}
+}

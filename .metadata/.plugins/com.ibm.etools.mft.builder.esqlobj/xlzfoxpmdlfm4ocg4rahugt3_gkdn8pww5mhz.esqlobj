@@ -1,0 +1,440 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE bool BOOLEAN;
+
+		SET bool = CopyEntireMessage();
+		
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE VerifyMessage() RETURNS BOOLEAN BEGIN
+		------------- checking for duplicate message -----------------
+		SET Environment.Assgnmt_id = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Assgnmt.ns13:Id;
+		SET Environment.dbQueryCount = '1';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+		IF CARDINALITY(Environment.PM[]) > 0 THEN
+			CALL ResponseMsg();
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Duplicate Assignment ID';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'The same Assignment ID was processed earlier';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+			DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+			CALL genSupData(outRef);
+			--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+		END IF;
+
+		DECLARE msg REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq;
+		DECLARE asgnrBICFI CHARACTER msg.ns13:Assgnmt.ns13:Assgnr.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+		DECLARE asgneBICFI CHARACTER msg.ns13:Assgnmt.ns13:Assgne.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+		DECLARE grpcxl CHARACTER msg.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl.ns13:GrpCxl;
+
+		DECLARE under CHARACTER ;
+		--------- checking for Constraint PC3: Cancellation request must have only one "Underlying" occurrence ------
+		IF CARDINALITY(InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg[]) = 1 THEN
+
+
+			DECLARE grpCxlId CHARACTER InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl.ns13:GrpCxlId;
+
+
+			IF LENGTH(asgnrBICFI) > 0 AND LENGTH(asgneBICFI) > 0 AND LENGTH(grpCxlId) > 0 AND LENGTH(grpcxl) > 0 THEN
+				--------- checking for Constraint PC1:"Assignment/Identification" must be the same as "Original Group Information And Cancellation/Group Cancellation Identification"------
+				IF grpCxlId = Environment.Assgnmt_id THEN
+
+					DECLARE under REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+					DECLARE txns REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg;
+					----- checking if message is for DC or DD ------
+					IF STARTSWITH(under.ns13:OrgnlMsgNmId,'pacs.008.') OR STARTSWITH(under.ns13:OrgnlMsgNmId,'pacs.003.') THEN
+						DECLARE grpcxl BOOLEAN;
+						SET Environment.grpcxl = under.ns13:GrpCxl;
+						----- checking is GroupCancellation is true or false ---------
+						IF Environment.grpcxl = false THEN
+
+							DECLARE numTxns,indTxns INTEGER;
+							SET numTxns = under.ns13:NbOfTxs;
+							------- checking if NoofTxns field exist since grpcxl is false ---------
+							IF LENGTH(CAST(numTxns AS CHARACTER)) > 0 THEN
+
+								SET indTxns = CARDINALITY(txns.ns13:TxInf[]);
+								--- checking for Constraint IC3:"Original Group Information And Cancellation/Group Cancellation" is false, then "Transaction Information" must be present ---
+								IF indTxns >= 1 THEN
+									--- checking for constraint IC1: Number Of Transactions" must equal the number of occurrences of "Transaction Information" ------
+									IF numTxns = indTxns THEN
+										RETURN TRUE;
+									ELSE -- IC1 not satisfied ---
+										CALL ResponseMsg();
+										SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+										SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Constraint IC1 not satisified';
+										SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = '"Original Group Information And Cancellation/Group Cancellation" is false, then "Number Of Transactions" must equal the number of occurrences of "Transaction Information"';
+										SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+										SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+										DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+										CALL genSupData(outRef);
+										--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+										CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request did not satisifed the Constraint IC1 thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+										PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+										RETURN FALSE;
+									END IF;
+
+								ELSE --- IC3 not satisfied ---
+									CALL ResponseMsg();
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Constraint IC3 not satisified';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = '"Original Group Information And Cancellation/Group Cancellation" is false, then "Transaction Information" must be present';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+									DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+									CALL genSupData(outRef);
+									--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+									CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request did not satisifed the Constraint IC3 thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+									PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+									RETURN FALSE;
+
+								END IF;
+							ELSE -- invalid message with grpcxl false and no tranx info ----
+								CALL ResponseMsg();
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Message not valid';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'Message specifying GrpCxl as false but the field NbOfTxs is missing';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+								DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+								CALL genSupData(outRef);
+								--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+								CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' invalid message with grpcxl false and no tranx info thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+								PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+								RETURN FALSE;
+							END IF;
+
+
+						ELSE -- grpcxl = true
+							SET Environment.ognlMsgID = under.ns13:OrgnlMsgId;
+							DECLARE indTxns INTEGER;
+							SET indTxns = CARDINALITY(txns.ns13:TxInf[]);
+							--- checking for constraint IC4: Original Group Information And Cancellation/Group Cancellation" is true, then "Transaction Information" is not allowed ---
+							IF indTxns = 0 THEN
+								IF STARTSWITH(under.ns13:OrgnlMsgNmId,'pacs.008.') THEN -- txn's from credit table
+									SET Environment.dbQueryCount = '2';
+									CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+								ELSE -- txn's from debit table
+									SET Environment.dbQueryCount = '3';
+									CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+								END IF;
+								IF Environment.Exception = 'True' THEN
+									RETURN FALSE;
+								END IF;
+								DECLARE M INTEGER;
+								SET M = CARDINALITY(Environment.data[]);
+								IF M = 0 THEN -- If no txns found in DB
+									CALL ResponseMsg();
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Invalid Original Message Id';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'No Transactions found with the specified MessageID or Transactions failed previously';
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+									SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+									DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+									CALL genSupData(outRef);
+									--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+									PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+									RETURN FALSE;
+								ELSE
+									RETURN TRUE;
+								END IF;
+							ELSE --- IC4 not satisfied ----
+								CALL ResponseMsg();
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Constraint IC4 not satisfied';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = '"Original Group Information And Cancellation/Group Cancellation" is true, then "Transaction Information" is not allowed';
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+								SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+								DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+								CALL genSupData(outRef);
+								--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+								CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request did not satisifed the Constraint IC4 thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+								PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+								RETURN FALSE;
+							END IF;
+
+						END IF;
+
+					ELSE -- Rejecting message if it is not for DD or DC
+						CALL ResponseMsg();
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Invalid Cancellation Message';
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'Message is neither for Direct Credit nor for Direct Debit';
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+						DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+						CALL genSupData(outRef);
+						-- SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+						CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request was rejected due transaction not found in DD and DC thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+						PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+						RETURN FALSE;
+					END IF;
+
+				ELSE -- constraint PC1 not satisfied ---
+					CALL ResponseMsg();
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Constraint PC1 is not satisfied';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = '"Assignment/Identification" must be the same as "Original Group Information And Cancellation/Group Cancellation Identification"';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+					DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+					CALL genSupData(outRef);
+					--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+					CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request did not satisifed the Constraint PC1 thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+					RETURN FALSE;
+				END IF;
+
+			ELSE
+				CALL ResponseMsg();
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Message not valid';
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'Mandatory fields like "BICFI" or "GrpCxlId" or "GrpCxl" or "AddtlInf" or "PlcAndName" are missing in the message';
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+				DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+				CALL genSupData(outRef);
+				--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				RETURN FALSE;
+			END IF;
+
+
+
+		ELSE --- PC3 not satisfied ----
+			CALL ResponseMsg();
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Constraint PC3 is not satisfied';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = 'Cancellation request message must have only one "Underlying" occurrence';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+			DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+			CALL genSupData(outRef);
+			--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+			CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Cancellation Request did not satisifed the Constraint PC3 thats why Response generated in Pac029.001.05 And send back to CBO' ) INTO rc;
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' -----------START-----------------' ) INTO rc;
+			DECLARE processMsg BOOLEAN;
+			SET processMsg = VerifyMessage();
+			IF processMsg = TRUE THEN
+
+				DECLARE under REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+				DECLARE txns REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg;
+				DECLARE assign REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Assgnmt;
+				DECLARE supp REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData;
+
+				SET Environment.id = assign.ns13:Id;
+				--DECLARE crtDateTime TIMESTAMP CURRENT_GMTTIMESTAMP;
+				SET Environment.crtDateTime = assign.ns13:CreDtTm;
+				SET Environment.assignrBicfi = assign.ns13:Assgnr.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+				--DECLARE assignr_Mbid CHARACTER assign.ns13:Assgnr.ns13:Agt.ns13:FinInstnId.ns13:ClrSysMmbId.ns13:MmbId;
+				SET Environment.assigneBicfi = assign.ns13:Assgne.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+				--DECLARE assigne_Mbid CHARACTER assign.ns13:Assgne.ns13:Agt.ns13:FinInstnId.ns13:ClrSysMmbId.ns13:MmbId;
+				SET Environment.uid = under.ns13:GrpCxlId;
+				SET Environment.msgId = under.ns13:OrgnlMsgId;
+				SET Environment.msgNmId = under.ns13:OrgnlMsgNmId;
+				SET Environment.noTxns = under.ns13:NbOfTxs;
+				SET Environment.grpcxl = under.ns13:GrpCxl;
+				SET Environment.dbQueryCount = '4';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.dbQueryCount = '28';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.dbQueryCount = '29';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.cancUndrlygId = Environment.SN.CANC_UNDRLYG_ID;
+				DECLARE underCxlRsn REFERENCE TO under.ns13:CxlRsnInf[>];
+				WHILE LASTMOVE(underCxlRsn) DO
+					SET Environment.underPrty = underCxlRsn.ns13:Rsn.ns13:Prtry;
+					SET Environment.underAddInfo = underCxlRsn.ns13:AddtlInf;
+					SET Environment.dbQueryCount = '5';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					MOVE underCxlRsn NEXTSIBLING;
+				END WHILE;
+				SET Environment.plcNm = supp.ns13:PlcAndNm;
+				SET Environment.batchSource = supp.ns13:Envlp.ns13:*;
+				SET Environment.dbQueryCount = '6';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				DECLARE i INTEGER 1;
+				SET Environment.failno = i;
+				DECLARE inRef REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq;
+
+				IF Environment.grpcxl = false THEN
+					DECLARE I INTEGER 1;
+					DECLARE J INTEGER;
+					SET J = CARDINALITY(inRef.ns13:Undrlyg.ns13:TxInf[]);
+
+					WHILE I <= J DO
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Assgnmt = inRef.ns13:Assgnmt;
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl = inRef.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf = inRef.ns13:Undrlyg.ns13:TxInf[I];
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData = inRef.ns13:SplmtryData;
+						SET Environment.CANC.TXN = OutputRoot.XMLNSC;
+						PROPAGATE TO TERMINAL 'out' DELETE NONE;
+						SET I = I + 1;
+					END WHILE;
+
+				ELSE
+					DECLARE I INTEGER 1;
+					DECLARE J INTEGER;
+					SET J = CARDINALITY(Environment.data[]);
+					WHILE I <= J DO
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Assgnmt = inRef.ns13:Assgnmt;
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl = inRef.ns13:Undrlyg.ns13:OrgnlGrpInfAndCxl;
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf = NULL;
+						SET OutputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData = inRef.ns13:SplmtryData;
+						SET Environment.CANC.DBTXNS = Environment.data[I];
+						PROPAGATE TO TERMINAL 'out' DELETE NONE;
+						SET I = I + 1;
+					END WHILE;
+				END IF;
+
+				SET OutputRoot.XMLNSC = NULL;
+				SET Environment.failno = NULL;
+				SET Environment.Flag = NULL;
+				SET Environment.grpcxl = NULL;
+				/* ===========================================================================================================
+				Sending Failed Transactions to CBO
+				===========================================================================================================*/
+				DECLARE fail INTEGER;
+				SET fail = CARDINALITY(Environment.FAIL.TXNS[]);
+				IF fail > 0 THEN
+					CALL ResponseMsg();
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR'; --'PACR or RJCR';
+					--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = '';
+					--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:CxlStsRsnInf.ns4:AddtlInf = '';
+
+					DECLARE H INTEGER 1;
+					WHILE H <= fail DO
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[H].ns4:OrgnlTxId = Environment.FAIL.TXNS[H].OrgnlTxId;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[H].ns4:TxCxlSts = Environment.FAIL.TXNS[H].TxCxlSts;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[H].ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = Environment.FAIL.TXNS[H].Prtry;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[H].ns4:CxlStsRsnInf.ns4:AddtlInf = Environment.FAIL.TXNS[H].AddtlInf;
+						SET H = H + 1;
+					END WHILE;
+
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+					DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+					CALL genSupData(outRef);
+					-- SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:SplmtryData.ns13:Envlp.ns13:BchSrc;
+					PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				END IF;
+
+
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'CANI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE ResponseMsg() BEGIN -- Forming Response Message to be sent to CBO
+		DECLARE inRef REFERENCE TO InputRoot.XMLNSC.ns13:Document.ns13:FIToFIPmtCxlReq;
+		DECLARE currDay,currDate,estSeq CHARACTER;
+		SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd');
+		SET currDate = SUBSTRING(currDay FROM 5 FOR 2);
+		IF LENGTH(fbchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+			DECLARE prevIdDate CHARACTER;
+			SET prevIdDate = SUBSTRING(fbchId FROM 9 FOR 2); -- if contains, extracting date from it
+			IF prevIdDate = currDate THEN
+				SET fbchSeq = CAST(fbchSeq AS INTEGER) + 1; --if previous BatchID date is same as current date, then incrementing by 1
+			ELSE
+				SET fbchSeq = 1; -- if dates are not same then starting new sequence from 1
+			END IF;
+		ELSE
+			SET fbchSeq = 1;
+		END IF;
+		DECLARE j,cboMsgId CHARACTER;
+		SET j = CAST(fbchSeq AS CHARACTER);
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns22 = ns22;
+		SET fbchId = Environment.VALUES.BANK_PREFIX || CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd') || 'FLD' || CAST(RIGHT('000'||j,3) AS CHARACTER);
+		
+		SET alpha = random(3);
+		SET cboMsgId = Environment.VALUES.BANK_PREFIX || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+		
+		CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', ' Msg id was genaerted' || fbchId || 'for response message' ) INTO rc;
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Id = cboMsgId;
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgnr.ns4:Agt.ns4:FinInstnId.ns4:BICFI = inRef.ns13:Assgnmt.ns13:Assgne.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgne.ns4:Agt.ns4:FinInstnId.ns4:BICFI = inRef.ns13:Assgnmt.ns13:Assgnr.ns13:Agt.ns13:FinInstnId.ns13:BICFI;
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Sts.ns4:AssgnmtCxlConf = 'No';
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgId = inRef.ns13:Assgnmt.ns13:Id;
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgNmId = 'camt.056.001.04';
+	END;

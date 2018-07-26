@@ -1,0 +1,63 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '31' THEN
+			INSERT INTO Database.{SCH}.{ADD_TAB}
+			(
+			ADDOPS_FILE_NAME,
+			EMPLOYER_NUM_TYPE,
+			EMPLOYER_CR_NO,
+			PAYER_NUMBER_TYPE,
+			PAYER_CR_NO,
+			EMPLOYER_NAME,
+			PAYER_NAME,
+			PAYER_ACCTNO_IBAN,
+			PAYER_BNK_SHORT_NAME,
+			PAYER_BRANCH,
+			EMPLOYER_TYPE,
+			EMPLOYER_BIZ_TYPE,
+			EMPLOYER_BRANCHES_COUNT,
+			EMPLOYER_GRADE,
+			EMPLOYER_EMAIL,
+			EMPLOYER_ADDRESS,
+			EMPLOYER_PH_NO,
+			EMPLOYER_POSTAL_CODE,
+			EMPLOYER_POBOX,
+			EMPLOYER_SIGNATORY1,
+			EMPLOYER_SIGNATORY2,
+			EMPLOYER_SIGNATORY3,
+			STATUS_CODE,
+			EXEC_DESC
+			) VALUES
+			(
+			Environment.fileName,
+			Environment.wpsAddRef.EmployerIdType,
+			Environment.wpsAddRef.EmployerId,
+			Environment.wpsAddRef.PayerIdType,
+			Environment.wpsAddRef.PayerId,
+			Environment.wpsAddRef.EmployerName,
+			Environment.wpsAddRef.PayerName,
+			Environment.wpsAddRef.PayerAccount,
+			Environment.wpsAddRef.PayerBankShortName,
+			Environment.wpsAddRef.PayerBranch,
+			Environment.wpsAddRef.EmployerType,
+			Environment.wpsAddRef.EmployerBusinessType,
+			Environment.wpsAddRef.EmployerBranchesCount,
+			Environment.wpsAddRef.EmployerGrade,
+			Environment.wpsAddRef.EmployerEmail,
+			Environment.wpsAddRef.EmployerAddress,
+			Environment.wpsAddRef.EmployerPhone,
+			Environment.wpsAddRef.EmployerPostalCode,
+			Environment.wpsAddRef.EmployerPoBox,
+			Environment.wpsAddRef.EmployerSignatory1,
+			Environment.wpsAddRef.EmployerSignatory2,
+			Environment.wpsAddRef.EmployerSignatory3,
+			'ADD_RCVD',
+			''
+			);
+		ELSEIF Environment.dbQueryCount = '32' THEN
+			UPDATE Database.{SCH}.{ADD_TAB} AS S SET STATUS_CODE = 'ADD_SENT_TO_CBO' WHERE S.ADDOPS_FILE_NAME = Environment.fileName;
+			
+		END IF;
+		RETURN TRUE;
+	END;
+

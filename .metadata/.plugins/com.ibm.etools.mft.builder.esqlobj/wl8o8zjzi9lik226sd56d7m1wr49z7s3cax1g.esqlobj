@@ -1,0 +1,173 @@
+CREATE COMPUTE MODULE WPS_SIF_Processing_CBO_Compute
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE Payer_BIC EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER;
+	DECLARE CHANEEL EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE operation,chlId,refernce,employeeCR CHARACTER;
+	DECLARE sifFileName CHARACTER;
+	DECLARE recordDb ROW;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE cbsReqMessage BLOB;
+	DECLARE bool BOOLEAN;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+
+		SET bool= CopyEntireMessage();
+		call SendAcknolegment();
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.operation = InputRoot.XMLNSC.WpsSifProcess.Operation;
+			SET Environment.chlId = InputRoot.XMLNSC.WpsSifProcess.Channel;
+			SET Environment.refernce = InputRoot.XMLNSC.WpsSifProcess.Reference;
+			SET sifFileName = Environment.chlId||Environment.refernce ;
+			SET Environment.Chlreference = sifFileName;
+			SET Environment.identifier = InputRoot.XMLNSC.WpsSifProcess.(XMLNSC.Attribute)OptionalIdentifier;
+			SET Environment.dbQueryCount = '17A';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.operation = 'P' AND Environment.identifier IS NULL THEN
+				DECLARE hedRef ROW;
+				SET Environment.dbQueryCount = '17';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANEEL;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24H'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.PayType.PAYMENT_TYPE||'_'||'CBS_PAYER_DEBIT_SENT';
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.data.PAYER_ACCOUNT_NO;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '-' || CAST(Environment.data.TOTAL_SALARIES AS CHARACTER);
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+				SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+				SET cbsReqMessage = ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+				SET Environment.dbQueryCount = '18';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				propagate to TERMINAL 'out';
+				/*Processing the request which is for FORCE*/
+			ELSEIF Environment.operation = 'F' THEN
+				DECLARE hedRef ROW;
+				SET Environment.dbQueryCount = '17';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANEEL;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24H'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+				
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = 'FORCE'||'_'||'CBS_PAYER_DEBIT_SENT';
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.data.PAYER_ACCOUNT_NO;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '-' || CAST(Environment.data.TOTAL_SALARIES AS CHARACTER);
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+				SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+				SET cbsReqMessage = ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+				SET Environment.dbQueryCount = '18';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				propagate to TERMINAL 'out';	
+			ELSEIF Environment.operation = 'P' AND Environment.identifier = 'PassThru' THEN
+				SET Environment.dbQueryCount = '35';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSEIF Environment.operation = 'R' THEN
+				DECLARE recordRef REFERENCE TO InputRoot.XMLNSC.WpsSifProcess.Employee[>];
+				WHILE LASTMOVE(recordRef) DO
+					SET Environment.recordRef = recordRef;
+					DECLARE count INTEGER 1;
+					SET Environment.dbQueryCount = '19';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANEEL;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+					--SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24R'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					-- IF Payer_BIC = Environment.recordRef.Bank THEN
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24E'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					-- ELSE
+					-- SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24S'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(count AS CHARACTER);
+					-- END IF;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.PayType.PAYMENT_TYPE||'_'||'CBS_EMP_CREDIT_REQ_SENT';
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.recordRef.Account;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = Environment.recordRef.NetSalary;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+					SET Environment.var.hedTxRefId = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+					SET cbsReqMessage = ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+					SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+					SET Environment.dbQueryCount = '20';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					propagate to TERMINAL 'out';
+					SET count = count + 1;
+					MOVE recordRef NEXTSIBLING;
+				END WHILE;
+			ELSEIF Environment.operation = 'RJ' THEN
+				SET Environment.dbQueryCount = '21';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			END IF;
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'WPS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+	CREATE PROCEDURE SendAcknolegment() 
+	BEGIN
+		DECLARE Exce CHARACTER;
+		SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+		SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+		DECLARE WPSRef REFERENCE TO OutputRoot.XMLNSC;
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS WPSRef NAME 'WPSResponse';
+		SET WPSRef.ResponseCode = 'WPS000';
+		SET WPSRef.ResponseString = 'Message has been received ::'|| Environment.refernce;
+
+		PROPAGATE TO TERMINAL 'out1';
+
+
+	END;
+END MODULE;

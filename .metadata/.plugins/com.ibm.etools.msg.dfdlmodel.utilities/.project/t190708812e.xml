@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageBroker name="Lib_Wps_And_Mpclear">
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIF_ACK_MSG.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIF_ACK_MSG.xsd#//SIF_ACK_MSG;XSDElementDeclaration" name="SIF_ACK_MSG"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIFNameValidation.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/RecordFixLengthFieldFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIFNameValidation.xsd#//SIFNameValidation;XSDElementDeclaration" name="SIFNameValidation"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/IBMdefined/CommaSeparatedFormat.xsd"
+    prefix="tns" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/ADD_OAB_WPS.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/ADD_OAB_WPS.xsd#//ADD_OAB_WPS;XSDElementDeclaration" name="ADD_OAB_WPS"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIF_ACK_FAILED_MSG.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIF_ACK_FAILED_MSG.xsd#//SIF_ACK_FAILED_MSG;XSDElementDeclaration" name="SIF_ACK_FAILED_MSG"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/ADD_OAB_WPS_RESPONSE.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/ADD_OAB_WPS_RESPONSE.xsd#//ADD_WPS_ERROR_RESPONSE;XSDElementDeclaration" name="ADD_WPS_ERROR_RESPONSE"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/ADD_OAB_WPS_RESPONSE.xsd#//ADD_OAB_WPS_RESPONSE;XSDElementDeclaration=1" name="ADD_OAB_WPS_RESPONSE"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIFIntReplyMsgValidation.xsd"
+    prefix="" targetNamespace="">
+    <include name="/Lib_Wps_And_Mpclear/SIFFormatValidation.xsd" targetNamespace=""/>
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIFIntReplyMsgValidation.xsd#//SIFIntReplyMsgValidation;XSDElementDeclaration" name="SIFIntReplyMsgValidation"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIF_XXML_FORMAT.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIF_XXML_FORMAT.xsd#//WpsSifValidation;XSDElementDeclaration" name="WpsSifValidation"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIFFormatValidation.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIFFormatValidation.xsd#//SIFFormatValidation;XSDElementDeclaration" name="SIFFormatValidation"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/Cust_Acc_Bulk_resp.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/Cust_Acc_Bulk_resp.xsd#//AccCustBulkRes;XSDElementDeclaration" name="AccCustBulkRes"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//AccCloseBulk;XSDElementDeclaration" name="AccCloseBulk"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//AccMaintBulk;XSDElementDeclaration=1" name="AccMaintBulk"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//AccOpenBulk;XSDElementDeclaration=2" name="AccOpenBulk"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//CustCloseBulk;XSDElementDeclaration=3" name="CustCloseBulk"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//CustMaintBulk;XSDElementDeclaration=4" name="CustMaintBulk"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/CustOpenBulk.xsd#//CustOpenBulk;XSDElementDeclaration=5" name="CustOpenBulk"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIF_Process_retry.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIF_Process_retry.xsd#//WpsSifProcess;XSDElementDeclaration" name="WpsSifProcess"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/ADD_Operation.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/ADD_Operation.xsd#//WpsAddRegulatedEntities;XSDElementDeclaration" name="WpsAddRegulatedEntities"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/SIF_SYNCBACK_ACK.xsd"
+    prefix="" targetNamespace="">
+    <import name="IBMdefined/CommaSeparatedFormat.xsd" targetNamespace="http://www.ibm.com/dfdl/CommaSeparatedFormat"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/SIF_SYNCBACK_ACK.xsd#//SIF_SYNCBACK_ACK;XSDElementDeclaration" name="SIF_SYNCBACK_ACK"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//ERRORREASON;XSDElementDeclaration"
+      name="ERRORREASON" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//ERRORCODE;XSDElementDeclaration=1"
+      name="ERRORCODE" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//esb-identifier;XSDElementDeclaration=2" name="esb-identifier"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//source-sys-id;XSDElementDeclaration=3"
+      name="source-sys-id" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//msg-data;XSDElementDeclaration=4" name="msg-data"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//TXID;XSDElementDeclaration=5"
+      name="TXID" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//msg-header;XSDElementDeclaration=6" name="msg-header"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//esb-timestamp;XSDElementDeclaration=7" name="esb-timestamp"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//interface-code;XSDElementDeclaration=8"
+      name="interface-code" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//STATUS;XSDElementDeclaration=9"
+      name="STATUS" type="mlib://Lib_Wps_And_Mpclear#/-/simpleType{http://www.w3.org/2001/XMLSchema}string"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//source-sys-timestamp;XSDElementDeclaration=10" name="source-sys-timestamp"/>
+    <element
+      href="platform:/resource/Lib_Wps_And_Mpclear/OABResponse.xsd#//msg;XSDElementDeclaration=11" name="msg"/>
+  </XSDCollection>
+  <XSDCollection
+    href="platform:/resource/Lib_Wps_And_Mpclear/IBMdefined/RecordFixLengthFieldFormat.xsd"
+    prefix="tns" targetNamespace="http://www.ibm.com/dfdl/RecordFixLengthFieldFormat"/>
+</MessageBroker>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?><psys:request xmlns:psys="urn:iso:std:psys:request" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:psys:request request.xsd ">
+  <id>12345678</id>
+  <type>pacs.008.001</type>
+  <format></format>
+  <date>{date}</date>
+  <signature>{signature}</signature>
+  <content><![CDATA[{content}]]></content>
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"/><ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"/><ds:Reference URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>qVmA9kjVvloi/GC5YF9D8COODp9U6jvg1HDr6X6Q+LQ=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>FRUOAmniQnG82GeT7ARNsCCeiOOe8BxmN3v61v5tVxJ20x7jSMi/W8rKlQ5+hFj6/aKTg1368XTXfg1BQPs5vyE3IcrT6Rp1pOEx35B9OZYGhfF56VPOvGBAU8EvI75/6JI1KsmrlCMZDnQ1m9h9Oo5ALJoMjKiqSGduI+ltJASPbSI6otQtaiSeD9Z+izJaKQeZqNTCHre/Fz2glo0wWi9KA9mJYzvxDr9yzWAAvAYRmKZX/B6euM71/ifiRD7sVbyTVoSz9WEL+BzYohy/NZNkNCR+3vIb7QESlo3UP3N/QDG8LFYSZsNGRJ2Pyx0CHbPWS3uS4iK3KFTd1Pbwtw==</ds:SignatureValue></ds:Signature></psys:request>

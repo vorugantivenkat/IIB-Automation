@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="AchBatchCancellation">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="Mode" minOccurs="0" maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+
+
+
+        			<xsd:pattern value="\w{0,24}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="Channel" minOccurs="1" maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+        			<xsd:pattern value="\w{1,10}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="BatchReference" minOccurs="1"
+        	maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+        			<xsd:pattern value="\w{1,16}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="OriginalReference" minOccurs="1"
+        	maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+        			<xsd:pattern value=".{1,16}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="Module" minOccurs="1" maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+        			<xsd:pattern value="\w{1,3}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element name="Reason" minOccurs="1" maxOccurs="1">
+        	<xsd:simpleType>
+        		<xsd:restriction base="xsd:string">
+        			<xsd:pattern value="\w{1,3}"></xsd:pattern>
+        		</xsd:restriction>
+        	</xsd:simpleType>
+        </xsd:element>
+        <xsd:element maxOccurs="unbounded" name="Transaction" minOccurs="0">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="TransactionReference" minOccurs="1"
+              	maxOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="\w{1,16}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="OriginalTransactionReference"
+              	minOccurs="1" maxOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="\w{1,16}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="UserReference" minOccurs="0"
+              	maxOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="\w{0,35}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+              <xsd:element name="Reason" minOccurs="0" maxOccurs="1">
+              	<xsd:simpleType>
+              		<xsd:restriction base="xsd:string">
+              			<xsd:pattern value="\w{1,3}"></xsd:pattern>
+              		</xsd:restriction>
+              	</xsd:simpleType>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

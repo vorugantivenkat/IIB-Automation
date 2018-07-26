@@ -1,0 +1,4 @@
+Original file name, Status, Reason Code, Reason Name, Errors List
+SIF_04102016_AIB_20161004_001,FAILED,111,Invalid File,
+Header,32,Payer CR is not numeric
+Record,SIF04102016AIB20161004001-000004,87,Net Salary is negative

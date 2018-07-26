@@ -1,0 +1,175 @@
+
+
+BROKER SCHEMA com.oab.cancellation.outward
+DECLARE ns3 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:camt.056.001.04';
+DECLARE ns5 NAMESPACE 'http://www.Progressoft.com/ACH';
+DECLARE bchSeq SHARED INTEGER;
+DECLARE bchId SHARED CHARACTER;
+/*Author : Upender Kuncham
+Subsequent Modifications by : Upender Kuncham
+Module Name : Cancellation_Outwrd
+Flow Name : Cancellation_Outward_Request_To_To_CBO
+Dependency Module :Handler_OAB
+Dependency Database : DDO_TXN_INFO,DCO_TXN_INFO
+Dependency XSD(Request Message) : camt.056.001.04.xsd,CAN_OAB_REQUEST.xsd
+Dependency XSD(Response Message) : camt.029.001.05.xsd,ACH_CANCELLATIONOUTWARD_RESPONSE.xsd
+Dependency CBS : --Yes, Simulator_CBS_DoubleEntryPosting App
+Description :
+This Flow Will Trigge the Transaction details which are with status CANO_SEND_TO_CBO and send the request to CBO.
+*/
+
+CREATE COMPUTE MODULE Cancellation_Outward_Forming_CBO_Request
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+	DECLARE DDO_TABLE EXTERNAL CHARACTER;
+	DECLARE DCO_TABLE EXTERNAL CHARACTER;
+	DECLARE CANO_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE CANO_TXN_INFO EXTERNAL CHARACTER;
+
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER ;
+	DECLARE DSN_NAME EXTERNAL CHARACTER ;
+	DECLARE ACHConfig ROW;
+	DECLARE CAN ROW;
+	DECLARE count INTEGER 3;
+	DECLARE seqCount INTEGER 1;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	--
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET ACHConfig.Values[] = SELECT J.INSTAGT_FN_BICFI,J.BANK_PREFIX,J.MAX_NO_OF_TXNS FROM Database.{SCH_NAME}.{ACH_CONFIG_VALUES} AS J;
+		DECLARE CAN ROW;
+		DECLARE totalDCOrgMsgIds INTEGER;
+		SET CAN.DCTXNS[] = SELECT J.GRP_HDR_ID_TXN_INFO_FK,J.END_TO_END_ID,J.ORIG_MSG_ID,J.ORIG_TXN_ID,J.TXN_FOUND,J.TXN_REASON,J.CREDITOR_BANK_BICFI,J.DEBTOR_BANK_BICFI
+		FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS J,Database.{SCH_NAME}.{CANO_HEADER_INFO} AS A
+		WHERE J.STATUS = 'CANO_SEND_TO_CBO' AND J.GRP_HDR_ID_TXN_INFO_FK = A.GRP_HEADER_ID;
+		SET totalDCOrgMsgIds = CARDINALITY(CAN.DCTXNS[]);
+		IF totalDCOrgMsgIds > 0 THEN
+			DECLARE I INTEGER 1;
+			WHILE I <= totalDCOrgMsgIds DO
+				DECLARE currentOrgMsgId,status,txnID,EndToEndId CHARACTER;
+				SET currentOrgMsgId = CAN.DCTXNS[I].ORIG_MSG_ID;
+				DECLARE Noofcanceltrans INTEGER CARDINALITY(CAN.DCTXNS[]);
+				SET OutputRoot.XMLNSC.ns3:Document.(XMLNSC.NamespaceDecl)xmlns = ns3;
+				SET OutputRoot.XMLNSC.ns3:Document.(XMLNSC.NamespaceDecl)xmlns:ns5 = ns5;
+				SET OutputRoot.XMLNSC.ns3:Document.ns3:FIToFIPmtCxlReq = '';
+				DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns3:Document.ns3:FIToFIPmtCxlReq;
+				SET bchId = genAssignId();
+				SET outRef.ns3:Assgnmt.ns3:Id = bchId;
+				SET outRef.ns3:Assgnmt.ns3:Assgnr.ns3:Agt.ns3:FinInstnId.ns3:BICFI = ACHConfig.Values.INSTAGT_FN_BICFI;
+				IF CAN.DCTXNS.TXN_FOUND = 'DDO' THEN
+					SET status = 'CANO_DDO_CBO_SENT';
+					SET outRef.ns3:Assgnmt.ns3:Assgne.ns3:Agt.ns3:FinInstnId.ns3:BICFI = CAN.DCTXNS.DEBTOR_BANK_BICFI; --hard coded for SIT need to look into this.
+				ELSE
+					SET status = 'CANO_DCO_CBO_SENT';
+					SET outRef.ns3:Assgnmt.ns3:Assgne.ns3:Agt.ns3:FinInstnId.ns3:BICFI =CAN.DCTXNS.CREDITOR_BANK_BICFI;
+				END IF;
+				-- SET outRef.ns3:Assgnmt.ns3:Assgnr.ns3:Agt.ns3:FinInstnId.ns3:BICFI = '';
+				SET outRef.ns3:Assgnmt.ns3:CreDtTm = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+				SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:GrpCxlId = bchId;
+				SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:OrgnlMsgId = CAN.DCTXNS[I].ORIG_MSG_ID;
+				IF CAN.DCTXNS.TXN_FOUND = 'DDO' THEN
+					SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:OrgnlMsgNmId = 'pacs.003.001.05';
+				ELSE
+					SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:OrgnlMsgNmId = 'pacs.008.001.05';
+				END IF;
+				SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:NbOfTxs = '1';
+				SET outRef.ns3:Undrlyg.ns3:OrgnlGrpInfAndCxl.ns3:GrpCxl = 'false'; --Environment.ISO.GrpCxl;
+				SET EndToEndId = CAN.DCTXNS[I].END_TO_END_ID;
+				-- SET txnID = bchId||CAST(RIGHT('000'|| CAST(I AS CHARACTER),3) AS CHARACTER);
+				SET txnID = bchId||'001';
+				SET OutputRoot.XMLNSC.ns3:Document.ns3:FIToFIPmtCxlReq.ns3:Undrlyg.ns3:TxInf = '';
+				DECLARE isodata REFERENCE TO OutputRoot.XMLNSC.ns3:Document.ns3:FIToFIPmtCxlReq.ns3:Undrlyg.ns3:TxInf;
+				SET isodata.ns3:CxlId = txnID; --CAN.DCTXNS[I].CANC_ID;
+				SET isodata.ns3:OrgnlTxId = CAN.DCTXNS[I].ORIG_TXN_ID;
+				SET Environment.ORGNL_TX_ID = CAN.DCTXNS[I].ORIG_TXN_ID;
+				SET isodata.ns3:CxlRsnInf.ns3:Rsn.ns3:Prtry = CAN.DCTXNS[I].TXN_REASON; --'111'
+				SET isodata.ns3:CxlRsnInf.ns3:AddtlInf = 'Wrong Transaction ';
+				DECLARE supRef REFERENCE TO OutputRoot.XMLNSC.ns3:Document.ns3:FIToFIPmtCxlReq;
+				CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns3 NAME 'SplmtryData';
+				CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns3 NAME 'Envlp';
+				CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns5 NAME 'supplementaryData';
+				CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns5 NAME 'Items';
+				SET supRef.ns5:Item = '2';
+				SET supRef.ns5:Item.(XMLNSC.Attribute)key = 'batchSource';
+				UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS R SET STATUS = status,MSG_ID = bchId,TXN_ID = txnID,DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.END_TO_END_ID = EndToEndId ;
+				PROPAGATE TO TERMINAL 'out';
+				SET I = I + 1 ;
+			END WHILE;
+		END IF;
+	END;
+	CREATE PROCEDURE genAssignId() RETURNS CHARACTER BEGIN
+		DECLARE currDay,currDate,estSeq,previousDate CHARACTER;
+		SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd');
+
+		DECLARE DD ROW;
+		DECLARE GroupID INTEGER;
+		SET GroupID = SELECT MAX(J.GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS J WHERE J.MSG_ID is not null; --SUBSTRING(bchId FROM 9 FOR 2); -- if contains, extracting date from it
+		SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCH_NAME}.{CANO_HEADER_INFO};
+
+		IF Environment.recCount =1 AND bchSeq > 0 THEN
+			SET bchSeq = bchSeq + 1;
+		ELSE
+			SET DD.V[] = SELECT K.MSG_RCV_TIMESTAMP FROM Database.{SCH_NAME}.{CANO_HEADER_INFO} AS K WHERE K.GRP_HEADER_ID = GroupID;
+			SET previousDate = SUBSTRING(DD.V.MSG_RCV_TIMESTAMP FROM 1 FOR 8);
+			IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+				IF seqCount = 1 THEN
+					IF previousDate = currDate THEN
+						SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+					ELSE
+						SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+						SET seqCount = seqCount + 1;
+					END IF;
+				ELSE
+					SET bchSeq = bchSeq + 1;
+				END IF;
+
+			ELSE -- if there is no previous BatchID value in shared variable
+				DECLARE DB,ref ROW;
+				SET DB.V[] = SELECT J.MSG_ID FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS J WHERE J.MSG_ID LIKE ACHConfig.Values.BANK_PREFIX ||'%';
+				IF CARDINALITY(DB.V[]) > 0 AND previousDate = currDate THEN --- checking in DB, MsgId column whether there is a sequence with current date
+					DECLARE maxId INTEGER;
+					SET maxId = SELECT MAX(GP.GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS GP WHERE GP.MSG_ID is not null;
+					SET ref.NM[] = SELECT A.MSG_ID FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS A WHERE A.GRP_HDR_ID_TXN_INFO_FK = maxId;
+					DECLARE maxIdSeq,maxIdChar CHARACTER;
+					SET maxIdChar = CAST(ref.NM.MSG_ID AS CHARACTER);
+					SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+					DECLARE newSeq INTEGER;
+					SET newSeq = CAST(maxIdSeq as INTEGER);
+					SET bchSeq = newSeq + 1; -- if there incrementing by 1
+
+				ELSE -- if not there then starting with 1
+					SET bchSeq = 1;
+					SET seqCount = seqCount + 1;
+				END IF;
+			END IF;
+		END IF;
+		DECLARE j,alpha CHARACTER;
+		SET j = CAST(bchSeq AS CHARACTER);
+		SET alpha = random(count);
+		SET bchId = ACHConfig.Values.BANK_PREFIX ||'1'||'I'|| alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+		CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'MsgId :' ||bchId ||'Created For CBO Request' ) INTO rc;
+		RETURN bchId;
+	END;
+	CREATE PROCEDURE random (IN Length INTEGER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";
+END MODULE;

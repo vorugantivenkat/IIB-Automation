@@ -1,0 +1,14 @@
+CREATE DATABASE MODULE Return_Inward_Response_From_CBS_Database
+	DECLARE PRI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '9' THEN
+			UPDATE Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS R SET STATUS = 'RETI_CBS_SUCCESS_CBO_SEND',CBS_PAY_REF = Environment.payRef, DESCRIPTION = 'Transaction was success at CBS' WHERE R.CBS_TRAN_REF = Environment.paymentRef;
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			UPDATE Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS R SET STATUS = 'RETI_CBS_FAILED_CBO_SEND',DESCRIPTION = 'Transaction was failed at CBS',FAULT_CODE = Environment.faultCode, FAULT_STRING = Environment.faultString WHERE R.CBS_TRAN_REF = Environment.paymentRef;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

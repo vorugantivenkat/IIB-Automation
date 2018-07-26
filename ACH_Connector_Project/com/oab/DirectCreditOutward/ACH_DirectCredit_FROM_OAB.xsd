@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?><xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="AchDirectCredit">
+
+  	<xs:complexType>
+  		<xs:sequence>
+
+  			<xs:element name="Channel" minOccurs="1" maxOccurs="1">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,10}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="BatchReference" minOccurs="1"
+  				maxOccurs="1">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,16}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="OrderingCustomerAccount"
+  				minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,34}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="OrderingCustomerName" minOccurs="1">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,140}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="OrderingCustomerId" minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,35}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="OrderingCustomerIdType" minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,35}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="PurposeOfTransfer" minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,4}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="Priority" minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="Currency" minOccurs="0">
+  				<xs:simpleType>
+  					<xs:restriction base="xs:string">
+  						<xs:pattern value=".{0,3}"></xs:pattern>
+  					</xs:restriction>
+  				</xs:simpleType>
+  			</xs:element>
+  			<xs:element name="Transaction" minOccurs="1" maxOccurs="unbounded">
+  				<xs:complexType>
+  					<xs:sequence>
+  						<xs:element name="TransactionReference"
+  							minOccurs="1">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,16}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="UserReference"
+  							minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,35}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="Amount" minOccurs="1">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern
+  										value="\d{0,18}\.?\d{0,5}">
+  									</xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="BeneficiaryBank" minOccurs="1">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,35}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="BeneficiaryAccount" minOccurs="1">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,34}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="BeneficiaryName" minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,140}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="BeneficiaryId" minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,35}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="BeneficiaryIdType" minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,35}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="PurposeOfTransfer"
+  							minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,4}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  						<xs:element name="DetailsOfPayments"
+  							minOccurs="0">
+  							<xs:simpleType>
+  								<xs:restriction base="xs:string">
+  									<xs:pattern value=".{0,140}"></xs:pattern>
+  								</xs:restriction>
+  							</xs:simpleType>
+  						</xs:element>
+  					</xs:sequence>
+  				</xs:complexType>
+  			</xs:element>
+  		</xs:sequence>
+  		<xs:attribute name="OptionIdentifier" type="xs:string"
+  			use="optional">
+  		</xs:attribute>
+  	</xs:complexType>
+  </xs:element>
+</xs:schema>

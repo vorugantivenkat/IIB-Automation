@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workingSetManager>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511774869499_0" label="[ACH_Connector_Project]" name="[ACH_Connector_Project]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/FileSigningSample" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/ACH_Connector_Project" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/BetaCode" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/AlphaCode" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/DigitalSignAndVerify_XML_OAB" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511939142004_6" label="[AlphaCodeLIB]" name="[AlphaCodeLIB]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/AlphaCodeLIB" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/AlphaCode" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511939142007_7" label="[BetaCodeLIB]" name="[BetaCodeLIB]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/BetaCodeLIB" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/BetaCode" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511939142011_8" label="[CommonExceptionHandler]" name="[CommonExceptionHandler]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/CommonExceptionHandler" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511939142015_9" label="[Lib_Cano_Reto_Revo_Common.xsd]" name="[Lib_Cano_Reto_Revo_Common.xsd]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Lib_Cano_Reto_Revo_Common.xsd" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1511939142020_10" label="[Lib_Wps_And_Mpclear]" name="[Lib_Wps_And_Mpclear]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Lib_Wps_And_Mpclear" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898179664_8" label="[Common_Exception_Mail_Alert_App]" name="[Common_Exception_Mail_Alert_App]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/Common_Exception_Mail_Alert_App" type="4"/>
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/JExceptionHandlingLibJava" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898179673_9" label="[MMS_Connector_Project]" name="[MMS_Connector_Project]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/MMS_Connector_Project" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898179681_10" label="[WPS_Connector_Project]" name="[WPS_Connector_Project]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/WPS_Connector_Project" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898766647_12" label="[ACH_WPS_DDL]" name="[ACH_WPS_DDL]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/ACH_WPS_DDL" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898766657_13" label="[SQLApp]" name="[SQLApp]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/SQLApp" type="4"/>
+</workingSet>
+<workingSet editPageId="com.ibm.etools.mft.navigator.BrokerWorkingSet.AppLib" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898766668_14" label="[test]" name="[test]">
+<item factoryID="org.eclipse.ui.internal.model.ResourceFactory" path="/test" type="4"/>
+</workingSet>
+<workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512544553655_6" label="Window Working Set" name="Aggregate for window 1512544553655"/>
+<workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512550984668_7" label="Window Working Set" name="Aggregate for window 1512550984668"/>
+<workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512898375138_11" label="Window Working Set" name="Aggregate for window 1512898375138"/>
+<workingSet aggregate="true" factoryID="org.eclipse.ui.internal.WorkingSetFactory" id="1512904174315_15" label="Window Working Set" name="Aggregate for window 1512904174315"/>
+</workingSetManager>

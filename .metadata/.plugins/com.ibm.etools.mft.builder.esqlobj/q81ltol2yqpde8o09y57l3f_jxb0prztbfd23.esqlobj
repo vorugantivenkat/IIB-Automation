@@ -1,0 +1,49 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.DC[] = SELECT J.END_TO_END_ID,J.MSG_ID FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			SET Environment.DCOvalues[] = SELECT A.ORDERING_CUSTOMER_NAME FROM Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO} AS A,Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS B WHERE A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK AND B.END_TO_END_ID = Environment.ORG_ENDTOENDID ;
+			SET Environment.DD[] = SELECT J.END_TO_END_ID,J.MSG_ID FROM Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS J WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			SET Environment.value[] = SELECT J.DC_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS J SET STATUS = 'CANO_ORG_TXN_NOT_FOUND',DESCRIPTION = 'Original transaction not found in either DCO or DDO tables' WHERE J.END_TO_END_ID = Environment.CANO_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			SET Environment.DC[] = SELECT J.END_TO_END_ID,J.BENEF_NAME,J.BENEF_BANK,J.BENEF_ACC,J.AMOUNT,J.MSG_ID,J.STATUS,J.TXN_ID,G.ORDERING_CUSTOMER_ACCOUNT,G.OPTIONAL_ID FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J, Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO} AS G WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID AND G.DCO_GRP_HEADER_ID = J.DCO_GRP_HDR_ID_TXN_INFO_FK;
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			SET Environment.DD[] = SELECT J.END_TO_END_ID,J.PAYER_BANK,J.PAYER_ACCOUNT,J.AMOUNT,J.MSG_ID,J.TXN_ID,J.STATUS FROM Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS J WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+--		ELSEIF Environment.dbQueryCount = '7' THEN
+--			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '9' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCEL_INITIATED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET CBS_TRAN_REF = Environment.CbsTranRef,CBS_REQUEST =Environment.cbsMsg ,STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			SET Environment.value[] = SELECT J.DC_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+			-- ELSEIF Environment.dbQueryCount = '10' THEN
+			-- UPDATE Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			-- UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '11' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '12' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,CREDITOR_BANK_BICFI = Environment.creditorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '13' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,DEBTOR_BANK_BICFI = Environment.debtorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '14' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DDO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = Environment.ORG_ENDTOENDID;
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,DEBTOR_BANK_BICFI = Environment.debtorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS K SET STATUS = Environment.CanoStatus,DEBTOR_BANK_BICFI = Environment.debtorBIC,ORIG_MSG_ID = Environment.orgMsgId,ORIG_TXN_ID = Environment.orgTxnId,TXN_FOUND = Environment.TxnFound WHERE K.END_TO_END_ID = Environment.CANO_ENDTOENDID AND K.ORIGIN_END_TO_END_ID = Environment.ORG_ENDTOENDID;			
+
+
+		END IF;
+		RETURN TRUE;
+	END;
+

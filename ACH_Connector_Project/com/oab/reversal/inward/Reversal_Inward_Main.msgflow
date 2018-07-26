@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmDatabase.msgnode="ComIbmDatabase.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmValidate.msgnode="ComIbmValidate.msgnode" xmlns:com_oab_exceptionhandler_CommonExceptionHandle.subflow="com/oab/exceptionhandler/CommonExceptionHandle.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow"
+    xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/reversal/inward/Reversal_Inward_Main.msgflow"
+    nsPrefix="com_oab_reversal_inward_Reversal_Inward_Main.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4J_CONF_FILE" name="LOG4J_CONF_FILE" defaultValueLiteral="Y:\OAB\IBM\logs4J\Log4jConfigurationFile.xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_GRP_HEADER_INFO" name="REVI_GRP_HEADER_INFO" defaultValueLiteral="REVI_GRP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.REVI_TXN_INFO" name="REVI_TXN_INFO" defaultValueLiteral="REVI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_NAME" name="SCHEMA_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_TXN_INFO" name="DCI_TXN_INFO" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDO_TXN_INFO" name="DDO_TXN_INFO" defaultValueLiteral="DDO_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ACH_CONFIG_VALUES" name="ACH_CONFIG_VALUES" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.BANK_PREFIX" name="BANK_PREFIX" defaultValueLiteral="OMAB">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USER" name="USER" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL" name="CHANNEL" defaultValueLiteral="ACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WORKSTATION" name="WORKSTATION" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNELRESERVED" name="CHANNELRESERVED">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDO_GROUP_HEADER_INFO" name="DDO_GROUP_HEADER_INFO" defaultValueLiteral="DDO_GROUP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_GP_HEADER_INFO" name="DCI_GP_HEADER_INFO" defaultValueLiteral="DCI_GP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="Reversal_Inward_Main" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/Reversal_Inward_Main.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/Reversal_Inward_Main.gif"/>
+    <longDescription xmi:type="utility:ConstantString" string="This Flow is about:&#xD;&#xA;1. Store Header to Database. &#xD;&#xA;2. Store Supplimentary data to Database. &#xD;&#xA;3. Pick individual transaction from Input Message and does the following. For each such transaction following is done. &#xD;&#xA;    a. Validate automatically based on the namespace. &#xD;&#xA;     b. If Validate is success, then store transaction/OriginalGroup  info in Database (Four tables are updated)&#xD;&#xA;    c. Retrieve necessary information required for DEP from database using original transaction id. &#xD;&#xA;    d. Construct CBS Request and send to CBS Queue. &#xD;&#xA;    &#xD;&#xA;    a. If Validate is failure, then store that particular transaction in Environment. &#xD;&#xA;    b. If Original transaction id not available or previous case was unsuccessful, store that particular transaction in Environment.&#xD;&#xA;&#xD;&#xA;4. When all the transactions are done, pull the information that is stored in the environment and send back to CBO."/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="124,189" queueName="CBO_REVI_Q_REQ" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="CBO_REVI_Q_REQ"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="400,193" computeExpression="esql://routine/com.oab.reversal.inward#Reversal_Inward_Compute.Main">
+        <translation xmi:type="utility:ConstantString" string="ProcesTransaction"/>
+      </nodes>
+      <nodes xmi:type="ComIbmValidate.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="283,189" domain="XMLNSC" checkDomain="true" checkSet="true" checkType="true" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="Validate"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="431,307" queueName="CBO_ACH_IO_Q_REQ_RES">
+        <translation xmi:type="utility:ConstantString" string="CBO_ACH_IO_Q_REQ_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="573,194" queueName="ESB.REQUEST" request="true" replyToQ="CBO.ACH.IN">
+        <translation xmi:type="utility:ConstantString" string="ESB.REQUEST"/>
+      </nodes>
+      <nodes xmi:type="com_oab_exceptionhandler_CommonExceptionHandle.subflow:FCMComposite_1" xmi:id="FCMComposite_1_7" location="203,52" rotation="BOTTOM_TO_TOP">
+        <translation xmi:type="utility:ConstantString" string="CommonExceptionHandle"/>
+      </nodes>
+      <nodes xmi:type="ComIbmDatabase.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="468,124" dataSource="CBOACH" statement="esql://routine/com.oab.reversal.inward#Reversal_Inward_Main_DBProcess.Main">
+        <translation xmi:type="utility:ConstantString" string="DBProcess"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_25" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.match" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in">
+        <bendPoints>24,-38,75,-107</bendPoints>
+        <bendPoints>-25,-38,26,-107</bendPoints>
+        <bendPoints>-78,-36,-27,-105</bendPoints>
+      </connections>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.Input">
+        <bendPoints>86,-40,263,80</bendPoints>
+        <bendPoints>90,-124,261,11</bendPoints>
+      </connections>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4J_CONF_FILE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4J_CONF_FILE" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_GRP_HEADER_INFO">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_GRP_HEADER_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.REVI_TXN_INFO">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.REVI_TXN_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_NAME">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_NAME" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_TXN_INFO">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_TXN_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDO_TXN_INFO">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.DDO_TXN_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ACH_CONFIG_VALUES">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.ACH_CONFIG_VALUES" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.BANK_PREFIX">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.BANK_PREFIX" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.USER">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.USER" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WORKSTATION">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.WORKSTATION" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNELRESERVED">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNELRESERVED" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDO_GROUP_HEADER_INFO">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.DDO_GROUP_HEADER_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_GP_HEADER_INFO">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_GP_HEADER_INFO" bundleName="com/oab/reversal/inward/Reversal_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

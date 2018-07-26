@@ -1,0 +1,124 @@
+
+
+BROKER SCHEMA com.oab.debit.outward
+
+CREATE DATABASE MODULE DirectDebit_Outward_Main_Database
+	DECLARE DDO_TABLE1 EXTERNAL CHARACTER ;
+	DECLARE DDO_TABLE2 EXTERNAL CHARACTER ;
+	DECLARE DDO_TABLE3 EXTERNAL CHARACTER ;
+
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.config.data[] = SELECT S.* FROM Database.{SCH_NAME}.DC_CONFIG_VALUES AS S;
+		ELSEIF Environment.dbQueryCount = '2' THEN
+			SET Environment.DB.ID[] = SELECT J.CHL_BATCH_REF FROM Database.{SCH_NAME}.{DDO_TABLE1} AS J WHERE J.CHL_BATCH_REF = Environment.chlBchRef;
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			INSERT INTO Database.{SCH_NAME}.{DDO_TABLE1} (
+			MSG_RCV_TIMESTAMP,
+			CHANNEL,
+			PRIORITY,
+			BATCH_REFERENCE,
+			ORDERING_CUSTOMER_ACCOUNT,
+			ORDERING_CUSTOMER_NAME,
+			ORDERING_CUSTOMER_ID,
+			ORDERING_CUSTOMER_ID_TYPE,
+			PURPOSE_OF_TRANSFER,
+			CURRENCY,
+			STATUS,
+			DESCRIPTION,
+			CHL_BATCH_REF,
+			OPT_ID,
+			MSG_CHANNEL_TO_ESB
+			) VALUES (
+			Environment.groupcurrdate,
+			Environment.XMLNSC.Header.Channel,
+			Environment.XMLNSC.Header.Priority,
+			Environment.XMLNSC.Header.BatchReference,
+			Environment.XMLNSC.Header.OrderingCustomerAccount,
+			Environment.XMLNSC.Header.OrderingCustomerName,
+			Environment.XMLNSC.Header.OrderingCustomerId,
+			Environment.XMLNSC.Header.OrderingCustomerIdType,
+			Environment.XMLNSC.Header.PurposeOfTransfer,
+			Environment.XMLNSC.Header.Currency,
+			'DDO_RCVD',
+			'Message has been received from OAB channel',
+			Environment.XMLNSC.Header.Channel||Environment.XMLNSC.Header.BatchReference,
+			Environment.identifier,
+			Environment.srcMsg
+			);
+			COMMIT;
+		ELSEIF Environment.dbQueryCount = '4' THEN
+			SET Environment.groupID = SELECT MAX(J.DDO_GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCH_NAME}.{DDO_TABLE2} AS J  WHERE J.MSG_ID IS NOT NULL;
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCH_NAME}.{DDO_TABLE1};
+		ELSEIF Environment.dbQueryCount = '5' THEN
+			SET Environment.DD.V[] = SELECT K.MSG_RCV_TIMESTAMP FROM Database.{SCH_NAME}.{DDO_TABLE1} AS K WHERE K.DDO_GRP_HEADER_ID = Environment.groupID;
+		ELSEIF Environment.dbQueryCount = '6' THEN
+			SET Environment.DB.V[] = SELECT J.MSG_ID FROM Database.{SCH_NAME}.{DDO_TABLE2} AS J WHERE J.MSG_ID LIKE Environment.config.data.BANK_PREFIX ||'%';
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			--SET Environment.maxId = SELECT MAX(GP.DDO_GRP_HEADER_ID) FROM Database.{SCH_NAME}.{DDO_TABLE1} AS GP ;
+			--SET Environment.mx = SELECT MAX(G.DDO_TXN_INF_ID) FROM Database.{SCH_NAME}.{DDO_TABLE2} AS G WHERE G.DDO_GRP_HDR_ID_TXN_INFO_FK = Environment.maxId -1 ;
+			SET Environment.REF.NM[] = SELECT G.MSG_ID FROM Database.{SCH_NAME}.{DDO_TABLE2} AS G WHERE G.DDO_GRP_HDR_ID_TXN_INFO_FK = Environment.groupID;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			SET Environment.GH.ID[] = SELECT GP.DDO_GRP_HEADER_ID FROM Database.{SCH_NAME}.{DDO_TABLE1} AS GP WHERE GP.CHL_BATCH_REF = Environment.chlBchRef;
+		ELSEIF Environment.dbQueryCount = '9' THEN
+			INSERT INTO Database.{SCH_NAME}.{DDO_TABLE2} (
+			DDO_GRP_HDR_ID_TXN_INFO_FK,
+			TXN_REF,
+			END_TO_END_ID,
+			USER_REF,
+			MANDATEID,
+			MANDATE_FIRST_COLLECTION_DATE,
+			MANDATE_PAY_COLLECTION_DATE,
+			MANDATE_PAY_SEQUENCE,
+			AMOUNT,
+			PAYER_BANK,
+			PAYER_ACCOUNT,
+			PAYER_NAME,
+			PAYER_ID,
+			PAYER_ID_TYPE,
+			PURP_OF_TRANSFER,
+			DETAILS_OF_PMTS,
+			STATUS,
+			DESCRIPTION,
+			MSG_ID,
+			TXN_ID
+			) VALUES (
+			Environment.fk,
+			Environment.XMLNSC.dataRef.TransactionReference,
+			Environment.endToEndId,
+			Environment.XMLNSC.dataRef.UserReference,
+			Environment.XMLNSC.dataRef.MandateReference,
+			Environment.XMLNSC.dataRef.MandateFirstCollectionDate,
+			Environment.mandatePaymentCollectionDate,
+			Environment.XMLNSC.dataRef.MandatepaymentSequence,
+			Environment.XMLNSC.dataRef.Amount,
+			Environment.XMLNSC.dataRef.PayerBank,
+			Environment.XMLNSC.dataRef.PayerAccount,
+			Environment.XMLNSC.dataRef.PayerName,
+			Environment.XMLNSC.dataRef.PayerId,
+			Environment.XMLNSC.dataRef.PayerIdType,
+			Environment.XMLNSC.dataRef.PurposeOfTransfer,
+			Environment.XMLNSC.dataRef.DetailsOfPayments,
+			'DDO_RCVD',
+			'current transaction is received from the OAB channel',
+			Environment.msgId,
+			Environment.txn_id);
+			COMMIT;
+
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			--UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS B SET STATUS = 'DDO_SENT_TO_CBO' WHERE B.END_TO_END_ID = Environment.endToEndId;
+			DECLARE DB ROW;
+			--SET DB.ID[] = SELECT A.DDO_GRP_HEADER_ID FROM Database.{SCH_NAME}.{DDO_TABLE1} AS A WHERE A.CHL_BATCH_REF = Environment.chlBchRef;
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS B SET STATUS = 'DDO_SENT_TO_CBO' WHERE B.MSG_ID = Environment.msgId;
+			COMMIT;
+			ELSEIF Environment.dbQueryCount = '11' THEN
+			SET Environment.DB[] = SELECT A.STATUS FROM Database.{SCH_NAME}.{DDO_TABLE2} AS A WHERE A.END_TO_END_ID = Environment.endToEndId;
+
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

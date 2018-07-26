@@ -1,0 +1,5 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		SET jmsAchRetryCount = 0;
+		RETURN TRUE;
+	END;

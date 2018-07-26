@@ -1,0 +1,167 @@
+CREATE COMPUTE MODULE Trigger_Flow_Compute
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+	DECLARE CANO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE CANO_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE DDO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DCO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	DECLARE DCO_GRP_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE WORK_STATION EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE RQ,SG ROW;
+	DECLARE orgStatus,EndId CHARACTER;
+	DECLARE outHeaderRef,outTransRef REFERENCE TO OutputRoot.XMLNSC;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', ' ----------------TRIGGER FLOW SATRTED------------------' ) INTO rc;
+		CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Trigger Flow Trigged For Every particular interval of time To check Valid Status' ) INTO rc;
+		SET RQ.ID[] = SELECT J.END_TO_END_ID,J.TXN_FOUND,J.TXN_REASON,J.ORIGIN_END_TO_END_ID FROM Database.{SCH_NAME}.{CANO_TXN_INFO} AS J WHERE J.STATUS = 'CANCEL_PENDING';
+		SET Environment.DCOvalues[] = SELECT A.ORDERING_CUSTOMER_NAME,A.BATCH_REFERENCE FROM Database.{SCH_NAME}.{DCO_GRP_HEADER_INFO} AS A,Database.{SCH_NAME}.{DCO_TXN_INFO} AS B WHERE A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK AND B.END_TO_END_ID = RQ.ID.ORIGIN_END_TO_END_ID ;
+		IF RQ.ID.END_TO_END_ID IS NOT NULL THEN
+			DECLARE inref REFERENCE TO RQ.ID[>];
+			WHILE LASTMOVE(inref) DO
+				IF (inref.TXN_FOUND LIKE 'DDO') THEN
+					SET SG.TX[] = SELECT K.STATUS FROM Database.{SCH_NAME}.{DDO_TXN_INFO} AS K WHERE K.END_TO_END_ID = inref.ORIGIN_END_TO_END_ID;
+					SET orgStatus = SG.TX.STATUS;
+					CALL checkingStatusDD(inref);
+				ELSE
+					SET SG.TX[] = SELECT J.END_TO_END_ID,J.BENEF_BANK,J.BENEF_ACC,J.AMOUNT,J.MSG_ID,J.STATUS,J.TXN_ID,G.ORDERING_CUSTOMER_ACCOUNT,G.OPTIONAL_ID FROM Database.{SCH_NAME}.{DCO_TXN_INFO} AS J, Database.{SCH_NAME}.{DCO_GRP_HEADER_INFO} AS G WHERE J.END_TO_END_ID = inref.ORIGIN_END_TO_END_ID AND G.DCO_GRP_HEADER_ID = J.DCO_GRP_HDR_ID_TXN_INFO_FK;
+					SET orgStatus = SG.TX.STATUS;
+					SET EndId = SG.TX.END_TO_END_ID;
+					CALL checkingStatusDC(inref);
+				END IF;
+				MOVE inref NEXTSIBLING;
+			END WHILE;
+		END IF;
+	END;
+	CREATE PROCEDURE checkingStatusDD(In TXNREF REFERENCE) BEGIN
+		CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Checking the Status of the transaction in DDO' ) INTO rc;
+		IF orgStatus = 'DDO_RCVD' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_DDO_RCVD',DESCRIPTION = 'Transaction was successfully cancelled' WHERE K.END_TO_END_ID = TXNREF.END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{DDO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF.ORIGIN_END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DDO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SUCCESS_DDO_RCVD And CANCEL_REQ_SENT in DDO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DDO_SENT_TO_CBO' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF.ORIGIN_END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS J SET STATUS = 'CANO_SEND_TO_CBO',DESCRIPTION = 'Transaction need to be send to CBO' WHERE J.END_TO_END_ID = TXNREF.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DDO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SEND_TO_CBO And CANCEL_REQ_SENT in DDO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DDO_SUCCESS' THEN
+			---creating message to return
+			CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+			SET outTransRef = TXNREF;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DDO Table With Status'|| orgStatus || 'Create Request And sended to Return Flow' ) INTO rc;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_RETO_Q_REQ';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF orgStatus = 'DDO_CBS_CRDT_OC_FAILED' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_CBS_CRDT_OC_FAILED',DESCRIPTION = 'Cancellation Success' WHERE K.END_TO_END_ID = TXNREF.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DDO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SUCCESS_CBS_CRDT_OC_FAILED ' ) INTO rc;
+		ELSEIF orgStatus = 'DDO_SENT_CBS_CRDT_DBT_OC' OR orgStatus = 'DDO_CBS_CRDT_DBT_OC_FAILED' OR orgStatus = 'DDO_CBS_CRDT_DBT_OC_SUCCESS' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_DDO_CBO_RJCT',DESCRIPTION = 'Cancellation Success Due to CBO reject' WHERE K.END_TO_END_ID = TXNREF.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DDO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SUCCESS_DDO_CBO_RJCT ' ) INTO rc;
+		END IF;
+	END;
+	CREATE PROCEDURE checkingStatusDC(IN TXNREF1 REFERENCE) BEGIN
+		CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Checking the Status of the transaction in DCO' ) INTO rc;
+		IF orgStatus = 'DCO_RCVD' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_DCO_RCVD',DESCRIPTION = 'Transaction was successfully cancelled' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF1.ORIGIN_END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_SUCCESS_DCO_RCVD AS CANO_SEND_TO_CBO And  CANCELLED In DCO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DCO_CBS_DBT_OC_FAILED' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_CBS_DBT_OC_FAILED',DESCRIPTION = 'Transaction was successfully cancelled' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF1.ORIGIN_END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_SUCCESS_CBS_DBT_OC_FAILED AS CANO_SEND_TO_CBO And  CANCELLED In DCO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DCO_SUCCESS' THEN
+			CREATE LASTCHILD OF outHeaderRef AS outTransRef NAME 'Transaction';
+			SET outTransRef = TXNREF1;
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_REVO_Q_REQ';
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF orgStatus = 'DCO_CBO_FAILED_PT' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_CBO_FAILED_PT',DESCRIPTION = 'Cncelation is success because the CBO rejected the transaction' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_SUCCESS_CBO_FAILED_PT ' ) INTO rc;
+
+		ELSEIF orgStatus = 'DCO_SENT_TO_CBO_NPT/DCO_SENT_TO_CBO_PT' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SEND_TO_CBO',DESCRIPTION ='Transaction need to be send to CBO' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCEL_REQ_SENT',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF1.ORIGIN_END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SEND_TO_CBO And  CANCEL_REQ_SENT In DCO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DCO_SEND_TO_CBO_NPT'  THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCEL_INITIATED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF1.ORIGIN_END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_REVERSAL_OC_CREDIT',DESCRIPTION = 'Transaction canceled in DCO and doing reversal to credit Ordering customer' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			
+			-----the amount has been debited from Ordering customer account and credited to settlemet account,so need to reverse that.
+			SET Environment.PurposeCodeDesc = RQ.ID.TXN_REASON || MappPurposeCodeWithDescription(RQ.ID.TXN_REASON);
+			DELETE LASTCHILD OF OutputRoot;
+			DECLARE ddAcc ROW;
+			SET ddAcc.value[] = SELECT J.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{ACH_CONFIG_VALUES} AS J;
+			DECLARE cbsTranRef CHARACTER '171B' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS')|| EndId;
+			DECLARE space1 NAMESPACE 'http://www.oab.com';
+--			SET OutputRoot.MQMD.ReplyToQ = 'IB.REPLY';
+			SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL ;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORK_STATION;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = cbsTranRef;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNEL_RESERVED;
+			-- SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = RQ.ID.TXN_REASON||'_CANO_REVERSAL_OC_CREDIT';
+
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = ddAcc.value.DC_STLMNT_ACC;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = SG.TX.AMOUNT;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+			
+			/*Naratives for Debitor*/
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference = Environment.DCOvalues.BATCH_REFERENCE;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1] = Environment.DCOvalues.ORDERING_CUSTOMER_NAME;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2] = Environment.PurposeCodeDesc;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3] = RQ.ID.ORIGIN_END_TO_END_ID;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4] = '';			
+
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = SG.TX.ORDERING_CUSTOMER_ACCOUNT;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = SG.TX.AMOUNT;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+			
+			/*Naratives for Creditor*/
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference = Environment.DCOvalues.BATCH_REFERENCE;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1] = Environment.DCOvalues.ORDERING_CUSTOMER_NAME;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2] = Environment.PurposeCodeDesc;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3] = RQ.ID.ORIGIN_END_TO_END_ID;
+			SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]= '';
+
+			DECLARE cbsBlob BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.cbsMsg = CAST(cbsBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS J SET CBS_TRAN_REF = cbsTranRef , CBS_REQUEST = Environment.cbsMsg WHERE J.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			PROPAGATE TO TERMINAL 'out';
+		ELSEIF orgStatus = 'DCO_SEND_TO_CBO_PT' THEN
+			UPDATE Database.{SCH_NAME}.{DCO_TXN_INFO} AS J SET STATUS = 'CANCELLED',DESCRIPTION = 'Transaction was cancelled' WHERE J.END_TO_END_ID = TXNREF1.ORIGIN_END_TO_END_ID;
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_DCO_PT',DESCRIPTION = 'Cancellation Success due to flow stoped in DCO' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SUCCESS_DCO_PT And  CANCELLED In DCO_TXN_INFO' ) INTO rc;
+		ELSEIF orgStatus = 'DCO_CBS_CRDT_OC_SUCCESS' THEN
+			UPDATE Database.{SCH_NAME}.{CANO_TXN_INFO} AS K SET STATUS = 'CANO_SUCCESS_REV_CRDT_OC',DESCRIPTION = 'Cancellation Success due amount credited to OC' WHERE K.END_TO_END_ID = TXNREF1.END_TO_END_ID;
+			CALL writeToLogFile(flowname, 'CANO_INFO', 'INFO', 'Transaction Found in DCO Table With Status'|| orgStatus || 'Upadted status in CANO_REVO_RETO_TXN_INFO AS CANO_SUCCESS_REV_CRDT_OC ' ) INTO rc;
+
+
+		END IF;
+	END;
+
+END MODULE;

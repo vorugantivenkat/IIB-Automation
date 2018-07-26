@@ -1,0 +1,602 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.return.inward
+PATH com.oab.reasoncodemapper;
+
+DECLARE fbchId SHARED CHARACTER;
+DECLARE fbchSeq SHARED INTEGER;
+
+
+DECLARE ns NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.004.001.05';
+DECLARE ns22 NAMESPACE 'http://www.Progressoft.com/ACH';
+DECLARE ns1 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.002.001.06';
+--DECLARE i SHARED INTEGER 1;
+/*Author : Sandhya Sudharshan
+Subsequent Modifications by : Lokesh
+Module Name : Return_Inward
+Flow Name : Return_Inward_Main
+Purpose : Storing input message in DB and forming CBS request message
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : Yes,PRI_GP_HEADER_INFO,PRI_ORGNL_GRP_INFO,PRI_RTR_RSN_INFO,PRI_SUPPLEMENTRY_DATA,PRI_TXN_INFO,DDI_TXN_INFO
+Dependency XSD(Request Message) : pacs.004.001.05.xsd
+Dependency XSD(Response Message) : pacs.002.001.06.xsd
+*/
+
+CREATE COMPUTE MODULE Retrun_Inwards_Compute
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER;
+	DECLARE PRI_GP_HEADER_INFO EXTERNAL CHARACTER;
+	--DECLARE STATUS_TABLE_NAME EXTERNAL CHARACTER;
+	DECLARE PRI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DCO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE DDI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER; --log4j configuration file path
+	DECLARE rc BOOLEAN;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER; --schema name of the database: esbach
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE flowName CHARACTER MessageFlowLabel; --getting flowname
+	DECLARE instgBicfi,srcMsg,alpha,cboMsgId CHARACTER;
+	DECLARE insertStatusQuery CHARACTER;
+	DECLARE insertRes ROW;
+	DECLARE rev REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:PmtRtr;
+	DECLARE bool BOOLEAN;
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE VerifyMsgId() RETURNS BOOLEAN BEGIN ----- This Procedure Check whether the message is already in datbase or not ,,, And also Checks the PC2,IC5,IC6 Constraints is there or not.If any Validation Fails means Its generate 216 format send to CBO
+		SET Environment.msgId = InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:MsgId;
+
+		SET Environment.dbQueryCount = '1';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+
+
+
+		IF CARDINALITY(Environment.DB.ID[]) > 0 THEN
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' ---Message is Duplicate --') INTO rc;
+			SET Environment.Failure = 'groupFail';
+			SET Environment.groupFail.rsn = 'Duplicate Message ID';
+			SET Environment.groupFail.AddtlInf = 'The same Message ID was processed earlier';
+			CALL respMsg();
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+
+		END IF;
+
+
+		DECLARE instgBicfi CHARACTER InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE instdBicfi CHARACTER InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE plcName CHARACTER InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:SplmtryData.ns:PlcAndNm;
+		IF LENGTH(instgBicfi) > 0 AND LENGTH(instdBicfi) > 0 THEN ---Checking Mandatory fields are there in Request or not
+			DECLARE grpCurncy CHARACTER InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:TtlRtrdIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy;
+			DECLARE stmlMthd CHARACTER InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:SttlmInf.ns:SttlmMtd;
+			IF stmlMthd = 'CLRG' THEN --PC2
+				DECLARE ref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:PmtRtr;
+				DECLARE curncy CHARACTER ref.ns:TxInf.ns:RtrdIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy;
+				DECLARE headerAmount DECIMAL ref.ns:GrpHdr.ns:TtlRtrdIntrBkSttlmAmt;
+				DECLARE txnAmount DECIMAL 0.0;
+				SET txnAmount = ref.ns:TxInf.ns:RtrdIntrBkSttlmAmt;
+				--IF curncy = grpCurncy THEN --IC6
+				-- IF txnAmount = headerAmount THEN --IC5
+				RETURN TRUE;
+				/* ELSE ---IC5 Constrtint is Not there
+				SET Environment.Failure = 'groupFail';
+				SET Environment.groupFail.rsn = 'Constraint IC5 not satisfied';
+				SET Environment.groupFail.AddtlInf = '"Group Header/Total Returned Interbank Settlement Amount" should be equal to the sum of all occurrences of "Transaction Information/Returned Interbank Settlement Amount"';
+				CALL respMsg();
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				RETURN FALSE;
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+				END IF;
+				ELSE ---IC6 Constraint is not there
+				SET Environment.Failure = 'groupFail';
+				SET Environment.groupFail.rsn = 'Constraint IC6 not satisfied';
+				SET Environment.groupFail.AddtlInf = '"Transaction Information/Returned Interbank Settlement Amount" must have the same Payments Clearing and Settlement currency as the currency of "Group Header/Total Returned Interbank Settlement Amount"';
+				CALL respMsg();
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				RETURN FALSE;
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+				END IF;*/
+
+
+			ELSE ---PC2 Constraint is not there
+				SET Environment.Failure = 'groupFail';
+				SET Environment.groupFail.rsn = 'Constraint PC2 not satisfied';
+				SET Environment.groupFail.AddtlInf = '"Settlement Method" should always be equal to "CLRG"';
+				CALL respMsg();
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				RETURN FALSE;
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+			END IF;
+		ELSE ---mandatory fields are not there.
+			SET Environment.Failure = 'groupFail';
+			SET Environment.groupFail.rsn = 'Message not valid';
+			SET Environment.groupFail.AddtlInf = 'Mandatory fields are missing';
+			CALL respMsg();
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Message not valid') INTO rc;
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+		END IF;
+	END;
+
+
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN ----This Procedure Insert frroup header etails in Database if VerifyMsgId() returns True,And Makes CBS Call If VerifyTxnID() Returns true
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+
+			SET Environment.rtrId = rev.ns:TxInf.ns:RtrId; -----This variable is used to Insert the Tarnsaction Details insertTxn() and check the mandatory fields in VerifyTxnID()
+			SET Environment.orgnlTxnId = rev.ns:TxInf.ns:OrgnlTxId; -----This variable is used to Insert the Tarnsaction Details insertTxn() and check the mandatory fields in VerifyTxnID()
+			DECLARE addtlInf CHARACTER rev.ns:TxInf.ns:RtrRsnInf.ns:AddtlInf; -----This variable is used to Insert the Tarnsaction Details insertTxn() and check the mandatory fields in VerifyTxnID()
+			SET Environment.reasonprtry = rev.ns:TxInf.ns:RtrRsnInf.ns:Rsn.ns:Prtry;
+
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+			DECLARE Grphdr REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr;
+			SET Environment.MSG_ID = Grphdr.ns:MsgId;
+			SET Environment.RTRD_INTR_BK_STTLM_AMT = rev.ns:TxInf.ns:RtrdIntrBkSttlmAmt;
+			--DECLARE rsnParty CHARACTER rev.ns:TxInf.ns:RtrRsnInf.ns:Rsn.ns:Prtry;
+			-- DECLARE PR_TXN_INFO_ID INTEGER;
+			-- SET PR_TXN_INFO_ID = SELECT MAX(PR.PR_TXN_INFO_ID) FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS PR;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','CBO request message received with Message Id '||Environment.MSG_ID) INTO rc;
+			SET instgBicfi = InputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstgAgt.ns1:FinInstnId.ns1:BICFI;
+			DECLARE processMsg BOOLEAN;
+			--======| Calling VerifyMsgId procedure to check duplicate MsgId under GrpHdr |==========--
+			SET processMsg = VerifyMsgId();
+			IF processMsg = TRUE THEN
+				DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+				--DECLARE crtDtTm TIMESTAMP CURRENT_GMTTIMESTAMP;
+				SET Environment.crtDtTm = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd''T''HH:mm:ss.sss+hh:mm'); --CAST(crtDtTm AS TIMESTAMP);
+				SET Environment.noOfTxn = Grphdr.ns:NbOfTxs;
+				SET Environment.ttlRtrdIntrBkSttlmAmt = Grphdr.ns:TtlRtrdIntrBkSttlmAmt;
+				DECLARE interBkSttlmDt DATE Grphdr.ns:IntrBkSttlmDt;
+				SET Environment.interBkSttlmDt = CAST(interBkSttlmDt AS DATE FORMAT 'YY-MM-DD');
+				SET Environment.sttlmInfSttlmnMtd = Grphdr.ns:SttlmInf.ns:SttlmMtd;
+				SET Environment.sttlmInfClrSysPrty = Grphdr.ns:SttlmInf.ns:ClrSys.ns:Prtry;
+				SET Environment.instgAgtFinInstnIdBicfi = Grphdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+				SET Environment.instgAgtBrchId = Grphdr.ns:InstgAgt.ns:BrnchId.ns:Id;
+				SET Environment.instdAgtFinInstnIdBicfi = Grphdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+				SET Environment.instdAgtBranchId = Grphdr.ns:InstdAgt.ns:BrnchId.ns:Id;
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting header information to Header table') INTO rc;
+				--Inserting header values into header tablle
+				SET Environment.dbQueryCount = '2';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+			ELSE
+				RETURN FALSE;
+			END IF;
+			DECLARE CBS BOOLEAN;
+			--==========| Calling VerifyTxnID procedure to check duplicate Txn and mandatory fields |============--
+			SET CBS = VerifyTxnID();
+			--==========| If Txn is valid the further processing is done |==============--
+			IF CBS = TRUE THEN
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to TXN table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_RCVD') INTO rc;
+				SET Environment.Status = 'RETI_RCVD';
+				SET Environment.AddtlInf = 'Transaction was received by ACH Connector';
+				-- Inserting into DC_DD_STATUS_INFO table
+				-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_RCVD') INTO rc;
+				-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+				-- TXN_END_TO_END_ID,
+				-- STATUS,
+				-- STATUS_UPDATED_TIMESTAMP,
+				-- TXN_TYPE
+				-- ) VALUES (?,?,?,?)';
+				-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_RCVD',CURRENT_TIMESTAMP,'RETI'));
+				SET Environment.dbQueryCount = '7';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+
+				SET Environment.ReasonCodeDesc = Environment.reasonprtry || MappReasonCodeWithDescription(Environment.reasonprtry);
+				
+				DECLARE DC_STML_ACC,DD_STML_ACC CHARACTER;
+
+				SET DC_STML_ACC = Environment.ACHConfig.values.DC_STLMNT_ACC;
+				SET DD_STML_ACC = Environment.ACHConfig.values.DD_STLMNT_ACC;
+				SET Environment.CBS_TRAN_REF = '141' || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS');
+				----Creating CBS Request---- Double Entry Posting---------
+				DECLARE space1 NAMESPACE 'http://www.oab.com';
+				SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORKSTATION;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = Environment.CBS_TRAN_REF;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNELRESERVED;
+				
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.TxnFound||'_RETI_CBS_CRDT_OC_SENT';
+				--------------------------------- Debit-----------------------------
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = DD_STML_ACC;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = Environment.RTRD_INTR_BK_STTLM_AMT;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+				/*Narratives for debit */
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference = Environment.Status.C3.BATCH_REFERENCE;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1] = Environment.Status.C3.ORDERING_CUSTOMER_NAME;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2] = Environment.ReasonCodeDesc;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3] = Environment.orgnlTxnId;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4] = '';
+				--------------------------------Credit-----------------------------
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = Environment.ACCOUNT;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = Environment.RTRD_INTR_BK_STTLM_AMT;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+				/*Narratives for credit */
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference = Environment.Status.C3.BATCH_REFERENCE;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1] = Environment.Status.C3.ORDERING_CUSTOMER_NAME;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2] = Environment.ReasonCodeDesc;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3] = Environment.orgnlTxnId;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]= '';				
+				
+				/*
+				DECLARE space1 NAMESPACE 'http://www.oab.com';
+				SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORK_STATION;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = '101' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMDDHHmmssSSS') || pmt_etoe_id;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNEL_RESERVED;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = dcAcc.value.DC_STLMNT_ACC;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = inter_sett_amt;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = '3101196774500';--cdtr_acct_iban;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = inter_sett_amt;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+				*/
+
+				DECLARE cbsBlob BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.cbsMsg = CAST(cbsBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Updating status as RETI_CBS_CRDT_OC_SENT in TXN table for END_TO_END_ID - '||Environment.orgnlTxnId ) INTO rc;
+				SET Environment.dbQueryCount = '8';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				-- Inserting into DC_DD_STATUS_INFO table
+				-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_CBS_CRDT_OC_SENT') INTO rc;
+				-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+				-- TXN_END_TO_END_ID,
+				-- STATUS,
+				-- STATUS_UPDATED_TIMESTAMP,
+				-- TXN_TYPE
+				-- ) VALUES (?,?,?,?)';
+				-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_CBS_CRDT_OC_SENT',CURRENT_TIMESTAMP,'RETI'));
+				-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Sending double entry posting message for crediting OC account') INTO rc;
+				PROPAGATE TO TERMINAL 'out' DELETE NONE;
+			END IF;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'RETI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+	END;
+	CREATE PROCEDURE insertTxn() RETURNS BOOLEAN BEGIN --- This Procedure is used to insert the transaction details in database
+		--=================| Inserting the txn into db |====================--
+		SET Environment.PR_GP_HEADER_ID = SELECT MAX(PR.PR_GP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{PRI_GP_HEADER_INFO} AS PR;
+		--DECLARE RSN_PRTRY CHARACTER rev.ns:TxInf.ns:RtrRsnInf.ns:Rsn.ns:Prtry;
+		-- DECLARE PR_TXN_INFO_ID INTEGER;
+		-- SET PR_TXN_INFO_ID = SELECT MAX(PR.PR_TXN_INFO_ID) FROM Database.{SCHEMA_NAME}.{PRI_TXN_INFO} AS PR;
+		SET Environment.dbQueryCount = '6';
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+		IF Environment.Exception = 'True' THEN
+			RETURN FALSE;
+		END IF;
+
+
+
+	END;
+	CREATE PROCEDURE VerifyTxnID() RETURNS BOOLEAN BEGIN ---- This Procedure used to check whether the transaction is duplicate or not,,,and All mandatory fields are there in request,, And In which Table this Transaction is there (DDI AND DCO)
+		IF LENGTH(Environment.rtrId) > 0 AND LENGTH(Environment.orgnlTxnId ) > 0 THEN
+
+			SET Environment.dbQueryCount = '3';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			--==========| If Txn is duplicate then it is inserted to PRI_TXN_INFO table with reason as duplicate |============--
+			IF CARDINALITY (Environment.DB.TXN[]) >= 1 THEN
+				SET Environment.Failure = 'TxnFailure';
+				SET Environment.TxnFail.Rsn = 'Duplicate Transaction Details';
+				SET Environment.Status = 'RETI_DUPLICATE_TXN';
+				SET Environment.TxnFail.AddtlInf = 'Transaction details already exist in DB';
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Duplicate transaction found. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_DUPLICATE_TXN') INTO rc;
+
+				CALL insertTxn() INTO bool;
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				CALL respMsg();
+				-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Duplicate transaction found. Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_DUPLICATE_TXN') INTO rc;
+				-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+				-- TXN_END_TO_END_ID,
+				-- STATUS,
+				-- STATUS_UPDATED_TIMESTAMP,
+				-- TXN_TYPE
+				-- ) VALUES (?,?,?,?)';
+				-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_DUPLICATE_TXN',CURRENT_TIMESTAMP,'RETI'));
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			END IF;
+
+			SET Environment.dbQueryCount = '4';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+			IF CARDINALITY(Environment.Status.T1[]) > 0 OR CARDINALITY(Environment.Status.T2[]) > 0 THEN
+
+				SET Environment.dbQueryCount = '5';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+				IF Environment.Status.C1.STATUS = 'DDI_SUCCESS' THEN -- checking if transaction is success earlier
+					SET Environment.ACCOUNT = Environment.Status.C1.DBTRACCT_ID_OTHR_ID;
+					SET Environment.Status = 'RETI_CBS_CRDT_OC_SENT';
+					SET Environment.TxnFound = 'DDI';
+					CALL insertTxn() INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_NOT_FOUND') INTO rc;
+					-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+					-- TXN_END_TO_END_ID,
+					-- STATUS,
+					-- STATUS_UPDATED_TIMESTAMP,
+					-- TXN_TYPE
+					-- ) VALUES (?,?,?,?)';
+					-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,Environment.Status,CURRENT_TIMESTAMP,'RETI'));
+
+
+					RETURN TRUE;
+				ELSEIF Environment.Status.C2.STATUS = 'DCO_SUCCESS' THEN -- checking if transaction is success earlier
+					SET Environment.ACCOUNT = Environment.Status.C3.ORDERING_CUSTOMER_ACCOUNT;
+					SET Environment.Status = 'RETI_CBS_CRDT_OC_SENT';
+					SET Environment.TxnFound = 'DCO';
+					CALL insertTxn() INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_NOT_FOUND') INTO rc;
+					-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+					-- TXN_END_TO_END_ID,
+					-- STATUS,
+					-- STATUS_UPDATED_TIMESTAMP,
+					-- TXN_TYPE
+					-- ) VALUES (?,?,?,?)';
+					-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,Environment.Status,CURRENT_TIMESTAMP,'RETI'));
+
+					RETURN TRUE;
+				ELSE
+					CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Transaction did not happen. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_FAILED') INTO rc;
+					SET Environment.Failure = 'TxnFailure';
+					SET Environment.TxnFail.Rsn = 'Transaction did not happen'; -- rejecting transaction if it failed previously
+					SET Environment.Status = 'RETI_ORGTXN_FAILED';
+					SET Environment.TxnFail.AddtlInf = 'Original Transaction was not success';
+
+					CALL insertTxn() INTO bool;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL respMsg();
+					-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_FAILED') INTO rc;
+					-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+					-- TXN_END_TO_END_ID,
+					-- STATUS,
+					-- STATUS_UPDATED_TIMESTAMP,
+					-- TXN_TYPE
+					-- ) VALUES (?,?,?,?)';
+					-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_ORGTXN_FAILED',CURRENT_TIMESTAMP,'RETI'));
+
+					PROPAGATE TO TERMINAL 'out1';
+				END IF;
+			ELSE
+				CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Transaction Not Found. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_NOT_FOUND') INTO rc;
+				SET Environment.Failure = 'TxnFailure';
+				SET Environment.Fail.Rsn = 'Transaction Not Found'; -- rejecting transaction if it is invalid
+				SET Environment.TxnFail.Rsn = 'Invalid Transaction ID';
+				SET Environment.Status = 'RETI_ORGTXN_NOT_FOUND';
+				SET Environment.TxnFail.AddtlInf = 'Invalid transaction, transaction not found in db(DC and DDI) tables';
+
+				CALL insertTxn() INTO bool;
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				CALL respMsg();
+				-- CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_ORGTXN_NOT_FOUND') INTO rc;
+				-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+				-- TXN_END_TO_END_ID,
+				-- STATUS,
+				-- STATUS_UPDATED_TIMESTAMP,
+				-- TXN_TYPE
+				-- ) VALUES (?,?,?,?)';
+				-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_ORGTXN_NOT_FOUND',CURRENT_TIMESTAMP,'RETI'));
+
+				PROPAGATE TO TERMINAL 'out1';
+			END IF;
+		ELSE
+			SET Environment.Failure = 'TxnFailure';
+			SET Environment.Status = 'RETI_TXN_INFO_MISSING';
+			SET Environment.TxnFail.Rsn = 'Message not valid';
+			SET Environment.TxnFail.AddtlInf = 'Mandatory fields are missing';
+
+			CALL insertTxn() INTO bool;
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			CALL respMsg();
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Message not valid') INTO rc;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.orgnlTxnId ||' and status as RETI_TXN_INFO_MISSING') INTO rc;
+			-- SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+			-- TXN_END_TO_END_ID,
+			-- STATUS,
+			-- STATUS_UPDATED_TIMESTAMP,
+			-- TXN_TYPE
+			-- ) VALUES (?,?,?,?)';
+			-- SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.orgnlTxnId ,'RETI_TXN_INFO_MISSING',CURRENT_TIMESTAMP,'RETI'));
+			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+			RETURN FALSE;
+			CALL writeToLogFile(flowName, 'return_in_info', 'INFO',' -------------------------') INTO rc;
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE respMsg() BEGIN ---- USed to generate MSG_ID And GroupHeader Part in Response Message (pacs.002.001.06)
+		--SET Environment.DB.VALUES[] = SELECT J.BANK_PREFIX FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		DECLARE currDay,currDate,estSeq CHARACTER;
+		SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd');
+		SET currDate = SUBSTRING(currDay FROM 5 FOR 2);
+
+		IF LENGTH(fbchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+			DECLARE prevIdDate CHARACTER;
+			SET prevIdDate = SUBSTRING(fbchId FROM 9 FOR 2); -- if contains, extracting date from it
+			IF prevIdDate = currDate THEN
+				SET fbchSeq = fbchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+			ELSE
+				SET fbchSeq = 1; -- if dates are not same then starting new sequence from 1
+			END IF;
+		ELSE
+			SET fbchSeq = 1;
+		END IF;
+		DECLARE j CHARACTER;
+		SET j = CAST(fbchSeq AS CHARACTER);
+		SET fbchId = 'OMAB' || CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyMMdd') || 'FLD' || CAST(RIGHT('000'||j,3) AS CHARACTER);
+		SET alpha = random(3);
+		SET cboMsgId = 'OMAB' || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+		DECLARE stsId CHARACTER;
+		SET stsId = cboMsgId || '001';
+
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns = ns1;
+		SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns:ns22 = ns22;
+
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:MsgId = cboMsgId;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstgAgt.ns1:FinInstnId.ns1:BICFI = InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:InstdAgt.ns:FinInstnId.ns:BICFI; --'OMABOMRU';
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:GrpHdr.ns1:InstdAgt.ns1:FinInstnId.ns1:BICFI = InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:InstgAgt.ns:FinInstnId.ns:BICFI;
+
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgId = InputRoot.XMLNSC.ns:Document.ns:PmtRtr.ns:GrpHdr.ns:MsgId;
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:OrgnlMsgNmId = 'pacs.004.001.05';
+		SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:GrpSts = 'RJCT';
+		IF Environment.Failure = 'groupFail' THEN
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry = Environment.groupFail.rsn;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:OrgnlGrpInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = Environment.groupFail.AddtlInf;
+		ELSE
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:StsId = stsId;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:OrgnlEndToEndId = Environment.rtrId;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:OrgnlTxId = Environment.orgnlTxnId ;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:TxSts = 'RJCT';
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:StsRsnInf.ns1:Rsn.ns1:Prtry =Environment.TxnFail.Rsn;
+			SET OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt.ns1:TxInfAndSts.ns1:StsRsnInf.ns1:AddtlInf = Environment.TxnFail.AddtlIn;
+		END IF;
+
+		DECLARE SupRef REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:FIToFIPmtStsRpt;
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns1 NAME 'SplmtryData';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns1 NAME 'Envlp';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'supplementaryData';
+		CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'Items';
+		SET SupRef.ns22:Item = '20';
+		SET SupRef.ns22:Item.(XMLNSC.Attribute)key = 'batchSource';
+
+		SET SupRef.ns22:Item[2] = '2';
+		SET SupRef.ns22:Item[2].(XMLNSC.Attribute)key = 'session';
+
+	END;
+END MODULE;
+
+
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";

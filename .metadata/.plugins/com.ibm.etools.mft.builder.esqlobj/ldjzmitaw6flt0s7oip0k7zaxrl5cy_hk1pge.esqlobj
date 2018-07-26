@@ -1,0 +1,15 @@
+CREATE DATABASE MODULE WPS_ADD_ProcessingFrom_CBO_TO_OAB_Database
+	DECLARE SCH EXTERNAL CHARACTER;
+	DECLARE ADD_TAB EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '33' THEN
+			UPDATE Database.{SCH}.{ADD_TAB} AS A SET STATUS_CODE = 'ADD_SUCCESS',EXEC_DESC = Environment.ref.Error WHERE A.ADDOPS_FILE_NAME = Environment.ref.record.OriginalFileName || '.csv';
+		ELSEIF Environment.dbQueryCount = '34' THEN
+			UPDATE Database.{SCH}.{ADD_TAB} AS A SET STATUS_CODE = 'ADD_FAILED',EXEC_DESC = Environment.ref.ADD_WPS_ERROR_RESPONSE.Error,FAILED_RECORD_NO = Environment.ref.ADD_WPS_ERROR_RESPONSE.RecordNumber WHERE A.ADDOPS_FILE_NAME = Environment.ref.record.OriginalFileName || '.csv';
+			
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

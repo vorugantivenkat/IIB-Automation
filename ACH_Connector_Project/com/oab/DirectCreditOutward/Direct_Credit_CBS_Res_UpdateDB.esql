@@ -1,0 +1,256 @@
+
+
+BROKER SCHEMA com.oab.DirectCreditOutward
+PATH  com.oab.reasoncodemapper;
+--DECLARE ns5 NAMESPACE 'http://www.oab.com';
+
+CREATE COMPUTE MODULE Direct_Credit_CBS_Res_UpdateDB
+
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER ; --Table for inserting the group header deatils: DCO_GROUP_HEADER_INFO.
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER ; --Table for inserting the transaction deatils: DCO_TXN_INFO.
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER ; --Table for getting the configurable deatils:DC_CONFIG_VALUES.
+	DECLARE SCH_NAME EXTERNAL CHARACTER; --schema name of the database: esbach
+	DECLARE DSN_NAME EXTERNAL CHARACTER; -- Data source name for the connection :it can be varied from SIT, UAT,PROD
+	DECLARE CHANNEL EXTERNAL CHARACTER; --channel for the CBS call.
+	DECLARE USER EXTERNAL CHARACTER; --user for the CBS call
+	DECLARE WORKSTATION EXTERNAL CHARACTER; --workstation for the CBS call.
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER; --channel reserved for the CBS call.
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE srcMsgBlob,srcMsg CHARACTER;
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE retValue BOOLEAN;
+		SET retValue = CopyEntireMessage();
+		
+		RETURN retValue;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+			CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO',' ------------------------') INTO rc;
+			SET Environment.ResponseStatus = InputRoot.XMLNSC.*:Reply.*:Header.*:replyStatus;
+			SET Environment.TransRefId = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			SET Environment.FinaTransRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			SET Environment.faultString = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+			SET Environment.faultCode = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultCode;
+			CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Response received from CBS with ref - ' || Environment.TransRefId) INTO rc;
+			DECLARE InsertRes ROW;
+			DECLARE InsertStatusQuery CHARACTER;
+			/* =========================================================================================
+			CBS response for Debiting Ordering Customer Account
+			========================================================================================= */
+
+			IF Environment.TransRefId LIKE '150%' THEN
+
+				DECLARE headerID CHARACTER;
+				SET headerID = SUBSTRING(Environment.TransRefId FROM 16);
+				SET Environment.headerID = CAST(headerID AS INTEGER);
+				SET Environment.cbsRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+				SET Environment.cbsTxnRef = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+
+				IF Environment.ResponseStatus = 'FIN' THEN
+					SET Environment.dbQueryCount = '9';
+					SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Success Response received for Debiting Ordering Customer Account with ref - ' || Environment.TransRefId) INTO rc;
+					DECLARE I INTEGER 1;
+					DECLARE J INTEGER;
+					SET Environment.dbQueryCount = '10';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					ELSE
+						SET OutputRoot.XMLNSC = NULL;
+					END IF;
+
+					SET J = CARDINALITY(Environment.Values[]);
+					IF J > 0 THEN
+						WHILE I <= J DO
+							SET Environment.loopCount = I;
+							SET Environment.txnRef = '151' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(Environment.Values[I].END_TO_END_ID AS CHARACTER);
+							-- SET Environment.dbQueryCount = '11';
+							-- CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							-- IF Environment.Exception = 'True' THEN
+							-- RETURN FALSE;
+							-- END IF;
+							-- CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+							IF Environment.Values[I].DETAILS_OF_PMTS IS NOT NULL THEN
+								SET Environment.CBS.USERREF = Environment.Id.userref.BATCH_REFERENCE;
+								SET Environment.CBS.NARRATIVE1 = SUBSTRING(Environment.Values[I].DETAILS_OF_PMTS FROM 1 FOR 35);
+								SET Environment.CBS.NARRATIVE2 = SUBSTRING(Environment.Values[I].DETAILS_OF_PMTS FROM 1 FOR 36);
+								SET Environment.CBS.NARRATIVE3 = SUBSTRING(Environment.Values[I].DETAILS_OF_PMTS FROM 71 FOR 35);
+								SET Environment.CBS.NARRATIVE4 = SUBSTRING(Environment.Values[I].DETAILS_OF_PMTS FROM 106 FOR 35);
+							ELSE
+								SET Environment.CBS.USERREF = Environment.Id.userref.BATCH_REFERENCE;
+								SET Environment.CBS.NARRATIVE1 = Environment.Id.userref.ORDERING_CUSTOMER_NAME;
+								
+								SET Environment.CBS.NARRATIVE2 = Environment.Values[I].PURP_OF_TRANSFER ||MappPurposeCodeWithDescription(Environment.Values[I].PURP_OF_TRANSFER);
+								SET Environment.CBS.NARRATIVE3 = Environment.Values[I].TXN_REF;
+								SET Environment.CBS.NARRATIVE4 = NULL;
+
+							END IF;
+							SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--							SET OutputRoot.MQMD.ReplyToQ = 'IB.REPLY';
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel 		      = CHANNEL;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user 			      = USER;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation 	      = WORKSTATION;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate      = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime      = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = Environment.txnRef;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved      = CHANNEL_RESERVED;
+
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.Values[I].PURP_OF_TRANSFER||'_DCO_CBS_CRDT_DCSETLACC_SENT';
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account                        = Environment.Values.DC_STLMNT_ACC; --'3101196774700';--
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount                         = '+' || CAST(Environment.Values[I].AMOUNT AS CHARACTER FORMAT '0.00');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency                       = 'OMR';
+							/*Creditor Naratives*/
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:userReference                  = Environment.CBS.USERREF;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:narratives.urn:narrative[1]    = Environment.CBS.NARRATIVE1;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:narratives.urn:narrative[2]    = Environment.CBS.NARRATIVE2;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:narratives.urn:narrative[3]    = Environment.CBS.NARRATIVE3;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:narratives.urn:narrative[4]    = Environment.CBS.NARRATIVE4;							
+
+
+							CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_CBS_CRDT_DCSETLACC_SENT in TXN table for END_TO_END_ID - ' || Environment.Values[I].END_TO_END_ID) INTO rc;
+							CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Inserting status as DCO_CBS_CRDT_DCSETLACC_SENT in STATUS table for END_TO_END_ID - ' || Environment.Values[I].END_TO_END_ID) INTO rc;
+							-- Inserting into DC_DD_STATUS_INFO table							
+							--USE CBS RETRY PERPOSE INSERT CBS_REQUEST_MESSAGE THIS COLUMN
+							DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+							SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+							SET Environment.dbQueryCount = '11';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;							
+							
+
+
+							PROPAGATE TO TERMINAL 'out';
+							SET I = I + 1;
+						END WHILE;
+						SET Environment.dbQueryCount = '12';
+
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+
+						END IF;
+					END IF;
+
+				ELSE
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Failure Response received for Debiting Ordering Customer Account with batch ref - ' || Environment.cbsRef) INTO rc;
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_CBS_DBT_OC_FAILED in TXN table for batch ref ' || Environment.cbsRef) INTO rc;
+					SET Environment.dbQueryCount = '13';
+					SET OutputRoot.XMLNSC        = InputRoot.XMLNSC;
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					COMMIT;
+				END IF;
+				/* =========================================================================================
+				CBS response for Crediting OAB Direct Credit Settlement Account
+				========================================================================================= */
+			ELSEIF Environment.TransRefId LIKE '151%' THEN
+
+				DECLARE status CHARACTER;
+				SET Environment.cbsRef         = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+				SET Environment.endToEndId     = SUBSTRING(Environment.TransRefId FROM 19);
+				IF Environment.ResponseStatus  = 'FIN' THEN
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Success Response received for DC Settlement Account with END_TO_END_ID - ' || Environment.endToEndId) INTO rc;
+					SET status = 'DCO_SEND_TO_CBO_NPT';
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_SEND_TO_CBO_NPT in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '14';
+
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+
+					END IF;
+				ELSE
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Failure Response received for DC Settlement Account with END_TO_END_ID - ' || Environment.endToEndId) INTO rc;
+					SET status = 'DCO_CBS_CRDT_DCSETLACC_FAILED';
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_CBS_CRDT_DCSETLACC_FAILED in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '15';
+					SET OutputRoot.XMLNSC        = InputRoot.XMLNSC;
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				END IF;
+				CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Inserting status as ' || status || ' in STATUS table for END_TO_END_ID - ' || Environment.endToEndId) INTO rc;
+				-- Inserting into DC_DD_STATUS_INFO table
+				/* ===========================================================================================================
+				CBS response for Crediting Ordering Customer Account(Unfreeze) if CBO response is failed
+				=========================================================================================================== */
+			ELSE
+				DECLARE cbsRef,endToEndId,status CHARACTER;
+				SET Environment.cbsRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+				SET Environment.endToEndId    = SUBSTRING(Environment.TransRefId FROM 19);
+				IF Environment.ResponseStatus = 'FIN' THEN
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Success Response received for Crediting Ordering Customer Account(Unfreeze) with END_TO_END_ID - ' || Environment.endToEndId) INTO rc;
+					SET status = 'DCO_CBS_CRDT_OC_SUCCESS';
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_CBS_CRDT_OC_SUCCESS in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '16';
+
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+
+					END IF;
+				ELSE
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Failure Response received for Crediting Ordering Customer Account(Unfreeze) with END_TO_END_ID - ' || endToEndId) INTO rc;
+					SET status = 'DCO_CBS_CRDT_OC_FAILED';
+					CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_CBS_CRDT_OC_FAILED in TXN table') INTO rc;
+					SET Environment.dbQueryCount = '17';
+
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+
+					END IF;
+
+				END IF;
+				CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Inserting status as ' || status || ' in STATUS table for END_TO_END_ID - ' || endToEndId) INTO rc;
+				-- Inserting into DC_DD_STATUS_INFO table
+			END IF;
+			CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO',' ------------------------') INTO rc;
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				SET OutputRoot.XMLNSC   = InputRoot.XMLNSC;
+				SET OutputExceptionList = InputExceptionList;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList    = InputExceptionList;
+				SET Environment.Exception  = 'True';
+				SET Environment.RetryQueue = 'DCO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+				SET Environment.Exception  = 'True';
+			END IF;
+		END IF;
+	END;
+END MODULE;

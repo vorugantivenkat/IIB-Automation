@@ -1,0 +1,39 @@
+CREATE PROCEDURE getExceptionDesc (in inputroot REFERENCE,in outputroot REFERENCE, IN InputExceptionList REFERENCE)
+RETURNS CHARACTER
+BEGIN
+	--Copy the exception description
+	DECLARE continueLoop BOOLEAN TRUE;
+	DECLARE exceptionData CHAR;
+	DECLARE messageText CHARACTER '';
+	DECLARE inRef2 REFERENCE TO InputExceptionList.*[1];
+	DECLARE inRef3 REFERENCE TO InputExceptionList.*[1];
+
+	DECLARE insertRef REFERENCE TO InputExceptionList.*[1];
+	DECLARE exceptionName CHARACTER;
+	SET continueLoop = TRUE;
+	MOVE inRef2 TO InputExceptionList;
+	IF CARDINALITY(inRef2.RecoverableException[]) = 0 THEN
+		SET continueLoop = FALSE;
+	END IF;
+
+	WHILE lastmove(inRef3) AND continueLoop DO
+		IF inRef3.Number is not null THEN
+			SET exceptionName = FIELDNAME(inRef3);
+			IF stringValidation(inRef3.Text) THEN
+				SET messageText = messageText||' '||inRef3.Text;
+			END IF;
+			MOVE insertRef TO inRef3.Insert[>];
+			WHILE LASTMOVE(insertRef) AND FIELDNAME(insertRef) = 'Insert' DO --- fetch description from Insert[]
+				IF NOT LENGTH(insertRef.Text) = 1 AND
+					stringValidation(insertRef.Text)THEN
+					SET messageText = messageText||' '||insertRef.Text;
+
+				END IF;
+				MOVE insertRef NEXTSIBLING;
+			END WHILE;
+		END IF;
+		MOVE inRef3 LASTCHILD;
+	END WHILE;
+	SET exceptionData = exceptionName||':'||messageText;
+	RETURN exceptionData;
+END;

@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurableservice EmailCcAddresses="rajesh.dhandu@eidiko.com,mudireddy.surendra@eidiko.com" EmailFromAddresses="chilakala.mahidhar@eidiko.com" EmailSubjectLine="ESB Exception mail alert" EmailToAddresses="upender.kuncham@eidiko.com" csName="OAB_UDS" csType="UserDefined"/>

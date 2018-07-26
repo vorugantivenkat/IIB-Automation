@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="www.oab.com/BatchCancellationReq_CancellationOutward" xmlns:urn="www.oab.com/BatchCancellationReq_CancellationOutward">
+  <xsd:element name="ACHBatchCancelation">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="Mode" type="xsd:string" minOccurs="0"/>
+        <xsd:element name="Channel" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="BatchReference" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="OrginalBatch" type="xsd:string" minOccurs="1"/>
+        <xsd:element name="Reason" type="xsd:string" minOccurs="1"/>
+        <xsd:element maxOccurs="unbounded" name="Transaction">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="TransactionReference" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="OriginalTransaction" type="xsd:string" minOccurs="1"/>
+              <xsd:element name="UserReference" type="xsd:string" minOccurs="0"/>
+              <xsd:element name="Reason" type="xsd:string" minOccurs="1"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

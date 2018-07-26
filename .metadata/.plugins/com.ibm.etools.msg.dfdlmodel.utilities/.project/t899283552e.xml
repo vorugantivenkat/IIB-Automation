@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageBroker name="Lib_Cano_Reto_Revo_Common.xsd">
+  <XSDCollection
+    href="platform:/resource/Lib_Cano_Reto_Revo_Common.xsd/BatchCancellation_CANO_InputMessage.xsd"
+    prefix="urn" targetNamespace="www.oab.com/BatchCancellationReq_CancellationOutward">
+    <element
+      href="platform:/resource/Lib_Cano_Reto_Revo_Common.xsd/BatchCancellation_CANO_InputMessage.xsd#//ACHBatchCancelation;XSDElementDeclaration" name="ACHBatchCancelation"/>
+  </XSDCollection>
+</MessageBroker>

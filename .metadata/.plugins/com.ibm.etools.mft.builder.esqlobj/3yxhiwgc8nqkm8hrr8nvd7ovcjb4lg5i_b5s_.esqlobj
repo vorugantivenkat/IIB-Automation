@@ -1,0 +1,93 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '1' THEN
+			SET Environment.DH.ID[] = SELECT J.GRP_BATCH_REF FROM Database.{SCHEMA_NAME}.{CANO_HEADER_INFO} AS J WHERE J.CHL_BTCH_REF = Environment.Variables.chnlBatchId;
+
+		ELSEIF Environment.dbQueryCount = '2' THEN
+
+			INSERT INTO Database.{SCHEMA_NAME}.{CANO_HEADER_INFO}
+			(GRP_MSG_MODE ,GRP_CHANNEL , GRP_BATCH_REF ,GRP_ORGIN_BATCH ,
+			GRP_REASON ,STATUS ,CHL_BTCH_REF ,MSG_RCV_TIMESTAMP)
+			VALUES
+			(
+			Environment.Variables.Mode ,
+			Environment.Variables.Channel ,
+			Environment.Variables.BatchReference ,
+			Environment.Variables.OriginalReference ,
+			Environment.Variables.Reason,
+			'RCVD',
+			Environment.Variables.chnlBatchId,
+			Environment.groupcurrdate);
+
+		ELSEIF Environment.dbQueryCount = '3' THEN
+
+			DECLARE DB ROW;
+			SET DB.ID[] = SELECT J.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{CANO_HEADER_INFO} AS J WHERE J.CHL_BTCH_REF = Environment.Variables.chnlBatchId;
+			SET Environment.CAN.headerID = DB.ID.GRP_HEADER_ID;
+
+		ELSEIF Environment.dbQueryCount = '4' THEN
+
+			INSERT INTO Database.{SCHEMA_NAME}.{CANO_TXN_INFO}(
+			GRP_HDR_ID_TXN_INFO_FK,
+			TXN_RCVD_BY,
+			USER_REF,
+			TRAN_REF,
+			END_TO_END_ID,
+			ORIGIN_END_TO_END_ID,
+			TXN_REASON,
+			TXN_FOUND,
+			STATUS,
+			DESCRIPTION,
+			ORIG_MSG_ID,
+			ORIG_TXN_ID,
+			CREDITOR_BANK_BICFI,
+			DEBTOR_BANK_BICFI
+			)
+			VALUES(
+			Environment.CAN.headerID,
+			'CANC_RET_REV_ROUTER',
+			Environment.Variables.UserReference,
+			Environment.Variables.TransactionReference,
+			Environment.Variables.EndToEndId,
+			Environment.Variables.OrgEndToEndId,
+			Environment.Variables.Reason,
+			'',
+			'CANC_RET_REV_RCVD',
+			'Transaction has been inserted','','','','');
+
+		ELSEIF Environment.dbQueryCount = '5' THEN
+
+			SET Environment.DCO.dbValues[] = SELECT J.END_TO_END_ID , J.STATUS FROM Database.{SCHEMA_NAME}.{DCO_TAB} AS J WHERE J.END_TO_END_ID = Environment.ENDTOENDID ;
+			SET Environment.DCI.dbValues[] = SELECT S.PMT_ID_ENDTOEND_ID,S.STATUS FROM Database.{SCHEMA_NAME}.{DCI_TAB} AS S WHERE S.PMT_ID_ENDTOEND_ID = Environment.ENDTOENDID;
+
+		ELSEIF Environment.dbQueryCount = '6' THEN
+
+			SET Environment.DDO.dbValues[] = SELECT S.END_TO_END_ID,S.STATUS FROM Database.{SCHEMA_NAME}.{DDO_TAB} AS S WHERE S.END_TO_END_ID = Environment.ENDTOENDID;
+			SET Environment.DDI.dbValues[] = SELECT S.PMT_ID_ENDTOEND_ID,S.STATUS FROM Database.{SCHEMA_NAME}.{DDI_TAB} AS S WHERE S.PMT_ID_ENDTOEND_ID = Environment.ENDTOENDID;
+
+		ELSEIF Environment.dbQueryCount = '10' THEN
+			DECLARE record ROW;
+			SET record.id [] = SELECT J.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{CANO_HEADER_INFO} AS J WHERE J.GRP_BATCH_REF = Environment.Variables.BatchReference;
+			SET Environment.DBStatus[] = SELECT A.STATUS FROM Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS A WHERE A.TRAN_REF = Environment.tranRef AND A.GRP_HDR_ID_TXN_INFO_FK = record.id.GRP_HEADER_ID;
+
+		ELSEIF Environment.dbQueryCount = '11' THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANO_TXN_INFO} AS A SET STATUS = 'CANCEL_INITIATED' WHERE A.TRAN_REF = Environment.tranRef ;
+
+		ELSEIF Environment.dbQueryCount = '11A' THEN
+
+			SET Environment.DC.ID[] = SELECT J.DCO_GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{DCO_HEAD} AS J WHERE J.CHL_BTCH_REF = Environment.ChnlBatchDCOOrg;
+			SET Environment.TxnDDDC.Details[]=SELECT J.TXN_REF,J.USER_REF FROM Database.{SCHEMA_NAME}.{DCO_TAB} AS J WHERE J.DCO_GRP_HDR_ID_TXN_INFO_FK = Environment.DC.ID.DCO_GRP_HEADER_ID;
+		
+		ELSEIF Environment.dbQueryCount = '11B' THEN
+
+
+			SET Environment.DD.ID[] = SELECT J.DDO_GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{DDO_HEAD} AS J WHERE J.BATCH_REFERENCE = Environment.Variables.OriginalReference ;
+			SET Environment.TxnDDDC.Details[]=SELECT J.TXN_REF,J.USER_REF FROM Database.{SCHEMA_NAME}.{DDO_TAB} AS J WHERE J.DDO_GRP_HDR_ID_TXN_INFO_FK = Environment.DD.ID.DDO_GRP_HEADER_ID;
+
+
+
+		END IF;
+		RETURN TRUE;
+	END;
+

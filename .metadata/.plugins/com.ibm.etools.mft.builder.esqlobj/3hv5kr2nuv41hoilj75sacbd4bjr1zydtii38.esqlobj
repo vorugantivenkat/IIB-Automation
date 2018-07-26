@@ -1,0 +1,16 @@
+CREATE DATABASE MODULE DirectCredit_Inward_Response_From_CBS_Database
+	DECLARE DC_TXN_TABLE EXTERNAL CHARACTER; -- This table is used to store the transaction details: DCI_TXN_INFO.
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER; --Schema name of the database. 
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '6' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DC_TXN_TABLE} AS R SET STATUS = 'DCI_CBS_CRDT_OC_SUCCESS',DESCRIPTION = 'Transaction for crediting OC was success at CBS',CBS_PAY_REF = Environment.reference WHERE R.CBS_TRAN_REF = Environment.payment_ref;
+		ELSEIF Environment.dbQueryCount = '7' THEN
+			UPDATE Database.{SCHEMA_NAME}.{DC_TXN_TABLE} AS R SET STATUS = Environment.STATUS,FAULT_CODE = Environment.faultCode||' '||Environment.faultNumber, FAULT_STRING = Environment.faultString,DESCRIPTION = 'Transaction for crediting OC was Failed at CBS',CBS_PAY_REF = Environment.reference WHERE R.CBS_TRAN_REF = Environment.payment_ref ;
+		ELSEIF Environment.dbQueryCount = '7A' THEN
+			SET Environment.CbsCount[]= SELECT A.FAULT_CODE FROM Database.{SCHEMA_NAME}.{DC_TXN_TABLE}  AS A  WHERE A.CBS_TRAN_REF = Environment.payment_ref ;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

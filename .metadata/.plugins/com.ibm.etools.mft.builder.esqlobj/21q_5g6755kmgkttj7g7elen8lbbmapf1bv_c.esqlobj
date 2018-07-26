@@ -1,0 +1,35 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '22' THEN
+			SET Environment.header[] = SELECT S.SIF_CBO_FILE_NAME,S.NO_OF_RECORDS,S.PAYER_BANK_SHORT_NAME,S.PAYER_ACCOUNT_NO,S.PAYMENT_TYPE FROM Database.{SCHEMA_NAME}.{WPS_SIF_HEADER_INFO} AS S WHERE S.CBS_TXN_REF = Environment.txRefId;
+			SET Environment.records[] = SELECT * FROM Database.WPS_SIF_RECORD_INFO AS S WHERE S.SIF_FILE_NAME = Environment.header.SIF_CBO_FILE_NAME;
+			SET Environment.config[] = SELECT t.DC_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{DC_CONFIG_VALUES}AS t;
+--			SET Environment.txnPType[] = SELECT H.PAYMENT_TYPE FROM Database.{WPS_SIF_HEADER_INFO} AS H,Database.{WPS_SIF_RECORD_INFO} AS T WHERE H.WPS_SIF_HEADER_INFO_ID = T.WPS_SIF_RECORD_INFO_ID AND H.CBS_TXN_REF = Environment.txRefId;
+
+		ELSEIF Environment.dbQueryCount = '23' THEN
+			UPDATE Database.WPS_SIF_HEADER_INFO AS S SET CBO_STATUS = 'CBS_PAYER_DEBIT_SUCCESS',CBS_PAY_REF = Environment.cbsPayRef WHERE S.SIF_CBO_FILE_NAME = Environment.header.SIF_CBO_FILE_NAME;
+		ELSEIF Environment.dbQueryCount = '24' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET CBS_PAY_REF = Environment.cbsPayRef, TXN_REF_ID = Environment.var.TXN_REF_ID,STATUS = 'CBS_EMP_CREDIT_REQ_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage.message WHERE S.RECORD_ID = Environment.records[Environment.count].RECORD_ID;
+		ELSEIF Environment.dbQueryCount = '25' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET CBS_PAY_REF = Environment.cbsPayRef, TXN_REF_ID = Environment.var.TXN_REF_ID,STATUS = 'CBS_STLEACC_CREDIT_REQ_SENT',CBS_REQUEST_MESSAGE = Environment.CbsReqMessage.message WHERE S.RECORD_ID = Environment.records[Environment.count].RECORD_ID AND S.SIF_FILE_NAME = Environment.records[Environment.count].SIF_FILE_NAME ;
+		ELSEIF Environment.dbQueryCount = '26' THEN
+			UPDATE Database.WPS_SIF_HEADER_INFO AS S SET CBO_STATUS = 'CBS_PAYER_DEBIT_FAILED',CBS_FAULT_CODE = Environment.faultCode,CBS_FAULT_STRING = Environment.failRsn WHERE S.SIF_CBO_FILE_NAME = Environment.header.SIF_CBO_FILE_NAME;
+		ELSEIF Environment.dbQueryCount = '27' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_EMP_CREDIT_SUCCESS' WHERE S.TXN_REF_ID = Environment.txRefId;
+		ELSEIF Environment.dbQueryCount = '28' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_EMP_CREDIT_FAILURE',CBS_FAULT_CODE = Environment.faultCode,CBS_FAULT_STRING = Environment.failRsn WHERE S.TXN_REF_ID = Environment.txRefId;
+		ELSEIF Environment.dbQueryCount = '29' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_STLEACC_CREDIT_SUCCESS' WHERE S.TXN_REF_ID = Environment.txRefId;
+		ELSEIF Environment.dbQueryCount = '30' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_STLEACC_CREDIT_FAILURE',CBS_FAULT_CODE = Environment.faultCode,CBS_FAULT_STRING = Environment.failRsn WHERE S.TXN_REF_ID = Environment.txRefId;
+
+		ELSEIF Environment.dbQueryCount = '27A' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_PAYER_CREDIT_SUCCESS' WHERE S.TXN_REF_ID = Environment.txRefId;
+		ELSEIF Environment.dbQueryCount = '28A' THEN
+			UPDATE Database.WPS_SIF_RECORD_INFO AS S SET STATUS = 'CBS_PAYER_CREDIT_FAILURE',CBS_FAULT_CODE = Environment.faultCode,CBS_FAULT_STRING = Environment.failRsn WHERE S.TXN_REF_ID = Environment.txRefId;
+
+
+		END IF;
+		RETURN TRUE;
+	END;
+

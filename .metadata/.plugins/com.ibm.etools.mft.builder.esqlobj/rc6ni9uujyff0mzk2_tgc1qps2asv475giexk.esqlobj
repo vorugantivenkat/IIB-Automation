@@ -1,0 +1,14 @@
+CREATE PROCEDURE genSupData(IN outRef REFERENCE )
+BEGIN
+	--DECLARE outRef REFERENCE TO outRef;
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns1 NAME 'SplmtryData';
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns1 NAME 'Envlp';
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns3 NAME 'supplementaryData';
+	CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns3 NAME 'Items';
+	SET outRef.ns3:Item = '2';
+	SET outRef.ns3:Item.(XMLNSC.Attribute)key = 'batchSource';
+	
+	SET outRef.ns3:Item[2] = '1';
+	SET outRef.ns3:Item[2].(XMLNSC.Attribute)Key = 'session';
+
+END;

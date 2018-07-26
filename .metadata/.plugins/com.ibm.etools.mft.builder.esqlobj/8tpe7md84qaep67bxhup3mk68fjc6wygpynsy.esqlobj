@@ -1,0 +1,19 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '11' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_DBT_OC_SUCCESS',CBS_PAY_REF = Environment.Variables.payRef,
+			DESCRIPTION = 'Transaction was success at CBS' WHERE R.CBS_TRAN_REF = Environment.Variables.Tran_Ref;
+
+		ELSEIF Environment.dbQueryCount = '12' THEN
+
+
+			UPDATE Database.{SCHEMA_NAME}.{REVI_TXN_INFO} AS R SET STATUS = 'REVI_DBT_OC_FAILED',FAULT_STRING = COALESCE(Environment.Variables.faultString,''),
+			FAULT_CODE = COALESCE(Environment.Variables.faultCode,''),DESCRIPTION = 'Transaction was failed at CBS Systems' 
+			WHERE R.CBS_TRAN_REF = Environment.Variables.Tran_Ref;
+
+		END IF ;
+		RETURN TRUE;
+	END;
+

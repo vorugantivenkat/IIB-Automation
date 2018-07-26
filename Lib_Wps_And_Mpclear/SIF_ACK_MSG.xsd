@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:csv="http://www.ibm.com/dfdl/CommaSeparatedFormat" xmlns:dfdl="http://www.ogf.org/dfdl/dfdl-1.0/" xmlns:ibmDfdlExtn="http://www.ibm.com/dfdl/extensions" xmlns:ibmSchExtn="http://www.ibm.com/schema/extensions">
+
+
+    <xsd:import namespace="http://www.ibm.com/dfdl/CommaSeparatedFormat" schemaLocation="IBMdefined/CommaSeparatedFormat.xsd"/>
+    <xsd:annotation>
+		<xsd:appinfo source="http://www.ogf.org/dfdl/">
+			<dfdl:format documentFinalTerminatorCanBeMissing="yes" encoding="{$dfdl:encoding}" escapeSchemeRef="csv:CSVEscapeScheme" ref="csv:CommaSeparatedFormat"/>
+		</xsd:appinfo>
+	</xsd:annotation>
+
+	<xsd:element ibmSchExtn:docRoot="true" name="SIF_ACK_MSG">
+		<xsd:complexType>
+			<xsd:sequence dfdl:separator="">
+				<xsd:element dfdl:terminator="" name="HeaderTitle">
+					<xsd:complexType>
+						<xsd:sequence dfdl:terminator="%LF;">
+							<xsd:element ibmDfdlExtn:sampleValue="head_value1" name="Originalfilename" type="xsd:string"/>
+							<xsd:element ibmDfdlExtn:sampleValue="head_value2" name="Status" type="xsd:string"/>							
+							<xsd:element ibmDfdlExtn:sampleValue="head_value3" name="ReasonCode" type="xsd:string"/>							
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value4" name="ReasonName" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="head_value5" name="ErrorsList" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>			
+				<xsd:element dfdl:terminator="" name="RecordBody">
+					<xsd:complexType>
+						<xsd:sequence dfdl:terminator="%LF;"> 
+							<xsd:element ibmDfdlExtn:sampleValue="value1" minOccurs="0" name="Originalfilename" type="xsd:string"/>
+							<xsd:element ibmDfdlExtn:sampleValue="value2" minOccurs="0" name="Status" type="xsd:string"/>
+							<xsd:element ibmDfdlExtn:sampleValue="value3" minOccurs="0" name="ReasonCode" type="xsd:string"/>
+                            <xsd:element ibmDfdlExtn:sampleValue="value4" minOccurs="0" name="ReasonName" type="xsd:string"/>
+                                                                                <xsd:element minOccurs="0" name="ErrorsList" type="xsd:string"/>
+                        </xsd:sequence>
+					</xsd:complexType>
+				</xsd:element>				
+                                			<xsd:element maxOccurs="unbounded" minOccurs="0" name="duplicate">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="duplicateList" type="xsd:string"/>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+                                                                                    </xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+
+
+</xsd:schema>

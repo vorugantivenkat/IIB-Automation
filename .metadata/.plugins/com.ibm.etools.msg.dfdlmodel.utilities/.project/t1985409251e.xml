@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MessageBroker name="WPS_Connector_Project">
+  <XSDCollection
+    href="platform:/resource/WPS_Connector_Project/Wps_Status.xsd"
+    prefix="" targetNamespace="">
+    <element
+      href="platform:/resource/WPS_Connector_Project/Wps_Status.xsd#//WpsSifStatusRequest;XSDElementDeclaration" name="WpsSifStatusRequest"/>
+  </XSDCollection>
+</MessageBroker>

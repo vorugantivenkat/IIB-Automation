@@ -1,0 +1,68 @@
+BROKER SCHEMA com.oab.wps.statusreport
+
+
+
+CREATE COMPUTE MODULE StausReport_WPS_Compute1
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSNNAME EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE1 EXTERNAL CHARACTER;
+	DECLARE WPS_TABLE2 EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		/*initialising Log4j*/
+		DECLARE rc BOOLEAN;
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO','Techinal or Communication error occured for Batch WPS Status Report with channel:'|| Environment.chlId || ' And WPS SIF Reference:' || Environment.reference) INTO rc;
+		CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO',' ---Technical Error or Communication Error occured while processing WPS Status Request---------------') INTO rc;
+
+		SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+		SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+		DECLARE Exce CHARACTER;
+		SET Exce = com.oab.exceptionhandler.getExceptionDesc(InputRoot,OutputRoot,InputExceptionList);
+
+		SET Environment.Exception = SUBSTRING(CAST(Exce AS CHARACTER) BEFORE ':');
+
+		IF CONTAINS(Environment.Exception, 'DatabaseException') THEN
+			CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO',' ----Communication Error occured while processing WPS Status Request---------------') INTO rc;
+
+			DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'WpsSifStatusResponse';
+			SET achRef.ResponseCode = 'WPS99';
+			SET achRef.ResponseText = 'Communication Error';
+
+		ELSE
+			CALL writeToLogFile(flowName, 'WPS_STATUS', 'INFO',' ----Technical Error occured while processing WPS Status Request---------------') INTO rc;
+
+			DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+			CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'WpsSifStatusResponse';
+			SET achRef.ResponseCode = 'WPS001';
+			SET achRef.ResponseText = 'Technical Error';
+
+		END IF;
+
+
+	END;
+END MODULE;

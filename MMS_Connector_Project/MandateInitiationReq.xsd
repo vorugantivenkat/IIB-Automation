@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="Creditor">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="Bank"/>
+        <xsd:element ref="Account"/>
+        <xsd:element ref="Name"/>
+        <xsd:element ref="Id"/>
+        <xsd:element ref="IdType"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="Channel" type="xsd:string"/>
+  <xsd:element name="AutoPostPayment" type="xsd:string"/>
+  <xsd:element name="NumberOfPayments" type="xsd:string"/>
+  <xsd:element name="Type">
+    <xsd:complexType/>
+  </xsd:element>
+  <xsd:element name="Bank" type="xsd:string"/>
+  <xsd:element name="Account" type="xsd:string"/>
+  <xsd:element name="IdType" type="xsd:string"/>
+  <xsd:element name="FromDate" type="xsd:string"/>
+  <xsd:element name="RecurringFrequency" type="xsd:string"/>
+  <xsd:element name="MaximumAmount">
+    <xsd:complexType/>
+  </xsd:element>
+  <xsd:element name="PresentEach" type="xsd:string"/>
+  <xsd:element name="Name" type="xsd:string"/>
+  <xsd:element name="AchMandateInitiation">
+    <xsd:complexType>
+      <xsd:sequence>
+
+
+      	<xsd:element name="Channel" minOccurs="1">
+      		<xsd:simpleType>
+      			<xsd:restriction base="xsd:string">
+      				<xsd:pattern value="\w{0,10}"></xsd:pattern>
+      			</xsd:restriction>
+      		</xsd:simpleType>
+      	</xsd:element>
+      	<xsd:element name="Mandate" minOccurs="0">
+      		<xsd:complexType>
+      			<xsd:sequence>
+      				<xsd:element name="Reference" minOccurs="1">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,20}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="Frequency" minOccurs="1">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,4}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="RecurringFrequency"
+      					minOccurs="0">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\d{0,2}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="PresentEach" minOccurs="0">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,3}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="NumberOfPayments"
+      					minOccurs="0">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,3}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="FromDate" minOccurs="1">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern
+      								value="\w{0,4}-\w{0,2}-\w{0,2}">
+      							</xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="ToDate" minOccurs="1">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern
+      								value="\w{0,4}-\w{0,2}-\w{0,2}">
+      							</xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:choice minOccurs="1">
+      					<xsd:element name="CollectionAmount"
+      						minOccurs="0">
+      						<xsd:simpleType>
+      							<xsd:restriction base="xsd:string">
+      								<xsd:pattern value="\d{0,18}.\d{0,5}"></xsd:pattern>
+      							</xsd:restriction>
+      						</xsd:simpleType>
+      					</xsd:element>
+      					<xsd:element name="MaximumAmount"
+      						minOccurs="0">
+      						<xsd:simpleType>
+      							<xsd:restriction base="xsd:string">
+      								<xsd:pattern
+      									value="\d{0,18}.\d{0,5}">
+      								</xsd:pattern>
+      							</xsd:restriction>
+      						</xsd:simpleType>
+      					</xsd:element>
+      				</xsd:choice>
+      				<xsd:element name="Currency" minOccurs="0">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,3}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="Reason" minOccurs="1">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,4}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="Type" minOccurs="0">
+      					<xsd:simpleType>
+      						<xsd:restriction base="xsd:string">
+      							<xsd:pattern value="\w{0,11}"></xsd:pattern>
+      						</xsd:restriction>
+      					</xsd:simpleType>
+      				</xsd:element>
+      				<xsd:element name="AutoPostPayment"
+      					type="xsd:string" minOccurs="0">
+      				</xsd:element>
+      				<xsd:element name="Creditor" minOccurs="0">
+      					<xsd:complexType>
+      						<xsd:sequence>
+      							<xsd:element name="Bank"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Account"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,34}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Name"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,140}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Id"
+      								minOccurs="0">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="IdType"
+      								minOccurs="0">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      						</xsd:sequence>
+      					</xsd:complexType>
+      				</xsd:element>
+      				<xsd:element name="Debtor" minOccurs="1">
+      					<xsd:complexType>
+      						<xsd:sequence>
+      							<xsd:element name="Bank"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Account"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,34}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Name"
+      								minOccurs="1">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,140}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="Id"
+      								minOccurs="0">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      							<xsd:element name="IdType"
+      								minOccurs="0">
+      								<xsd:simpleType>
+      									<xsd:restriction
+      										base="xsd:string">
+      										<xsd:pattern
+      											value="\w{0,35}">
+      										</xsd:pattern>
+      									</xsd:restriction>
+      								</xsd:simpleType>
+      							</xsd:element>
+      						</xsd:sequence>
+      					</xsd:complexType>
+      				</xsd:element>
+      			</xsd:sequence>
+      		</xsd:complexType>
+      	</xsd:element>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="Mandate">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="Reference"/>
+        <xsd:element ref="Frequency"/>
+        <xsd:element ref="RecurringFrequency"/>
+        <xsd:element ref="PresentEach"/>
+        <xsd:element ref="NumberOfPayments"/>
+        <xsd:element ref="FromDate"/>
+        <xsd:element ref="ToDate"/>
+        <xsd:element ref="CollectionAmount"/>
+        <xsd:element ref="MaximumAmount"/>
+        <xsd:element ref="Currency"/>
+        <xsd:element ref="Reason"/>
+        <xsd:element ref="Type"/>
+        <xsd:element ref="AutoPostPayment"/>
+        <xsd:element ref="Creditor"/>
+        <xsd:element ref="Debtor"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="ToDate" type="xsd:string"/>
+  <xsd:element name="Debtor">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="Bank"/>
+        <xsd:element ref="Account"/>
+        <xsd:element ref="Name"/>
+        <xsd:element ref="Id"/>
+        <xsd:element ref="IdType"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="Id" type="xsd:string"/>
+  <xsd:element name="Reference" type="xsd:string"/>
+  <xsd:element name="Frequency" type="xsd:string"/>
+  <xsd:element name="CollectionAmount" type="xsd:string"/>
+  <xsd:element name="Currency" type="xsd:string"/>
+  <xsd:element name="Reason" type="xsd:string"/>
+</xsd:schema>

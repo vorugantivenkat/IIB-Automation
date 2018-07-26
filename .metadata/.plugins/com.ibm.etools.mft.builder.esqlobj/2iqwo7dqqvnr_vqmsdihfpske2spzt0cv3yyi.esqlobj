@@ -1,0 +1,33 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '1' THEN
+			INSERT INTO Database.{SCHEMA_NAME}.{DC_GRP_TABLE}(MSG_ID,
+			CREATION_DATETIME,
+			NO_OF_TXNS,
+			TOTAL_INTRBANK_SETTLE_AMT,
+			INTERBANK_SETTLE_DATE,
+			--SETTLE_INFO_METHOD,
+			SETTLE_INFO_CLR_SYS_PRTY,
+			PMT_TP_INF_LCL_INST_CODE,
+			PMT_TP_INF_CTGY_PURP_PRTRY,
+			INST_AGT_FIN_ID_BICFI,
+			INSTG_AGT_BRNCHID_ID,
+			INSTD_AGT_FIN_ID_BICFI,
+			INSTD_AGT_BRNCHID_ID,
+			SRC_MSG) VALUES (Environment.MsgID,CAST(Environment.crt_date_time AS TIMESTAMP),Environment.no_of_txns,Environment.ttl_settle_amt,CAST(Environment.settle_date AS DATE FORMAT 'yy-MMM-dd'),Environment.clr_sys_prtry,Environment.lcl_inst_code,Environment.ctgy_purp_prtry,
+			Environment.instg_agt_BICFI,Environment.instg_agt_branchid_id,Environment.instd_agt_BICFI,Environment.instd_agt_branchid_id,Environment.srcMsg);
+			COMMIT;
+--		ELSEIF Environment.dbQueryCount = '2' THEN
+--			SET Environment.VALUES[] = SELECT J.BANK_PREFIX FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		ELSEIF Environment.dbQueryCount = '3' THEN
+			SET Environment.ID[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{DC_GRP_TABLE} AS J WHERE J.MSG_ID = Environment.msgID;
+		COMMIT;
+		ELSEIF Environment.dbQueryCount = '8' THEN
+			SET Environment.status[] = SELECT S.STATUS FROM Database.{SCHEMA_NAME}.{DC_TXN_TABLE} AS S WHERE S.PMT_ID_TXN_ID = Environment.txnId;
+			COMMIT;
+
+		END IF;
+
+		RETURN TRUE;
+	END;
+

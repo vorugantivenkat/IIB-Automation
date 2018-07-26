@@ -1,0 +1,136 @@
+
+/*
+Author : Atul
+Subsequent Modifications by : Upender Kuncham
+Module Name : WPS
+Flow Name : WPS_ADD_ProcessingFrom_OAB_TO_CBO
+Purpose : Log Add operation info into DB
+Dependency Module : NO
+Dependency Database : YES,WPS_ADD_OPS_INFO
+Dependency XSD(Request Message) : NO
+Dependency XSD(Response Message) : NO
+Dependency CBS : NO
+Description :
+1. Receive csv input payload from SubRouter flow and validate it.
+2. if validation fail propagate it to exception handler if success log info into database and send to CBO.
+*/
+
+BROKER SCHEMA com.oab.wps
+
+
+CREATE COMPUTE MODULE ADD_OAB_TO_WPS_Compute
+	DECLARE SCH EXTERNAL CHARACTER;
+	DECLARE ADD_TAB EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage()RETURNS BOOLEAN BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			DECLARE wpsAddRef REFERENCE TO InputRoot.XMLNSC.WpsAddRegulatedEntities.Entity;
+			--ADD_BNK2_20140925094520.csv
+
+			SET Environment.fileName = 'ADD_' || 'OAB_' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddhhmmss') || '.csv';
+			SET OutputRoot.MQRFH2.usr.CamelFileName = Environment.fileName;
+			DECLARE rootRef,headerRef,rocordRef REFERENCE TO OutputRoot.DFDL;
+			CREATE LASTCHILD OF OutputRoot.DFDL AS rootRef NAME 'ADD_OAB_WPS';
+			--SET rootRef.fileName = fileName;
+
+			CREATE LASTCHILD OF rootRef AS headerRef NAME 'header';
+			SET headerRef.EmployerNumberType = 'Employer Number Type';
+			SET headerRef.Employer_CR_NO= 'Employer CR-NO';
+			SET headerRef.PayerNumberType= 'Payer Number Type';
+			SET headerRef.Payer_CR_NO= 'Payer CR-NO';
+			SET headerRef.EmployerName= 'Employer Name';
+			SET headerRef.PayerName= 'Payer Name';
+			SET headerRef.PayerAccountNumber_IBAN= 'Payer Account Number / IBAN';
+			SET headerRef.PayerBankShortName= 'Payer Bank short Name';
+			SET headerRef.PayerBranch= 'Payer Branch';
+			SET headerRef.EmployerType= 'Employer Type';
+			SET headerRef.EmployerBusinessType= 'Employer Business Type';
+			SET headerRef.EmployerBranchesCount= 'Employer Branches Count';
+			SET headerRef.EmployerGrade= 'Employer Grade';
+			SET headerRef.EmployerEmail= 'Employer Email';
+			SET headerRef.EmployerAddress= 'Employer Address';
+			SET headerRef.EmployerPhoneNumber= 'Employer Phone Number';
+			SET headerRef.EmployerPostalCode= 'Employer Postal Code';
+			SET headerRef.Employer_POBox= 'Employer P.O.Box';
+			SET headerRef.EmployerSignatory1= 'Employer Signatory 1';
+			SET headerRef.EmployerSignatory2= 'Employer Signatory 2';
+			SET headerRef.EmployerSignatory3= 'Employer Signatory 3';
+
+			WHILE LASTMOVE(wpsAddRef) DO
+				SET Environment.wpsAddRef = wpsAddRef;
+				CREATE LASTCHILD OF rootRef AS rocordRef NAME 'record';
+				SET Environment.dbQueryCount = '31';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET rocordRef.EmployerNumberType = wpsAddRef.PayerIdType;
+				SET rocordRef.Employer_CR_NO= wpsAddRef.EmployerId;
+				SET rocordRef.PayerNumberType= wpsAddRef.PayerIdType;
+				SET rocordRef.Payer_CR_NO= wpsAddRef.PayerId;
+				SET rocordRef.EmployerName= wpsAddRef.EmployerName;
+				SET rocordRef.PayerName= wpsAddRef.PayerName;
+				SET rocordRef.PayerAccountNumber_IBAN= wpsAddRef.PayerAccount;
+				SET rocordRef.PayerBankShortName= wpsAddRef.PayerBank;
+				SET rocordRef.PayerBranch= wpsAddRef.PayerBranch;
+				IF wpsAddRef.PayerIdType = 'GOV' THEN
+					SET rocordRef.EmployerType= 'PUBLIC';
+				ELSE
+					SET rocordRef.EmployerType= 'PRIVATE';
+				END IF;				
+				SET rocordRef.EmployerBusinessType= wpsAddRef.EmployerBusinessType;
+				SET rocordRef.EmployerBranchesCount= wpsAddRef.EmployerBranchesCount;
+				SET rocordRef.EmployerGrade= wpsAddRef.EmployerGrade;
+				SET rocordRef.EmployerEmail= wpsAddRef.EmployerEmail;
+				SET rocordRef.EmployerAddress= wpsAddRef.EmployerAddress;
+				SET rocordRef.EmployerPhoneNumber= wpsAddRef.EmployerPhone;
+				SET rocordRef.EmployerPostalCode= wpsAddRef.EmployerPostalCode;
+				SET rocordRef.Employer_POBox= wpsAddRef.EmployerPoBox;
+				SET rocordRef.EmployerSignatory1= wpsAddRef.EmployerSignatory1;
+				SET rocordRef.EmployerSignatory2= wpsAddRef.EmployerSignatory2;
+				SET rocordRef.EmployerSignatory3= wpsAddRef.EmployerSignatory3;
+				MOVE wpsAddRef NEXTSIBLING;
+			END WHILE;
+			SET OutputLocalEnvironment.Destination.File.Name = Environment.fileName;
+			SET Environment.dbQueryCount = '32';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			PROPAGATE TO TERMINAL 'out';
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				SET OutputRoot.DFDL= Environment.DFDL;
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'WPS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+END MODULE;

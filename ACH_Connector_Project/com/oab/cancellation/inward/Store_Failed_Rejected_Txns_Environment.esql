@@ -1,0 +1,91 @@
+BROKER SCHEMA com.oab.cancellation.inward
+PATH com.oab.exceptionhandler;
+
+/*
+Author : Naveen
+Subsequent Modifications by : Naveen
+Module Name : Cancellation_Inward
+Flow Name : Cancellation_Inward_Main
+Purpose : Storing input message in DB and forming CBS request message
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : Yes,CANI_ASSIGNMENT,CANI_UNDERLYING,CANI_TXN_INFO,CANI_SUPPLEMENTARY_DATA,CANI_UNDRLYG_CANC_RSN_INFO,CANI_TXN_CANC_RSN_INFO,DCI_TXN_INFO,DDI_TXN_INFO,DCI_GP_HEADER_INFO,DDI_GP_HEADER_INFO
+Dependency XSD(Request Message) : camt.056.001.04.xsd
+Dependency XSD(Response Message) : camt.029.001.05.xsd
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+
+1. Verifying the Input Message
+	a. Validate automatically based on the namespace, if failed it is sent back to CBO
+	b. Checking if the message is for direct credit/direct debit, otherwise reject and sent back to CBO
+	c. If Group Cancellation(GrpCxl) is false then verifying if the number of transactions are equal to number of occurrences of individaul transactions, otherwise back to CBO
+	d. If Group Cancellation is true then there should be atleast one transaction info in DB otherwise rejecting the message and sent back to CBO.
+2. If verification is successful, Store Header to Database. 
+3. Store Supplimentary data to Database. 
+4. Pick individual transaction from Input Message/from database and does the following. For each such transaction following is done. 
+  	a. Store transaction/OriginalGroup  info in Database (Four tables are updated)
+	b. Retrieve necessary information required for DEP from database using original transaction id. 
+ 	c. Construct CBS Request and send to CBS Queue. 
+	 
+	a. If Original transaction id not available or previous case was unsuccessful, store that particular transaction in Environment. 
+
+5. When all the transactions are done, pull the information that is stored in the environment and send back to CBO. 
+*/
+
+
+
+CREATE COMPUTE MODULE Store_Failed_Rejected_Txns_Environment
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE CANI_TXN_INFO EXTERNAL CHARACTER;
+	
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE excDesc CHARACTER getExceptionDesc(InputRoot,OutputRoot,InputExceptionList);
+			
+		DECLARE txnIn CHARACTER Environment.CANC.TXN.ns13:Document.ns13:FIToFIPmtCxlReq.ns13:Undrlyg.ns13:TxInf.ns13:OrgnlTxId;
+		DECLARE dbTxn CHARACTER Environment.CANC.DBTXNS.PMT_ID_TXN_ID;
+		DECLARE txn CHARACTER;
+		SET txn = COALESCE(txnIn,dbTxn);
+		
+		
+		DECLARE rejRsn CHARACTER;
+		
+		IF excDesc IS NOT NULL THEN
+			UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET EXEC_DESC = excDesc WHERE J.ORGNL_TX_ID = txn;
+			COMMIT;
+		ELSE
+			DECLARE i INTEGER;
+			SET i = Environment.failno;
+		
+			SET Environment.FAIL.TXNS[i].OrgnlTxId = txn;
+			SET Environment.FAIL.TXNS[i].TxCxlSts = 'RJCR';			
+			SET Environment.FAIL.TXNS[i].Prtry = Environment.TxnFail.Rsn;
+			SET Environment.FAIL.TXNS[i].AddtlInf = Environment.TxnFail.AddtlInf;
+			--SET rejRsn = Environment.TxnFail.Rsn;
+			--UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET EXEC_DESC = rejRsn WHERE J.ORGNL_TX_ID = txn;
+		   -- COMMIT;
+		    SET Environment.TxnFail = NULL;
+			
+			SET i = i + 1;
+		    SET Environment.failno = i;
+		END IF;
+		
+	END;
+END MODULE;
+
+

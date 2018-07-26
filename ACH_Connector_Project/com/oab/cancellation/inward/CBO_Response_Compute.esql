@@ -1,0 +1,268 @@
+
+
+BROKER SCHEMA com.oab.cancellation.inward
+DECLARE bchSeq SHARED INTEGER;
+DECLARE bchId SHARED CHARACTER;
+
+/*
+Author : Naveen
+Subsequent Modifications by : Naveen
+Module Name : Cancellation_Inward
+Flow Name : Cancellation_Response_To_CBO
+Purpose : Forming ISO message
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : Yes,CANI_ASSIGNMENT,CANI_UNDERLYING,CANI_TXN_INFO,CANI_SUPPLEMENTARY_DATA,CANI_UNDRLYG_CANC_RSN_INFO,CANI_TXN_CANC_RSN_INFO,DCI_TXN_INFO,DDI_TXN_INFO
+Dependency XSD(Request Message) : camt.056.001.04.xsd
+Dependency XSD(Response Message) : camt.029.001.05.xsd
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+1. Retrieving from database for all transactions whose CBS response is FIN and NON FIN.
+2. Forming ISO message and sending to CBO
+3. Also updating database with appropriate status code after sending to CBO
+*/
+
+
+CREATE COMPUTE MODULE CBO_Response_Compute
+	DECLARE flowname CHARACTER MessageFlowLabel;
+	DECLARE rc BOOLEAN;
+	DECLARE CANI_ASSIGNMENT EXTERNAL CHARACTER;
+	DECLARE CANI_UNDERLYING EXTERNAL CHARACTER;
+	DECLARE CANI_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE CANI_SUPPLEMENTARY_DATA EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE count INTEGER 3;
+	DECLARE StsID CHARACTER;
+	DECLARE seqCount INTEGER 1;
+	DECLARE alpha CHARACTER; -- to get the random alphabetic number from the java code.
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+	
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		CALL writeToLogFile(flowname, 'CANI_INFO', 'INFO', 'Respnse was generated and send to CBO' ) INTO rc;
+		DECLARE ACHConfig ROW;
+		SET ACHConfig.values[] = SELECT C.BANK_PREFIX,C.INSTAGT_FN_BICFI FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS C;
+		DECLARE headerRef ROW;
+		DECLARE headerRef1 ROW;
+		DECLARE headerRef2 ROW;
+		DECLARE SQL CHARACTER 'SELECT DISTINCT A.CANC_ASSIGNMENT_ID,A.ID,A.ASSGNR_AGT_FININSTID_BICFI,
+		A.ASSGNR_AGT_FINSID_CSMBID_MMBID,A.ASSGNE_AGT_FININSTNID_BICFI,A.ASSGNE_AGT_FINSID_CSMBID_MMBID
+		FROM
+		'||SCHEMA_NAME||'.'||CANI_ASSIGNMENT||' A,
+		'||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T,
+		'||SCHEMA_NAME||'.'||CANI_UNDERLYING||' U
+		WHERE A.CANC_ASSIGNMENT_ID = T.CANC_ASSIGNMENT_ID_TXN_FK AND
+		A.CANC_ASSIGNMENT_ID = U.CANC_ASSIGNMENT_ID_UNDRLYG_FK AND
+		(T.STATUS = ? OR T.STATUS = ? OR T.STATUS = ? OR T.STATUS = ?)';
+
+		SET headerRef.data[] = PASSTHRU(SQL TO Database.{DSN} VALUES('CANI_CBS_SUCCESS_CBO_SEND','CANI_CBS_FAILED_CBO_SEND','CANI_EXTSYS_SUCCESS_CBO_SEND','CANI_EXTSYS_REJECTED_CBO_SEND'));
+		DECLARE SQL1 CHARACTER 'SELECT  DISTINCT U.ORG_GP_INF_AND_CANC_ORG_MSG_ID,U.ORG_GP_INF_AND_CAN_ORG_MGNM_ID FROM '||SCHEMA_NAME||'.'||CANI_UNDERLYING||' U,'||SCHEMA_NAME||'.'||CANI_ASSIGNMENT||' A  WHERE A.CANC_ASSIGNMENT_ID = U.CANC_ASSIGNMENT_ID_UNDRLYG_FK';
+		set headerRef1.data[] = PASSTHRU(SQL1 TO Database.{DSN});
+		DECLARE SQL2 CHARACTER 'SELECT DISTINCT T.CANC_ID FROM '||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T,'||SCHEMA_NAME||'.'||CANI_ASSIGNMENT||' A where A.CANC_ASSIGNMENT_ID = T.CANC_ASSIGNMENT_ID_TXN_FK';
+		set headerRef2.data[] = PASSTHRU(SQL2 TO Database.{DSN});
+		DECLARE R INTEGER 1;
+		DECLARE S INTEGER CARDINALITY(headerRef.data[]);
+		DECLARE txnrefF ROW;
+		DECLARE txnref ROW;
+		WHILE R <= S DO
+			-----generating Batch Sequence(MsgID) which is in the format BankCode(4digit)+CurrentDate(yyMMdd)+Sequence(001)-----------------
+
+			DECLARE currDay,currDate,estSeq CHARACTER;
+			DECLARE previousDate DATE;
+			SET currDay = CAST(CURRENT_DATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+			--SET currDate = SUBSTRING(currDay FROM 5 FOR 2);
+			SET estSeq = ACHConfig.values.BANK_PREFIX ;
+
+		DECLARE DD ROW;
+			DECLARE GroupID INTEGER;
+			SET GroupID = SELECT MAX(L.CANC_ASSIGNMENT_ID_TXN_FK) FROM Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS L WHERE L.ASSIGN_ID IS NOT NULL ; --SUBSTRING(bchId FROM 9 FOR 2); -- if contains, extracting date from it
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT};
+
+			IF Environment.recCount =1 AND bchSeq > 0 THEN
+				SET bchSeq = bchSeq + 1;
+			ELSE
+				SET DD.V[] = SELECT K.MSG_RECV_TIMESTAMP FROM Database.{SCHEMA_NAME}.{CANI_ASSIGNMENT} AS K WHERE K.CANC_ASSIGNMENT_ID = GroupID;
+				SET previousDate = CAST(DD.V.MSG_RECV_TIMESTAMP as DATE FORMAT 'yyyy-MM-dd' );
+				IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+					IF seqCount = 1 THEN
+						IF previousDate = currDay THEN
+							SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+						ELSE
+							SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+							SET seqCount = seqCount + 1;
+						END IF;
+					ELSE
+						SET bchSeq = bchSeq + 1;
+					END IF;
+
+				ELSE -- if there is no previous BatchID value in shared variable
+					DECLARE DB ROW;
+					DECLARE ref ROW;
+					SET DB.V[] = SELECT J.ASSIGN_ID FROM Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J WHERE J.ASSIGN_ID LIKE estSeq||'%';
+					IF CARDINALITY(DB.V[]) > 0 AND previousDate = currDay THEN
+						DECLARE maxId INTEGER;
+						--SET maxId = SELECT MAX(GP.ASSIGN_ID) FROM Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS GP ;
+						SET maxId = SELECT MAX(T.CANC_ASSIGNMENT_ID_TXN_FK) FROM Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS T WHERE T.ASSIGN_ID IS NOT NULL ;
+						SET ref.NM[] = SELECT A.ASSIGN_ID FROM Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS A WHERE A.CANC_ASSIGNMENT_ID_TXN_FK = maxId;
+						-- SET maxId = SELECT MAX(GP.DCI_GP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{DC_GRP_TABLE} AS GP ;
+						-- SET DB.NM[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{DC_TXN_TABLE} AS A WHERE A.DCI_GP_HDR_ID_TXN_FK = maxId -1;
+
+						DECLARE maxIdSeq,maxIdChar CHARACTER;
+						SET maxIdChar = CAST(ref.NM.ASSIGN_ID AS CHARACTER);
+						SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+						DECLARE newSeq INTEGER;
+						SET newSeq = CAST(maxIdSeq as INTEGER);
+
+						SET bchSeq = newSeq + 1;
+					ELSE -- if not there then starting with 1
+						SET bchSeq = 1;
+						SET seqCount = seqCount + 1;
+					END IF;
+				END IF;
+			END IF;
+			DECLARE j CHARACTER;
+			SET j = CAST(bchSeq AS CHARACTER);
+			SET alpha = random(count);
+			SET bchId = ACHConfig.values.BANK_PREFIX || '1' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+			       		
+
+
+
+
+			DECLARE A,passno,C,failno,J,total INTEGER;
+			--DECLARE idRef REFERENCE TO headerRef.data[R].CANC_ASSIGNMENT_ID;
+			DECLARE idRef INTEGER CAST(headerRef.data[R].CANC_ASSIGNMENT_ID AS INTEGER);
+			SET Environment.ID = idRef;
+			---- forming header in iso 029
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns22 = ns22;
+
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Id = bchId;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgnr.ns4:Agt.ns4:FinInstnId.ns4:BICFI = ACHConfig.values.INSTAGT_FN_BICFI;
+			--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgnr.ns4:Agt.ns4:FinInstnId.ns4:ClrSysMmbId.ns4:MmbId = headerRef.data[R].ASSGNR_AGT_FINSID_CSMBID_MMBID;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgne.ns4:Agt.ns4:FinInstnId.ns4:BICFI = headerRef.data[R].ASSGNR_AGT_FININSTID_BICFI;
+			--SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:Assgne.ns4:Agt.ns4:FinInstnId.ns4:ClrSysMmbId.ns4:MmbId = headerRef.data[R].ASSGNE_AGT_FINSID_CSMBID_MMBID;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Assgnmt.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+			DECLARE Description CHARACTER;
+			DECLARE pacs CHARACTER;
+			SET pacs = headerRef.data[R].ORG_GP_INF_AND_CAN_ORG_MGNM_ID;
+			IF pacs LIKE 'pacs.003.%' THEN
+				DECLARE TXN CHARACTER 'SELECT T.ORGNL_TX_ID FROM '||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T WHERE T.CANC_ASSIGNMENT_ID_TXN_FK = ? AND T.STATUS = ?';
+				SET txnref.data[] = PASSTHRU(TXN TO Database.{DSN} VALUES(idRef,'CANI_CBS_SUCCESS_CBO_SEND'));
+				SET passno = CARDINALITY(txnref.data[]);
+
+				DECLARE TXNF CHARACTER 'SELECT T.ORGNL_TX_ID,T.DESCRIPTION FROM '||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T WHERE T.CANC_ASSIGNMENT_ID_TXN_FK = ? AND T.STATUS = ?';
+				SET txnrefF.data[] = PASSTHRU(TXNF TO Database.{DSN} VALUES(idRef,'CANI_CBS_FAILED_CBO_SEND'));
+				SET failno = CARDINALITY(txnrefF.data[]);
+				SET Description = 'CBS';
+			ELSE
+				DECLARE TXN CHARACTER 'SELECT T.ORGNL_TX_ID FROM '||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T WHERE T.CANC_ASSIGNMENT_ID_TXN_FK = ? AND T.STATUS = ?';
+				SET txnref.data[] = PASSTHRU(TXN TO Database.{DSN} VALUES(idRef,'CANI_CBS_SUCCESS_CBO_SEND'));
+				SET passno = CARDINALITY(txnref.data[]);
+
+				DECLARE TXNF CHARACTER 'SELECT T.ORGNL_TX_ID,T.DESCRIPTION FROM '||SCHEMA_NAME||'.'||CANI_TXN_INFO||' T WHERE T.CANC_ASSIGNMENT_ID_TXN_FK = ? AND T.STATUS = ?';
+				SET txnrefF.data[] = PASSTHRU(TXNF TO Database.{DSN} VALUES(idRef,'CANI_CBS_FAILED_CBO_SEND'));
+				SET failno = CARDINALITY(txnrefF.data[]);
+				SET Description = 'ES';
+			END IF;
+
+			SET total = passno + failno;
+			SET J = 1;
+			SET A = 1;
+			WHILE J <= total DO
+
+				IF passno = 0 THEN
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Sts.ns4:AssgnmtCxlConf = 'false';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgId = headerRef.data[R].ID;
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgNmId = 'camt.056.001.04';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'RJCR';
+
+				ELSEIF failno >= 1 THEN
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Sts.ns4:AssgnmtCxlConf = 'false';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgId = headerRef.data[R].ID;
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgNmId = 'camt.056.001.04';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'PACR';
+				ELSE
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:Sts.ns4:AssgnmtCxlConf = 'true';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgId = headerRef.data[R].ID;
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:OrgnlMsgNmId = 'camt.056.001.04';
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:OrgnlGrpInfAndSts.ns4:GrpCxlSts = 'ACCR';
+				END IF;
+				---- clubing success transactions
+				IF CARDINALITY(txnref.data[]) > 0 THEN
+					WHILE A <= passno DO
+						SET StsID = bchId || CAST(RIGHT('000'||CAST(J AS CHARACTER),3) AS CHARACTER);
+						DECLARE txnid CHARACTER txnref.data[A].ORGNL_TX_ID;
+						SET Environment.TxnId = txnid;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:CxlStsId = StsID ; --bchId || CAST(RIGHT('000'||CAST(J AS CHARACTER),3) AS CHARACTER); -- headerRef.data[A].ID;--
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:OrgnlTxId = txnref.data[A].ORGNL_TX_ID;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:TxCxlSts = 'ACCR';
+						UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET STATUS = 'CANI_SUCCESS',DESCRIPTION = 'Transaction was success at '|| Description ||' and sent to CBO',TXN_ID=StsID WHERE J.ORGNL_TX_ID = txnid AND J.CANC_ASSIGNMENT_ID_TXN_FK = idRef;
+						COMMIT;
+						SET A = A + 1;
+						SET J = J + 1;
+					END WHILE;
+				END IF;
+
+				SET J = A;
+				----clubing failed transactions
+				IF CARDINALITY(txnrefF.data[]) > 0 THEN
+					SET C = 1;
+					WHILE C <= failno DO
+						SET StsID = bchId || CAST(RIGHT('000'||CAST(J AS CHARACTER),3) AS CHARACTER);
+						DECLARE txnid CHARACTER txnrefF.data[C].ORGNL_TX_ID;
+						DECLARE failRsn CHARACTER txnrefF.data[C].DESCRIPTION;
+						SET Environment.TxnId = txnid;
+					--	SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:CxlStsId = bchId || CAST(RIGHT('000'||CAST(J AS CHARACTER),3) AS CHARACTER); -- headerRef.data[A].ID;--
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:CxlStsId = StsID;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:OrgnlTxId = txnrefF.data[C].ORGNL_TX_ID;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:TxCxlSts = 'RJCR';
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:CxlStsRsnInf.ns4:Rsn.ns4:Prtry = 'Transaction Failed at ' || Description;
+						SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:CxlDtls.ns4:TxInfAndSts[J].ns4:CxlStsRsnInf.ns4:AddtlInf = failRsn;
+						UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET STATUS = 'CANI_FAILED',DESCRIPTION = 'Transaction was failed at '|| Description ||' and sent to CBO',TXN_ID=StsID WHERE J.ORGNL_TX_ID = txnid AND J.CANC_ASSIGNMENT_ID_TXN_FK = idRef;
+						COMMIT;
+						SET C = C + 1;
+						SET J = J + 1;
+					END WHILE;
+				END IF;
+
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:PlcAndNm = 'ACHSupplementaryData';
+
+				SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp = '';
+				DECLARE SupRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp;
+				CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'supplementaryData';
+				CREATE LASTCHILD OF SupRef AS SupRef NAMESPACE ns22 NAME 'Items';
+				SET SupRef.ns22:Item[1] = '2';
+				SET SupRef.ns22:Item[1].(XMLNSC.Attribute)key = 'batchSource';
+				SET SupRef.ns22:Item[2] = '5';
+				SET SupRef.ns22:Item[2].(XMLNSC.Attribute)key = 'session';
+				-- SET OutputRoot.XMLNSC.ns4:Document.ns4:RsltnOfInvstgtn.ns4:SplmtryData.ns4:Envlp. = headerRef.data[R].ENV_BATCH_SRC;
+				UPDATE Database.{SCHEMA_NAME}.{CANI_TXN_INFO} AS J SET ASSIGN_ID = bchId WHERE J.CANC_ASSIGNMENT_ID_TXN_FK = idRef;
+				COMMIT;
+				PROPAGATE TO TERMINAL 'out';
+			END WHILE;
+			SET R = R + 1;
+		END WHILE;
+		
+	END;
+END MODULE;
+CREATE PROCEDURE random(IN Length INTEGER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";

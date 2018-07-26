@@ -1,0 +1,64 @@
+CREATE COMPUTE MODULE DDO_Trigger_Compute
+	DECLARE DDO_TABLE1 EXTERNAL CHARACTER ;
+	DECLARE DDO_TABLE2 EXTERNAL CHARACTER ;
+	DECLARE DDO_TABLE3 EXTERNAL CHARACTER ;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORK_STATION EXTERNAL CHARACTER;
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE inMessage CHARACTER;
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.MQMD = InputRoot.MQMD;
+		SET OutputRoot.MQRFH2.usr.dbQueryCount = InputRoot.XMLNSC.MSG.ExceptionDetails.dbQueryCount;
+		SET OutputRoot.MQRFH2.usr.Retry = 'True';
+		DECLARE actMsg CHARACTER REPLACE(InputRoot.XMLNSC.MSG.ExceptionDetails.OrgMsg,'<xmlns:ns>http://www.oab.com</xmlns:ns>','');
+		DECLARE srcMsg BLOB CAST(actMsg AS BLOB CCSID InputRoot.Properties.CodedCharSetId);
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN('XMLNSC') PARSE(srcMsg,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+		--SET OutputRoot.XMLNSC = Environment.MyData.XMLNSC;
+
+		DECLARE inRef REFERENCE TO OutputRoot.XMLNSC;
+
+		DECLARE dbCount CHARACTER OutputRoot.MQRFH2.usr.dbQueryCount;
+		IF dbCount = '1' OR dbCount = '2' OR dbCount = '3' OR dbCount = '4' OR dbCount = '5' OR dbCount = '6' OR dbCount = '7' OR dbCount = '8' OR dbCount = '9' OR dbCount = '10' OR dbCount = '11' THEN
+
+			DECLARE chlBatchRef CHARACTER;
+			DECLARE record ROW;
+			SET chlBatchRef = inRef.AchDirectDebit.Channel || inRef.AchDirectDebit.BatchReference;
+			SET record.id [] = SELECT J.DDO_GRP_HEADER_ID FROM Database.{SCH_NAME}.{DDO_TABLE1} AS J WHERE J.CHL_BATCH_REF = chlBatchRef;
+			DELETE FROM Database.{SCH_NAME}.{DDO_TABLE2} AS J WHERE J.DDO_GRP_HDR_ID_TXN_INFO_FK = record.id.DDO_GRP_HEADER_ID AND J.STATUS = 'DDO_RCVD';
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'OAB_DDO_Q_REQ';
+
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '13' OR dbCount = '14' OR dbCount = '15' OR dbCount = '16' OR dbCount = '17' OR dbCount = '18' OR dbCount = '19' OR dbCount = '20' OR dbCount = '21' OR dbCount = '22' OR dbCount = '23' OR dbCount = '18C' OR dbCount = '18D' OR dbCount = '18E' THEN
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DDO_Q_RES';
+
+			PROPAGATE TO TERMINAL 'out1';
+		ELSEIF dbCount = '24' OR dbCount = '25' OR dbCount = '26' OR dbCount = '27' OR dbCount = '28' OR dbCount = '28A' OR dbCount = '28B'  OR dbCount = '27A' THEN
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBS_DDO_Q_RES';
+
+			PROPAGATE TO TERMINAL 'out1';
+		END IF;
+
+
+	END;
+END MODULE;

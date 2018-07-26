@@ -1,0 +1,168 @@
+BROKER SCHEMA com.oab.ach.forceretry
+
+CREATE COMPUTE MODULE ACH_Force_Retry_Compute
+
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER;
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER;
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE cbsTranRef CHARACTER;
+	DECLARE record ROW;
+	DECLARE urn NAMESPACE 'www.oab.com/dco_request';
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		DECLARE optionalId CHARACTER InputRoot.XMLNSC.AchDirectCreditRecovery.(XMLNSC.Attribute)OptionIdentifier;
+		DECLARE chl CHARACTER InputRoot.XMLNSC.AchDirectCreditRecovery.Channel;
+		DECLARE refernce CHARACTER InputRoot.XMLNSC.AchDirectCreditRecovery.BatchReference;
+		IF optionalId = 'Force' THEN
+			DECLARE statusCheck ROW;
+			DECLARE totalAmount INTEGER;
+			SET statusCheck.btch [] = SELECT K.DCO_GRP_HEADER_ID,K.STATUS,K.PURPOSE_OF_TRANSFER,K.ORDERING_CUSTOMER_ACCOUNT, M.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DCO_TABLE3} AS M , Database.{SCH_NAME}.{DCO_TABLE1} AS K WHERE K.CHANNEL = chl AND K.BATCH_REFERENCE = refernce;
+			IF statusCheck.btch.STATUS = 'DCO_CBS_DBT_OC_FAILURE' THEN
+				SET totalAmount = SELECT SUM(A.AMOUNT) FROM Database.{SCH_NAME}.{DCO_TABLE2} AS A WHERE A.DCO_GRP_HDR_ID_TXN_INFO_FK = statusCheck.btch.DCO_GRP_HEADER_ID;
+				SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--				SET OutputRoot.MQMD.ReplyToQ = 'CBO.ACH.IN';
+				SET cbsTranRef = '150' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(statusCheck.btch.DCO_GRP_HEADER_ID AS CHARACTER);
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = cbsTranRef;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNEL_RESERVED;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = statusCheck.btch.PURPOSE_OF_TRANSFER||'_DCO_CBS_DBT_OC_FORCE_RETRY_SENT';
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = statusCheck.btch.ORDERING_CUSTOMER_ACCOUNT;
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '-' || CAST(totalAmount AS CHARACTER);
+				SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = 'OMR';
+				PROPAGATE TO TERMINAL 'out';
+				UPDATE Database.{SCH_NAME}.{DCO_TABLE1} AS R SET CBS_TRAN_REF = cbsTranRef,STATUS = 'DCO_CBS_DBT_OC_FORCE_RETRY_SENT' WHERE R.CHL_BTCH_REF = chl||refernce;
+
+			END IF;
+--				SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--				SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+--				DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+--				CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'ACHDirectCredit';
+--				SET achRef.faultCode = 'ACH99';
+--				SET achRef.faultString = 'batch transanctions with channel' || chl || 'And batchreference' || refernce || 'was not error state';
+----				PROPAGATE TO TERMINAL 'out1';
+--				
+--				SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--				SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+--				DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+--				CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchDirectCreditRecovery';
+--				SET achRef.ResponseCode = 'ACH001';
+--				SET achRef.ResponseString = 'We recived Batch reference '|| reference;
+--				PROPAGATE TO TERMINAL 'out1';
+			
+		ELSEIF optionalId = 'Retry' THEN
+			DECLARE txnRef REFERENCE TO InputRoot.XMLNSC.AchDirectCreditRecovery.Transaction[>];
+			IF txnRef IS NULL THEN
+				SET record.bh[] = SELECT A.DCO_GRP_HEADER_ID,B.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DCO_TABLE3} AS B, Database.{SCH_NAME}.{DCO_TABLE1} AS A WHERE A.CHANNEL = chl AND A.BATCH_REFERENCE = refernce;
+				SET record.tx[] = SELECT B.AMOUNT,B.END_TO_END_ID FROM Database.{SCH_NAME}.{DCO_TABLE2} AS B WHERE B.DCO_GRP_HDR_ID_TXN_INFO_FK = record.bh.DCO_GRP_HEADER_ID AND B.STATUS = 'DCO_CBS_CRDT_DCSETLACC_FAILED';
+				DECLARE amountRef REFERENCE TO record.tx[>];
+				WHILE LASTMOVE(amountRef) DO
+					SET cbsTranRef = '151' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(amountRef.END_TO_END_ID AS CHARACTER);
+					SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--					SET OutputRoot.MQMD.ReplyToQ = 'CBO.ACH.IN';
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = cbsTranRef;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNEL_RESERVED;
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = record.bh.DC_STLMNT_ACC; --'3101196774700';--
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '+' || CAST(amountRef.AMOUNT AS CHARACTER);
+					SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = 'OMR';
+					PROPAGATE TO TERMINAL 'out';
+					UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT',CBS_TRAN_REF = cbsTranRef WHERE R.END_TO_END_ID = amountRef.END_TO_END_ID;
+					MOVE amountRef NEXTSIBLING;
+				END WHILE;
+				
+
+			ELSE
+				DECLARE inref REFERENCE TO InputRoot.XMLNSC.AchDirectCreditRecovery.Transaction[>];
+				DECLARE txnStatus, btchStatus ROW;
+				SET btchStatus.st[] = SELECT A.STATUS,B.DC_STLMNT_ACC FROM Database.{SCH_NAME}.{DCO_TABLE3} AS B ,Database.{SCH_NAME}.{DCO_TABLE1} AS A WHERE A.CHANNEL = chl AND A.BATCH_REFERENCE = refernce;
+				WHILE LASTMOVE(inref) DO
+					DECLARE tranRef CHARACTER inref.TransactionReference;
+					SET txnStatus.st[] = SELECT B.STATUS,B.END_TO_END_ID,B.AMOUNT FROM Database.{SCH_NAME}.{DCO_TABLE2} AS B WHERE B.TXN_REF = tranRef;
+					IF txnStatus.st.STATUS = 'DCO_CBS_CRDT_DCSETLACC_FAILED' AND btchStatus.st.STATUS = 'DCO_CBS_DBT_OC_SUCCESS' OR btchStatus.st.STATUS = 'DCO_CBS_SETACC_CRDT_UNDER_PROCESS' OR btchStatus.st.STATUS = 'DCO_CBS_SETACC_CRDT_ALL_TXNS_PROCESSED' THEN
+						UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET USER_REF = inref.UserReference,
+						BENEF_BANK = inref.BeneficiaryBank,
+						BENEF_ACC = inref.BENEF_ACC,
+						BENEF_NAME = inref.BeneficiaryName,
+						BENEF_ID = inref.BeneficiaryId,
+						BENEF_ID_TYPE = inref.BeneficiaryIdType,
+						PURP_OF_TRANSFER = inref.PurposeOfTransfer,
+						DETAILS_OF_PMTS= inref.DetailsOfPayments
+						WHERE R.TXN_REF = tranRef;
+						SET cbsTranRef = '151' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS') || CAST(txnStatus.st.END_TO_END_ID AS CHARACTER);
+						SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--						SET OutputRoot.MQMD.ReplyToQ = 'CBO.ACH.IN';
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = cbsTranRef;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNEL_RESERVED;
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = btchStatus.st.DC_STLMNT_ACC; --'3101196774700';--
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = '+' || CAST(txnStatus.st.AMOUNT AS CHARACTER);
+						SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = 'OMR';
+						PROPAGATE TO TERMINAL 'out';
+						UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET STATUS = 'DCO_CBS_CRDT_DCSETLACC_SENT',CBS_TRAN_REF = cbsTranRef WHERE R.TXN_REF = tranRef;
+					
+
+--						SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--						SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+--						DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+--						CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchDirectCreditRecovery';
+--						SET achRef.faultCode = 'ACH99';
+--						SET achRef.faultString = 'Transcation With Tran Ref' || tranRef || 'was not in Error State';
+					END IF;
+					MOVE inref NEXTSIBLING;
+				END WHILE;
+--				
+--						SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+--						SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+--						DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+--						CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchDirectCreditRecovery';
+--						SET achRef.ResponseCode = 'ACH001';
+--						SET achRef.ResponseString = 'We recived Batch reference '|| reference ;
+--						PROPAGATE TO TERMINAL 'out1';
+			END IF;
+			-- End If Of Retry ----
+			
+		END IF;
+		
+		
+						SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+						SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+						DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+						CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchDirectCreditRecovery';
+						SET achRef.ResponseCode = 'ACH001';
+						SET achRef.ResponseString = 'We recived Batch reference '|| refernce ;
+						PROPAGATE TO TERMINAL 'out1';
+	END;
+END MODULE;

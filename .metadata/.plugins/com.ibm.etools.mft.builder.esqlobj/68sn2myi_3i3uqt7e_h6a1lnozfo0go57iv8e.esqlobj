@@ -1,0 +1,90 @@
+CREATE COMPUTE MODULE ACH_ProcessFinalStatuReports_ProcessFinalTxnStatus
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		CALL ProcessFinalTxnStatus();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	CREATE PROCEDURE ProcessFinalTxnStatus() BEGIN
+		/*Decoding the finalstatus request mesage to xml message and routing to respective application to update the
+		final status */
+
+		DECLARE INREF REFERENCE TO InputRoot.XMLNSC;
+		DECLARE OriginalTxt CHARACTER INREF.*:request.*:content;
+		DECLARE XMLString,OriginalMsgID,OriginalTxnId,Status,Reason,AddtlInfo CHARACTER;
+--
+--		SET XMLString = DecodeAndConverttoXML(OriginalTxt);
+--
+--		CREATE LASTCHILD OF Environment DOMAIN 'XMLNSC' PARSE(XMLString,InputProperties.Encoding,InputProperties.CodedCharSetId);
+--		DECLARE REF REFERENCE TO Environment.XMLNSC;
+		/*Preparing Statusreport ISO message to send to CBORESPONSE FLOW to update*/
+		/*Using temp refs*/
+		/*=========*/
+		DECLARE RECORDREF REFERENCE TO INREF.txReport.details[>];
+		/*========*/		
+		
+		WHILE LASTMOVE(RECORDREF) DO
+
+		SET OriginalTxnId	= RECORDREF.(XMLNSC.Attribute)id;
+		SET OriginalMsgID	= LEFT(OriginalTxnId,LENGTH(OriginalTxnId)-3);
+		SET Status 			= RECORDREF.(XMLNSC.Attribute)state;
+		SET Reason			= RECORDREF.(XMLNSC.Attribute)reason;
+		SET AddtlInfo		= RECORDREF.(XMLNSC.Attribute)additionalInfo;		
+		
+
+
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+		SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns3 = ns3;
+
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr = '';
+		DECLARE isogrpheader REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:GrpHdr;
+		SET isogrpheader.ns4:MsgId 		= 'OMAB0IACH0001';
+		SET isogrpheader.ns4:CreDtTm 	= CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+		SET isogrpheader.ns4:InstgAgt.ns4:FinInstnId.ns4:BICFI = 'ACHMOMRX';
+		SET isogrpheader.ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = 'OMABOMRU';
+
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts = '';
+		DECLARE IsoOrgInfSts REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:OrgnlGrpInfAndSts;
+
+		SET IsoOrgInfSts.ns4:OrgnlMsgId 	= OriginalMsgID;
+		SET IsoOrgInfSts.ns4:OrgnlMsgNmId 	= 'pacs.008.001.05';
+		SET IsoOrgInfSts.ns4:GrpSts 		= 'PART';
+
+		SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt.ns4:TxInfAndSts = '';
+		DECLARE isobody REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFIPmtStsRpt;
+		SET isobody.ns4:TxInfAndSts.ns4:StsId 		= 'OMAB0IACH0001001';
+		SET isobody.ns4:TxInfAndSts.ns4:OrgnlTxId	= OriginalTxnId;
+		IF Status = 'ACSC' THEN
+			SET isobody.ns4:TxInfAndSts.ns4:TxSts		= Status;
+		ELSE
+			SET isobody.ns4:TxInfAndSts.ns4:TxSts						= Status;
+			SET isobody.ns4:TxInfAndSts.ns4:StsRsnInf.ns4:Rsn.ns4:Prtry	= Reason;
+			SET isobody.ns4:TxInfAndSts.ns4:StsRsnInf.ns4:AddtlInf 		= COALESCE(AddtlInfo,'');
+		END IF;
+		
+		/*Propagate To DCO OR DCI based on msgID and Type*/
+		IF STARTSWITH(OriginalMsgID,'OMAB0I') THEN
+		   SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CBO_DCO_Q_RES';
+		ELSE
+			SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'DCO_PORTAL_REQ';
+		END IF;
+		
+		MOVE RECORDREF NEXTSIBLING;
+		END WHILE;
+	END;
+END MODULE;

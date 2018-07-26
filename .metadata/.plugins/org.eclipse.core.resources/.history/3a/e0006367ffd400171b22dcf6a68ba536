@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmDatabase.msgnode="ComIbmDatabase.msgnode" xmlns:ComIbmFlowOrder.msgnode="ComIbmFlowOrder.msgnode" xmlns:ComIbmMQInput.msgnode="ComIbmMQInput.msgnode" xmlns:ComIbmMQOutput.msgnode="ComIbmMQOutput.msgnode" xmlns:ComIbmTryCatch.msgnode="ComIbmTryCatch.msgnode" xmlns:ComIbmValidate.msgnode="ComIbmValidate.msgnode" xmlns:com_oab_exceptionhandler_CommonExceptionHandle.subflow="com/oab/exceptionhandler/CommonExceptionHandle.subflow"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="com/oab/cancellation/inward/Cancellation_Inward_Main.msgflow"
+    nsPrefix="com_oab_cancellation_inward_Cancellation_Inward_Main.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.LOG4J_CONF_FILE" name="LOG4J_CONF_FILE" defaultValueLiteral="Y:\OAB\IBM\logs4J\Log4jConfigurationFile.xml">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_ASSIGNMENT" name="CANI_ASSIGNMENT" defaultValueLiteral="CANI_ASSIGNMENT">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_UNDERLYING" name="CANI_UNDERLYING" defaultValueLiteral="CANI_UNDERLYING">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_TXN_INFO" name="CANI_TXN_INFO" defaultValueLiteral="CANI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_SUPPLEMENTARY_DATA" name="CANI_SUPPLEMENTARY_DATA" defaultValueLiteral="CANI_SUPPLEMENTARY_DATA">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_UNDRLYG_CANC_RSN_INFO" name="CANI_UNDRLYG_CANC_RSN_INFO" defaultValueLiteral="CANI_UNDRLYG_CANC_RSN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CANI_TXN_CANC_RSN_INFO" name="CANI_TXN_CANC_RSN_INFO" defaultValueLiteral="CANI_TXN_CANC_RSN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_TXN_INFO" name="DCI_TXN_INFO" defaultValueLiteral="DCI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDI_TXN_INFO" name="DDI_TXN_INFO" defaultValueLiteral="DDI_TXN_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL" name="CHANNEL" defaultValueLiteral="ACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.USER" name="USER" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.WORKSTATION" name="WORKSTATION" defaultValueLiteral="QBRK">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CHANNEL_RESERVED" name="CHANNEL_RESERVED">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CURRENCY" name="CURRENCY" defaultValueLiteral="OMR">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DCI_GP_HEADER_INFO" name="DCI_GP_HEADER_INFO" defaultValueLiteral="DCI_GP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DDI_GP_HEADER_INFO" name="DDI_GP_HEADER_INFO" defaultValueLiteral="DDI_GP_HEADER_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.EXC_TABLENAME" name="EXC_TABLENAME" defaultValueLiteral="EX_HANDLER_CONFIG_INFO">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_CODE" name="INTERFACE_CODE" defaultValueLiteral="12">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.INTERFACE_NAME" name="INTERFACE_NAME" defaultValueLiteral="CancellationInward">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.DSN" name="DSN" defaultValueLiteral="CBOACH">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.ACH_CONFIG_VALUES" name="ACH_CONFIG_VALUES" defaultValueLiteral="DC_CONFIG_VALUES">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.SCHEMA_NAME" name="SCHEMA_NAME" defaultValueLiteral="ACHADMIN">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="Cancellation_Inward_Main" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj16/Cancellation_Inward_Main.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/ACH_Connector_Project/icons/full/obj30/Cancellation_Inward_Main.gif"/>
+    <longDescription xmi:type="utility:ConstantString" string="This flow does the following&#xD;&#xA;&#xD;&#xA;Author : Naveen&#xD;&#xA;Subsequent Modifications by : Naveen&#xD;&#xA;Module Name : Cancellation_Inward&#xD;&#xA;Flow Name : Cancellation_Inward_Main&#xD;&#xA;Purpose : Storing input message in DB and forming CBS request message&#xD;&#xA;Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting&#xD;&#xA;Dependency Database : Yes,CANI_ASSIGNMENT,CANI_UNDERLYING,CANI_TXN_INFO,CANI_SUPPLEMENTARY_DATA,CANI_UNDRLYG_CANC_RSN_INFO,CANI_TXN_CANC_RSN_INFO,DCI_TXN_INFO,DDI_TXN_INFO,DCI_GP_HEADER_INFO,DDI_GP_HEADER_INFO&#xD;&#xA;Dependency XSD(Request Message) : camt.056.001.04.xsd&#xD;&#xA;Dependency XSD(Response Message) : camt.029.001.05.xsd&#xD;&#xA;Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting&#xD;&#xA;Description :&#xD;&#xA;&#xD;&#xA;1. Verifying the Input Message&#xD;&#xA;&#x9;a. Validate automatically based on the namespace, if failed it is sent back to CBO&#xD;&#xA;&#x9;b. Checking if the message is for direct credit/direct debit, otherwise reject and sent back to CBO&#xD;&#xA;&#x9;c. If Group Cancellation(GrpCxl) is false then verifying if the number of transactions are equal to number of occurrences of individaul transactions, otherwise back to CBO&#xD;&#xA;&#x9;d. If Group Cancellation is true then there should be atleast one transaction info in DB otherwise rejecting the message and sent back to CBO.&#xD;&#xA;2. If verification is successful, Store Header to Database. &#xD;&#xA;3. Store Supplimentary data to Database. &#xD;&#xA;4. Pick individual transaction from Input Message/from database and does the following. For each such transaction following is done. &#xD;&#xA;  &#x9;a. Store transaction/OriginalGroup  info in Database (Four tables are updated)&#xD;&#xA;&#x9;b. Retrieve necessary information required for DEP from database using original transaction id. &#xD;&#xA; &#x9;c. Construct CBS Request and send to CBS Queue. &#xD;&#xA;&#x9; &#xD;&#xA;&#x9;a. If Original transaction id not available or previous case was unsuccessful, store that particular transaction in Environment. &#xD;&#xA;&#xD;&#xA;5. When all the transactions are done, pull the information that is stored in the environment and send back to CBO. "/>
+    <composition>
+      <nodes xmi:type="ComIbmMQInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="30,150" queueName="CBO_CANI_Q_REQ" messageDomainProperty="XMLNSC">
+        <translation xmi:type="utility:ConstantString" string="CBO_CANI_Q_REQ"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="398,171" computeExpression="esql://routine/com.oab.cancellation.inward#Grp_Txn_toDB_FormingCBSReq.Main" computeMode="destinationAndMessage">
+        <translation xmi:type="utility:ConstantString" string="Store GrpInfo and TxnData and Forming CBSReq"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_3" location="672,195" queueName="ESB.REQUEST" request="true" replyToQ="CBO.ACH.IN">
+        <translation xmi:type="utility:ConstantString" string="ESB.REQUEST"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="236,162" computeExpression="esql://routine/com.oab.cancellation.inward#Header_SuppData_toDB_PickingTransaction.Main">
+        <translation xmi:type="utility:ConstantString" string="Store Header and Sup Data"/>
+      </nodes>
+      <nodes xmi:type="ComIbmMQOutput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_8" location="401,315" queueName="CBO_ACH_IO_Q_REQ_RES">
+        <translation xmi:type="utility:ConstantString" string="CBO_ACH_IO_Q_REQ_RES"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_10" location="608,63" dataSource="CBOACH" computeExpression="esql://routine/com.oab.cancellation.inward#Store_Failed_Rejected_Txns_Environment.Main">
+        <translation xmi:type="utility:ConstantString" string="Store_Failed_to_Env"/>
+      </nodes>
+      <nodes xmi:type="ComIbmTryCatch.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_5" location="390,163">
+        <translation xmi:type="utility:ConstantString" string="Try Catch1"/>
+      </nodes>
+      <nodes xmi:type="ComIbmFlowOrder.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_11" location="425,62">
+        <translation xmi:type="utility:ConstantString" string="Flow Order"/>
+      </nodes>
+      <nodes xmi:type="ComIbmValidate.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_6" location="149,153" domain="XMLNSC" checkDomain="true" checkSet="true" checkType="true" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="Validate_ReqMsg"/>
+      </nodes>
+      <nodes xmi:type="com_oab_exceptionhandler_CommonExceptionHandle.subflow:FCMComposite_1" xmi:id="FCMComposite_1_14" location="245,36">
+        <translation xmi:type="utility:ConstantString" string="CommonExceptionHandle"/>
+      </nodes>
+      <nodes xmi:type="ComIbmDatabase.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_4" location="282,258" rotation="RIGHT_TO_LEFT" dataSource="CBOACH" statement="esql://routine/com.oab.cancellation.inward#Cancellation_Inward_Main_Database.Main">
+        <translation xmi:type="utility:ConstantString" string="Database"/>
+      </nodes>
+      <nodes xmi:type="ComIbmDatabase.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_9" location="554,281" rotation="RIGHT_TO_LEFT" dataSource="CBOACH" statement="esql://routine/com.oab.cancellation.inward#Cancellation_Inward_Main_Database1.Main">
+        <translation xmi:type="utility:ConstantString" string="Database1"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_14" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.try" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_11" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_15" targetNode="FCMComposite_1_10" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.first" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_20" targetNode="FCMComposite_1_6" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_13" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_16" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_19" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_11" sourceTerminalName="OutTerminal.second" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_21" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_6" sourceTerminalName="OutTerminal.match" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_7" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_8" targetNode="FCMComposite_1_9" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out2" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_9" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_12" targetNode="FCMComposite_1_14" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out3" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.LOG4J_CONF_FILE">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.LOG4J_CONF_FILE" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_ASSIGNMENT">
+          <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_ASSIGNMENT" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_UNDERLYING">
+            <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_UNDERLYING" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_TXN_INFO">
+              <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_TXN_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_SUPPLEMENTARY_DATA">
+                <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_SUPPLEMENTARY_DATA" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_UNDRLYG_CANC_RSN_INFO">
+                  <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_UNDRLYG_CANC_RSN_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CANI_TXN_CANC_RSN_INFO">
+                    <propertyName xmi:type="utility:TranslatableString" key="Property.CANI_TXN_CANC_RSN_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_TXN_INFO">
+                      <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_TXN_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDI_TXN_INFO">
+                        <propertyName xmi:type="utility:TranslatableString" key="Property.DDI_TXN_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL">
+                          <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.USER">
+                            <propertyName xmi:type="utility:TranslatableString" key="Property.USER" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.WORKSTATION">
+                              <propertyName xmi:type="utility:TranslatableString" key="Property.WORKSTATION" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CHANNEL_RESERVED">
+                                <propertyName xmi:type="utility:TranslatableString" key="Property.CHANNEL_RESERVED" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CURRENCY">
+                                  <propertyName xmi:type="utility:TranslatableString" key="Property.CURRENCY" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                  <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DCI_GP_HEADER_INFO">
+                                    <propertyName xmi:type="utility:TranslatableString" key="Property.DCI_GP_HEADER_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                    <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DDI_GP_HEADER_INFO">
+                                      <propertyName xmi:type="utility:TranslatableString" key="Property.DDI_GP_HEADER_INFO" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.EXC_TABLENAME">
+                                        <propertyName xmi:type="utility:TranslatableString" key="Property.EXC_TABLENAME" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                        <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_CODE">
+                                          <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_CODE" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                          <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.INTERFACE_NAME">
+                                            <propertyName xmi:type="utility:TranslatableString" key="Property.INTERFACE_NAME" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                            <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.DSN">
+                                              <propertyName xmi:type="utility:TranslatableString" key="Property.DSN" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                              <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.ACH_CONFIG_VALUES">
+                                                <propertyName xmi:type="utility:TranslatableString" key="Property.ACH_CONFIG_VALUES" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                                <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.SCHEMA_NAME">
+                                                  <propertyName xmi:type="utility:TranslatableString" key="Property.SCHEMA_NAME" bundleName="com/oab/cancellation/inward/Cancellation_Inward_Main" pluginId="ACH_Connector_Project"/>
+                                                </propertyDescriptor>
+                                              </propertyDescriptor>
+                                            </propertyDescriptor>
+                                          </propertyDescriptor>
+                                        </propertyDescriptor>
+                                      </propertyDescriptor>
+                                    </propertyDescriptor>
+                                  </propertyDescriptor>
+                                </propertyDescriptor>
+                              </propertyDescriptor>
+                            </propertyDescriptor>
+                          </propertyDescriptor>
+                        </propertyDescriptor>
+                      </propertyDescriptor>
+                    </propertyDescriptor>
+                  </propertyDescriptor>
+                </propertyDescriptor>
+              </propertyDescriptor>
+            </propertyDescriptor>
+          </propertyDescriptor>
+        </propertyDescriptor>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

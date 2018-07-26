@@ -1,0 +1,11 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		IF Environment.dbQueryCount = '33' THEN
+			UPDATE Database.{SCH}.{ADD_TAB} AS A SET STATUS_CODE = 'ADD_SUCCESS',EXEC_DESC = Environment.ref.Error WHERE A.ADDOPS_FILE_NAME = Environment.ref.record.OriginalFileName || '.csv';
+		ELSEIF Environment.dbQueryCount = '34' THEN
+			UPDATE Database.{SCH}.{ADD_TAB} AS A SET STATUS_CODE = 'ADD_FAILED',EXEC_DESC = Environment.ref.ADD_WPS_ERROR_RESPONSE.Error,FAILED_RECORD_NO = Environment.ref.ADD_WPS_ERROR_RESPONSE.RecordNumber WHERE A.ADDOPS_FILE_NAME = Environment.ref.record.OriginalFileName || '.csv';
+			
+		END IF;
+		RETURN TRUE;
+	END;
+

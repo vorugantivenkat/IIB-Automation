@@ -1,0 +1,62 @@
+
+
+
+
+
+
+
+BROKER SCHEMA com.oab.return.outward
+
+
+CREATE DATABASE MODULE Return_Outward_Response_From_CBS_Database
+	DECLARE RETO_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE RETO_TXN_INFO EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+
+
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF Environment.dbQueryCount = '24' THEN
+			SET Environment.RETO.TXNS[] = SELECT J.END_TO_END_ID,J.USER_REF,J.ORIGIN_END_TO_END_ID,J.TXN_REASON,J.ORIG_MSG_ID,J.ORIG_TXN_ID,J.CREDITOR_BANK_BICFI,
+			J.TXN_AMOUNT,J.TXN_FOUND,N.GRP_REASON,N.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J,Database.{SCHEMA_NAME}.{RETO_HEADER_INFO}
+			AS N WHERE J.CBS_TRAN_REF = Environment.txnRef AND J.GRP_HDR_ID_TXN_INFO_FK = N.GRP_HEADER_ID;
+		ELSEIF Environment.dbQueryCount = '25' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS R SET STATUS = 'RETO_GRP_CBO_SENT',MSG_ID = Environment.bchId WHERE R.GRP_HEADER_ID = Environment.RETO.TXNS.GRP_HEADER_ID ;
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS R SET STATUS = 'RETO_TXN_CBO_SENT',DESCRIPTION = 'Transaction Sent to CBO', CBS_PAY_REF = Environment.payRef, MSG_ID = Environment.bchId,TXN_ID = Environment.txnId WHERE R.CBS_TRAN_REF = Environment.txnRef;
+
+		ELSEIF Environment.dbQueryCount = '26' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS R SET STATUS = 'RETO_CBS_DBT_OC_FAILED',FAULT_CODE = Environment.faultCode, FAULT_STRING = Environment.faultString,DESCRIPTION = Environment.cbsFail,CBS_PAY_REF = Environment.payRef WHERE R.CBS_TRAN_REF = Environment.txnRef;
+		ELSEIF Environment.dbQueryCount = '27' THEN
+			SET Environment.RETO.TXNS[] = SELECT J.END_TO_END_ID,J.USER_REF,J.ORIGIN_END_TO_END_ID,J.TXN_REASON,J.ORIG_MSG_ID,J.ORIG_TXN_ID,J.CREDITOR_BANK_BICFI,
+			J.TXN_AMOUNT,J.TXN_FOUND,N.GRP_REASON,N.GRP_HEADER_ID FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J,Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS N WHERE J.END_TO_END_ID = Environment.txnEndId AND J.GRP_HDR_ID_TXN_INFO_FK = N.GRP_HEADER_ID;
+		ELSEIF Environment.dbQueryCount = '28' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS R SET STATUS = 'RETO_GRP_CBO_SENT',
+			MSG_ID = Environment.bchId WHERE R.GRP_HEADER_ID = Environment.RETO.TXNS.GRP_HEADER_ID ;
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS R SET STATUS = 'RETO_CBO_SENT',
+			DESCRIPTION = 'Transaction Sent to CBO',MSG_ID = Environment.bchId,TXN_ID = Environment.txnId WHERE R.END_TO_END_ID = Environment.txnEndId;
+		ELSEIF Environment.dbQueryCount = '29' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS R SET STATUS = 'RETO_CBS_CRDT_OC_SUCCESS',DESCRIPTION = 'Amount was credited back to OrderingCustomer Account since it was failed at CBO',CBS_PAY_REF = Environment.payRef WHERE R.CBS_TRAN_REF = Environment.txnRef;
+		ELSEIF Environment.dbQueryCount = '30' THEN
+			UPDATE Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS R SET STATUS = 'RETO_CBS_CRDT_OC_FAILED',FAULT_CODE = Environment.faultCode, FAULT_STRING = Environment.faultString,DESCRIPTION = Environment.cbsFail, CBS_PAY_REF = Environment.payRef WHERE R.CBS_TRAN_REF = Environment.txnRef;
+		ELSEIF Environment.dbQueryCount = '31' THEN
+			SET Environment.ACHConfig.values[] = SELECT J.BANK_PREFIX,J.STML_MTHD,J.CLRSYS_PRPRTRY,J.INSTAGT_FN_BICFI FROM Database.{SCHEMA_NAME}.{ACH_CONFIG_VALUES} AS J;
+		ELSEIF Environment.dbQueryCount = '32' THEN
+			SET Environment.DB.V[] = SELECT J.MSG_ID FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J WHERE J.MSG_ID LIKE Environment.estSeq||'%';
+		ELSEIF Environment.dbQueryCount = '33' THEN
+			--SET Environment.maxId = SELECT MAX(GP.GRP_HEADER_ID) FROM Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS GP ;
+			SET Environment.ref.NM[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS A WHERE A.GRP_HDR_ID_TXN_INFO_FK = Environment.GroupID;
+		ELSEIF Environment.dbQueryCount = '34A' THEN
+			SET Environment.GroupID = SELECT MAX(J.GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCHEMA_NAME}.{RETO_TXN_INFO} AS J WHERE J.MSG_ID IS NOT NULL;
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCHEMA_NAME}.{RETO_HEADER_INFO};
+		ELSEIF Environment.dbQueryCount = '34B' THEN
+			SET Environment.DD.V[] = SELECT K.MSG_RCV_TIMESTAMP FROM Database.{SCHEMA_NAME}.{RETO_HEADER_INFO} AS K WHERE K.GRP_HEADER_ID = Environment.GroupID;
+
+
+
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;

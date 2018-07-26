@@ -1,0 +1,323 @@
+CREATE COMPUTE MODULE Direct_Credit_GenerateISO_Compute
+	/*declaring the UDP variables*/
+	DECLARE rc BOOLEAN;
+	DECLARE SCH_NAME EXTERNAL CHARACTER; --Schema name of the database
+	DECLARE DCO_TABLE1 EXTERNAL CHARACTER; --Table for inserting the group header deatils: DCO_GROUP_HEADER_INFO.
+	DECLARE DCO_TABLE2 EXTERNAL CHARACTER; --Table for inserting the transaction deatils: DCO_TXN_INFO.
+	DECLARE DCO_TABLE3 EXTERNAL CHARACTER; --Table for getting the configurable deatils:DC_CONFIG_VALUES.
+	DECLARE DSN_NAME EXTERNAL CHARACTER; -- Data source name for the connection :it can be varied from SIT, UAT,PROD
+	DECLARE PAYLOAD_TABLE EXTERNAL CHARACTER;
+	DECLARE SessionEndTime EXTERNAL TIME;
+	DECLARE num INTEGER;
+	DECLARE totalSettlementAmt FLOAT;
+	DECLARE outValues ROW;
+	DECLARE configValues ROW;
+	DECLARE ref ROW;
+	DECLARE flag BOOLEAN;
+	DECLARE J FLOAT 0.0;
+	DECLARE count INTEGER 3;
+	DECLARE alpha CHARACTER; -- to get the random alphabetic number from the java code.
+	DECLARE seqCount INTEGER 1;
+	DECLARE GroupID INTEGER;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		CALL CopyMessageHeaders();
+		CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO',' ------------DCO trigger_flow------------') INTO rc;
+		SET configValues.values[] = SELECT R.DC_CONFIG_ID,R.STML_MTHD,R.CLRSYS_PRPRTRY,R.INSTAGT_FN_BICFI,R.CHRG_BEARER,
+		R.DBTRAGT_FN_BICFI,R.DC_STLMNT_ACC,R.DD_STLMNT_ACC,R.BANK_PREFIX,R.MAX_NO_OF_TXNS,R.MAX_TOTAL_AMOUNT FROM Database.{SCH_NAME}.{DCO_TABLE3} AS R;
+
+		DECLARE i INTEGER;
+		SET Environment.i = 1;
+		-- Get all batches which need to be send
+		DECLARE SQL CHARACTER 'SELECT A.DCO_GRP_HEADER_ID  FROM DCO_GROUP_HEADER_INFO A, DCO_TXN_INFO B WHERE A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK AND (B.STATUS = ? OR B.STATUS = ?) GROUP BY A.DCO_GRP_HEADER_ID';
+		SET Environment.Batchs.Batch[] = PASSTHRU(SQL TO Database.{DSN_NAME} VALUES('DCO_SEND_TO_CBO_NPT','DCO_SEND_TO_CBO_PT'));
+
+		FOR eachBatch AS Environment.Batchs.Batch[] DO
+
+			CALL CopyEntireMessage(eachBatch.DCO_GRP_HEADER_ID);
+
+		END FOR;
+
+		RETURN FALSE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	/* =========================================================================================
+	Forming ISO pacs.008.001.05 message to be send to CBO
+	========================================================================================= */
+
+	CREATE PROCEDURE CopyEntireMessage(IN aBatchKey FLOAT) BEGIN
+
+		DECLARE process BOOLEAN;
+
+		CALL getTxns(aBatchKey) INTO process;
+
+		IF process = true THEN
+			-----generating Batch Sequence(MsgID) which is in the format BankCode(4digit)+CurrentDate(yyMMdd)+Sequence(001)-----------------
+
+			DECLARE currDay,currDate,estSeq,previousDate CHARACTER;
+			SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd');
+
+			DECLARE DD ROW;
+			DECLARE GroupID INTEGER;
+			SET GroupID = SELECT MAX(J.DCO_GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCH_NAME}.{DCO_TABLE2} AS J WHERE J.MSG_ID IS NOT NULL;
+			SET Environment.recCount = SELECT COUNT ( * ) FROM Database.{SCH_NAME}.{DCO_TABLE1};
+
+			IF Environment.recCount =1 AND bchSeq > 0 THEN
+				SET bchSeq = bchSeq + 1;
+			ELSE
+				SET DD.V[] = SELECT K.MSG_RCV_TIMESTAMP FROM Database.{SCH_NAME}.{DCO_TABLE1} AS K WHERE K.DCO_GRP_HEADER_ID = GroupID ;
+				SET previousDate = SUBSTRING(DD.V.MSG_RCV_TIMESTAMP FROM 1 FOR 8);
+
+				IF LENGTH(bchId) > 0 THEN -- checking if there is any previous BatchID value in shared variable
+					IF seqCount = 1 THEN
+						IF previousDate = currDate THEN
+							SET bchSeq = bchSeq + 1; --if previous BatchID date is same as current date, then incrementing by 1
+						ELSE
+							SET bchSeq = 1; -- if dates are not same then starting new sequence from 1
+							SET seqCount = seqCount + 1;
+						END IF;
+					ELSE
+						SET bchSeq = bchSeq + 1;
+					END IF;
+				ELSE -- if there is no previous BatchID value in shared variable
+					DECLARE DB ROW;
+					SET DB.V[] = SELECT J.MSG_ID FROM Database.{SCH_NAME}.{DCO_TABLE2} AS J WHERE J.MSG_ID LIKE configValues.values.BANK_PREFIX ||'%';
+					IF CARDINALITY(DB.V[]) > 0 AND previousDate = currDate THEN --- checking in DB, MsgId column whether there is a sequence with current date
+						DECLARE maxId INTEGER;
+						--SET maxId = SELECT MAX(GP.DCO_GRP_HDR_ID_TXN_INFO_FK) FROM Database.{SCH_NAME}.{DCO_TABLE2} AS GP WHERE GP.MSG_ID IS NOT NULL ;
+						SET ref.NM[] = SELECT A.MSG_ID FROM Database.{SCH_NAME}.{DCO_TABLE2} AS A WHERE A.DCO_GRP_HDR_ID_TXN_INFO_FK = GroupID ;
+						DECLARE maxIdSeq,maxIdChar CHARACTER;
+						SET maxIdChar = CAST(ref.NM.MSG_ID AS CHARACTER);
+						SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+						DECLARE newSeq INTEGER;
+						SET newSeq = CAST(maxIdSeq as INTEGER);
+						SET bchSeq = newSeq + 1; -- if there incrementing by 1
+					ELSE -- if not there then starting with 1
+						SET bchSeq = 1;
+						SET seqCount = seqCount + 1;
+					END IF;
+				END IF;
+			END IF;
+
+			DECLARE j CHARACTER;
+			SET j = CAST(bchSeq AS CHARACTER);
+			SET alpha = random(count);
+			SET bchId = configValues.values.BANK_PREFIX || '0' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+
+			SET Environment.MSGID[]= SELECT GP.MSG_ID FROM Database.{SCH_NAME}.{DCO_TABLE2} AS GP WHERE GP.MSG_ID = bchId;
+			WHILE Environment.MSGID.MSG_ID IS NOT NULL DO
+				SET alpha = random(count);
+				SET bchId = configValues.values.BANK_PREFIX || '0' || 'I' || alpha || CAST(RIGHT('0000'||j,4) AS CHARACTER);
+				SET Environment.MSGID[]= SELECT GP.MSG_ID FROM Database.{SCH_NAME}.{DCO_TABLE2} AS GP WHERE GP.MSG_ID = bchId;
+			END WHILE;				
+				
+				
+			--------------- checking if Beneficiary Bank's are same or not, if same generating Instructed Agent or else ------------------------
+			DECLARE II INTEGER 1;
+			DECLARE I INTEGER 1;
+			DECLARE instd CHARACTER;
+			SET Environment.instdBIC = outValues.values[II].BENEF_BANK;
+			WHILE II <= Environment.Number DO
+				SET instd = outValues.values[II].BENEF_BANK;
+				IF Environment.instdBIC = instd THEN
+
+				ELSE
+					SET Environment.instdBIC = NULL;
+				END IF;
+				SET II = II + 1 ;
+			END WHILE;
+			--------------------------- Forming CBO request message header ---------------------------------
+			SET OutputRoot.XMLNSC.ns18:Document.(XMLNSC.NamespaceDecl)xmlns = ns18;
+			SET OutputRoot.XMLNSC.ns18:Document.(XMLNSC.NamespaceDecl)xmlns:ns20 = ns20;
+			CREATE FIELD OutputRoot.XMLNSC.ns18:Document.ns18:FIToFICstmrCdtTrf;
+			DECLARE outRef REFERENCE TO OutputRoot.XMLNSC.ns18:Document.ns18:FIToFICstmrCdtTrf;
+			DECLARE dte CHARACTER CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+			SET outRef.ns18:GrpHdr.ns18:MsgId = bchId; -----Messageid need to chnaged accordingly Document V1.11.pdf
+			SET outRef.ns18:GrpHdr.ns18:CreDtTm = dte;
+			SET outRef.ns18:GrpHdr.ns18:NbOfTxs = Environment.Number;
+			SET outRef.ns18:GrpHdr.ns18:TtlIntrBkSttlmAmt =CAST(Environment.Amount AS DECIMAL);
+			SET outRef.ns18:GrpHdr.ns18:TtlIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy = outValues.values.CURRENCY; ----Check Once
+
+			IF CURRENT_TIME > SessionEndTime THEN
+				SET outRef.ns18:GrpHdr.ns18:IntrBkSttlmDt = CAST(CURRENT_DATE + CAST('1' AS INTERVAL DAY) AS CHARACTER FORMAT 'yyyy-MM-dd');
+			ELSE
+				SET outRef.ns18:GrpHdr.ns18:IntrBkSttlmDt = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+			END IF;
+			-- SET outRef.ns18:GrpHdr.ns18:IntrBkSttlmDt = '2017-11-19';
+			SET outRef.ns18:GrpHdr.ns18:SttlmInf.ns18:SttlmMtd = configValues.values.STML_MTHD;
+			SET outRef.ns18:GrpHdr.ns18:SttlmInf.ns18:ClrSys.ns18:Prtry = 'ACH'; -------In Document V1.11 its mentined that value always be ACH
+			SET outRef.ns18:GrpHdr.ns18:PmtTpInf.ns18:LclInstrm.ns18:Prtry = 'POS'; --------In Document V1.11 its mentined that value and tag was changed
+			SET outRef.ns18:GrpHdr.ns18:PmtTpInf.ns18:CtgyPurp.ns18:Prtry = CAST(outValues.values[I].PURPOSE_OF_TRANSFER AS INTEGER); --configValues.values.PMTINFO_CTPURP_PRTRY;
+			SET outRef.ns18:GrpHdr.ns18:InstgAgt.ns18:FinInstnId.ns18:BICFI = configValues.values.INSTAGT_FN_BICFI;
+			SET outRef.ns18:GrpHdr.ns18:InstgAgt.ns18:BrnchId.ns18:Id = 'HQ';
+
+			IF Environment.instdBIC IS NOT NULL THEN
+				SET outRef.ns18:GrpHdr.ns18:InstdAgt.ns18:FinInstnId.ns18:BICFI =Environment.instdBIC;
+			END IF;
+			--
+			--SET outRef.ns18:GrpHdr.ns18:InstdAgt.ns18:BrnchId.ns18:Id =
+			----------------------------- Forming Body of CBO request message -------------------------------
+
+			DECLARE insertStatusQuery CHARACTER;
+			DECLARE insertRes ROW;
+			WHILE I <= Environment.Number DO
+				DECLARE temp,txnID CHARACTER;
+				SET temp = CAST(I AS CHARACTER);
+				SET txnID = bchId || RIGHT('000'||temp,3);
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:PmtId.ns18:InstrId = outValues.values[I].USER_REF;
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:PmtId.ns18:EndToEndId = outValues.values[I].END_TO_END_ID;
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:PmtId.ns18:TxId = txnID;
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:IntrBkSttlmAmt = CAST(outValues.values[I].AMOUNT AS DECIMAL);
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:IntrBkSttlmAmt.(XMLNSC.Attribute)Ccy = outValues.values[I].CURRENCY;
+				-- IF outValues.values[I].PRIORITY1 = '01' THEN
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:SttlmPrty = 'NORM';
+				-- ELSEIF outValues.values[I].PRIORITY1 = '02' THEN
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:SttlmPrty = 'MEDIUM';
+				-- ELSEIF outValues.values[I].PRIORITY1 = '03' THEN
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:SttlmPrty = 'HIGH';
+				-- ELSE
+
+				IF outValues.values[I].PRIORITY1 IS NOT NULL THEN
+					SET outRef.ns18:CdtTrfTxInf[I].ns18:SttlmPrty = outValues.values[I].PRIORITY1;
+				ELSE
+					SET outRef.ns18:CdtTrfTxInf[I].ns18:SttlmPrty = 'NORM';
+				END IF;
+				-- END IF;
+
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:ChrgBr = configValues.values.CHRG_BEARER;
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:InstdAgt.ns18:FinInstnId.ns18:BICFI = outValues.values[I].BENEF_BANK;
+				--SET outRef.ns18:CdtTrfTxInf.ns18:InstdAgt.ns18:BrnchId.ns18:Id =
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:Dbtr.ns18:Nm = outValues.values[I].ORDERING_CUSTOMER_NAME;
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:Dbtr.ns18:Id.ns18:PrvtId.ns18:Othr.ns18:Id = outValues.values[I].ORDERING_CUSTOMER_ID;
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:Dbtr.ns18:Id.ns18:PrvtId.ns18:Othr.ns18:SchmeNm.ns18:Prtry = '0007';
+				-- IF configValues.values.DBTR_ACCNO_TYPE = 'IBAN' THEN --Suggested by Zafar for SIT
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:DbtrAcct.ns18:Id.ns18:IBAN = outValues.values[I].ORDERING_CUSTOMER_ACCOUNT; ------Make sure this fields are populated In Document V1.11 they make this fields mandatory
+				-- ELSE
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:DbtrAcct.ns18:Id.ns18:Othr.ns18:Id = outValues.values[I].ORDERING_CUSTOMER_ACCOUNT;
+				-- END IF;
+
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:DbtrAgt.ns18:FinInstnId.ns18:BICFI = configValues.values.DBTRAGT_FN_BICFI;
+				-- SET outRef.ns18:CdtTrfTxInf.ns18:DbtrAgt.ns18:BrnchId.ns18:Id =
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:CdtrAgt.ns18:FinInstnId.ns18:BICFI = outValues.values[I].BENEF_BANK;
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:Cdtr.ns18:Nm = outValues.values[I].BENEF_NAME;
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:Cdtr.ns18:Id.ns18:PrvtId.ns18:Othr.ns18:Id = outValues.values[I].BENEF_ID;
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:Cdtr.ns18:Id.ns18:PrvtId.ns18:Othr.ns18:SchmeNm.ns18:Prtry = '0007';
+				-- IF configValues.values.CDTR_ACCNO_TYPE = 'IBAN' THEN -----Suggested by Zafar for SIT
+				-- SET outRef.ns18:CdtTrfTxInf[I].ns18:CdtrAcct.ns18:Id.ns18:IBAN = outValues.values[I].BENEF_ACC;
+				-- ELSE
+
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:CdtrAcct.ns18:Id.ns18:Othr.ns18:Id = TRANSLATE(outValues.values[I].BENEF_ACC,'٠١٢٣٤٥٦٧٨٩','0123456789');
+				-- END IF;
+				--SET outRef.ns18:CdtTrfTxInf.ns18:CdtrAgt.ns18:BrnchId.ns18:Id =
+				SET outRef.ns18:CdtTrfTxInf[I].ns18:Purp.ns18:Prtry = CAST(outValues.values[I].PURP_OF_TRANSFER AS INTEGER); --'6';
+				--SET outRef.ns18:CdtTrfTxInf[I].ns18:RmtInf.ns18:Ustrd = outValues.values[I].DETAILS_OF_PMTS;
+				CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Updating status as DCO_SENT_TO_CBO_NPT/DCO_SENT_TO_CBO_PT in TXN table for END_TO_END_ID - ' || outValues.values[I].END_TO_END_ID) INTO rc;
+				UPDATE Database.{SCH_NAME}.{DCO_TABLE2} AS R SET MSG_ID = bchId,TXN_ID = txnID,STATUS = 'DCO_SENT_TO_CBO_NPT/DCO_SENT_TO_CBO_PT',DESCRIPTION = 'Transaction is sent to CBO in a Batch Message' WHERE R.END_TO_END_ID = outValues.values[I].END_TO_END_ID ;
+
+				CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Inserting status as DCO_SENT_TO_CBO_NPT/DCO_SENT_TO_CBO_PT in STATUS table for END_TO_END_ID - ' || outValues.values[I].END_TO_END_ID) INTO rc;
+
+				SET I = I + 1;
+			END WHILE;
+			CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns18 NAME 'SplmtryData';
+			CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns18 NAME 'Envlp';
+			CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns20 NAME 'supplementaryData';
+			CREATE LASTCHILD OF outRef AS outRef NAMESPACE ns20 NAME 'Items';
+			SET outRef.ns20:Item = '2';
+			SET outRef.ns20:Item.(XMLNSC.Attribute)key = 'batchSource';
+			PROPAGATE TO TERMINAL 'out';
+
+			SET Environment.i = Environment.i + 1;
+
+			CALL CopyEntireMessage(aBatchKey);
+
+		END IF;
+
+	END;
+	/* =======================================================================================================================
+	Retrieving all the transactions from DCO_TXN_INFO table whose status is 'DCO_SEND_TO_CBO_NPT' or 'DCO_SEND_TO_CBO_PT'
+	========================================================================================================================*/
+	CREATE PROCEDURE getTxns(IN aBatchKey FLOAT) RETURNS BOOLEAN BEGIN
+	DECLARE SQL CHARACTER 'SELECT  A.PRIORITY1,A.ORDERING_CUSTOMER_ACCOUNT,A.ORDERING_CUSTOMER_NAME,A.ORDERING_CUSTOMER_ID,A.ORDERING_CUSTOMER_ID_TYPE,A.PURPOSE_OF_TRANSFER,
+	A.CURRENCY,A.CHL_BTCH_REF,B.TXN_REF,B.END_TO_END_ID,B.USER_REF,B.AMOUNT,B.BENEF_BANK,B.BENEF_ACC ,B.BENEF_NAME ,B.BENEF_ID ,B.BENEF_ID_TYPE,B.PURP_OF_TRANSFER,
+	B.DETAILS_OF_PMTS FROM DCO_GROUP_HEADER_INFO A, DCO_TXN_INFO B WHERE A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK AND B.DCO_GRP_HDR_ID_TXN_INFO_FK = ? AND (B.STATUS = ? OR B.STATUS = ?)';
+	--SET Environment.batchID = 'OB' || CAST(Environment.i AS CHARACTER);
+	CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','Fetching transactions from TXN table where status is DCO_SEND_TO_CBO_NPT or DCO_SEND_TO_CBO_PT') INTO rc;
+	SET outValues.values[] = PASSTHRU(SQL TO Database.{DSN_NAME} VALUES(aBatchKey,'DCO_SEND_TO_CBO_NPT','DCO_SEND_TO_CBO_PT'));
+	SET num = CARDINALITY(outValues.values[]);
+	SET totalSettlementAmt = SELECT SUM(B.AMOUNT) FROM outValues.values[] AS B;
+	-- if the transactions are within the CBO specified max amount and max transactions count
+	IF num <> 0 AND num <= configValues.values.MAX_NO_OF_TXNS AND totalSettlementAmt <= configValues.values.MAX_TOTAL_AMOUNT THEN
+		SET Environment.Number = num;
+		SET Environment.Amount = totalSettlementAmt;
+		RETURN TRUE;
+		-- if total amount has exceeded the max amount, then summing individual transaction amount and then verifying
+	ELSEIF totalSettlementAmt >= CAST(configValues.values.MAX_TOTAL_AMOUNT AS INTEGER) OR num >= configValues.values.MAX_NO_OF_TXNS THEN
+		DECLARE I INTEGER 1;
+		DECLARE J DECIMAL 0.0;
+		DECLARE N DECIMAL 0.0;
+		WHILE I <= num DO
+			SET J = J + CAST(outValues.values[I].AMOUNT AS DECIMAL);
+			SET N = CAST(outValues.values[I].AMOUNT AS DECIMAL);
+			IF I <= configValues.values.MAX_NO_OF_TXNS THEN
+				IF J <= CAST(configValues.values.MAX_TOTAL_AMOUNT AS DECIMAL) THEN
+					SET I = I + 1;
+				ELSE
+					SET Environment.Amount = J - N;
+					SET Environment.Number = I - 1;
+					RETURN TRUE;
+				END IF;
+			ELSE
+				SET Environment.Amount = J - N;
+				SET Environment.Number = I - 1;
+				RETURN TRUE;
+			END IF;
+
+		END WHILE;
+		-- if total count of transactions has exceeded the max transactions count, then taking transactions count accordingly
+		/*ELSEIF num >= configValues.values.MAX_NO_OF_TXNS THEN
+		DECLARE I INTEGER 1;
+		-- SET I = num - configValues.values.MAX_NO_OF_TXNS;
+		-- SET Environment.Number = num - I;
+		--SET Environment.Amount = totalSettlementAmt;
+		DECLARE D DECIMAL 0.0;
+		DECLARE E DECIMAL 0.0;
+		WHILE I <= configValues.values.MAX_NO_OF_TXNS DO
+		SET Environment.Number = I;
+		SET D = D + CAST(outValues.values[I].AMOUNT AS DECIMAL);
+		IF D <= CAST(configValues.values.MAX_TOTAL_AMOUNT AS DECIMAL) THEN
+		else
+		SET D = D - CAST(outValues.values[I].AMOUNT AS DECIMAL);
+		SET Environment.Number = Environment.Number - 1;
+		RETURN TRUE;
+		END IF;
+		--SET num = Environment.Number;
+		SET E = D;
+		--SET D = Environment.Amount;
+		SET Environment.Amount = E;
+		SET I = I + 1;
+		END WHILE;
+		RETURN TRUE;
+		-- if no transactions are found in DC_TXN_INFO table with status as SENDTOCBO
+		*/
+		ELSE
+		CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO','No transaction found in TXN table with status as DCO_SEND_TO_CBO_NPT or DCO_SEND_TO_CBO_PT') INTO rc;
+		CALL writeToLogFile(MessageFlowLabel, 'dco_info', 'INFO',' ------------------------') INTO rc;
+		RETURN FALSE;
+	END IF;
+END;
+CREATE PROCEDURE random(IN Length INTEGER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.RandmNumber.randomAlphaNumeric";
+END MODULE;

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema targetNamespace="www.oab.com/mandate_termination" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:req="www.oab.com/mandate_termination">
+  <xsd:element name="source_sys_id">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,35}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="cxl_rsn_prtry">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="source_sys_timestamp" type="xsd:dateTime"/>
+  <xsd:element name="interface_code">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,32}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="source_sys_code" type="xsd:string"/>
+  <xsd:element name="msg_header">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:source_sys_code"/>
+        <xsd:element ref="req:source_sys_id"/>
+        <xsd:element ref="req:interface_code"/>
+        <xsd:element ref="req:source_sys_timestamp"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="orgnl_mndtid">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,20}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filename">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filesize">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,19}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filedata">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,64}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filetype">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="SplmtryData_attachment_filecomment">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{1,255}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+  <xsd:element name="msg_data">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:cxl_rsn_prtry" minOccurs="1" maxOccurs="1"/>
+        <xsd:element ref="req:cxl_addtlinf" minOccurs="0" maxOccurs="1"/>
+        <xsd:element ref="req:orgnl_mndtid" minOccurs="1" maxOccurs="1"/>
+		<xsd:element ref="req:SplmtryData_attachment_filename" minOccurs="1" maxOccurs="1"/>
+		<xsd:element ref="req:SplmtryData_attachment_filesize" minOccurs="1" maxOccurs="1"/>
+		<xsd:element ref="req:SplmtryData_attachment_filedata" minOccurs="1" maxOccurs="1"/>
+		<xsd:element ref="req:SplmtryData_attachment_filetype" minOccurs="0" maxOccurs="1"/>
+		<xsd:element ref="req:SplmtryData_attachment_filecomment" minOccurs="0" maxOccurs="1"/>
+      </xsd:sequence>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="msg">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element ref="req:msg_header"/>
+        <xsd:element ref="req:msg_data" minOccurs="1" maxOccurs="unbounded"/>
+      </xsd:sequence>
+      <xsd:attribute name="type" type="xsd:string"/>
+    </xsd:complexType>
+  </xsd:element>
+  <xsd:element name="cxl_addtlinf">
+  	<xsd:simpleType>
+  		<xsd:restriction base="xsd:string">
+  			<xsd:pattern value=".{0,105}"></xsd:pattern>
+  		</xsd:restriction>
+  	</xsd:simpleType>
+  </xsd:element>
+</xsd:schema>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="www.oab.com/ddo_response" xmlns:res="www.oab.com/ddo_response">
+  <xsd:element name="msg">
+    <xsd:complexType>
+      <xsd:sequence>
+        <xsd:element name="msg_header">
+          <xsd:complexType>
+            <xsd:sequence>
+              <xsd:element name="source_sys_code" type="xsd:string"/>
+              <xsd:element name="source_sys_id" type="xsd:string"/>
+              <xsd:element name="interface_code" type="xsd:string"/>
+              <xsd:element name="source_sys_timestamp" type="xsd:string"/>
+              <xsd:element name="total_txn" type="xsd:string"/>
+              <xsd:element name="grp_sts" type="xsd:string"/>
+              <xsd:element name="grp_stsinf">
+                <xsd:complexType/>
+              </xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+        <xsd:element maxOccurs="unbounded" name="msg_data">
+          <xsd:complexType>
+            <xsd:sequence>
+            	<xsd:element name="endtoend_id" type="xsd:string" />
+            	<xsd:element name="transaction_id" type="xsd:string"></xsd:element>
+            	<xsd:element name="status_code" type="xsd:string" />
+            	<xsd:element name="status_info" type="xsd:string" />
+            	<xsd:element name="add_info">
+            		<xsd:complexType />
+            	</xsd:element>
+            </xsd:sequence>
+          </xsd:complexType>
+        </xsd:element>
+      </xsd:sequence>
+      <xsd:attribute name="type" type="xsd:string"/>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

@@ -1,0 +1,160 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE bool BOOLEAN;
+		set bool = CopyEntireMessage();
+		RETURN bool;
+	END;
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = srcMsg;
+			
+			
+			SET Environment.msgID = InputRoot.XMLNSC.ns:Document.ns:MndtAmdmntReq.ns:GrpHdr.ns:MsgId;
+			CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', '###### START ######') INTO rc;
+			CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'Request received for Mandateamendment') INTO rc;
+			CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'MsgId :' || Environment.msgID) INTO rc;
+			
+			DECLARE MD ROW;
+			DECLARE i INTEGER 1;
+			DECLARE nooftxns INTEGER;
+			-- SET nooftxns = CARDINALITY(InputRoot.XMLNSC.ns:Document.ns:MndtAmdmntReq.ns:UndrlygAmdmntDtls[]);
+			DECLARE envref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:MndtAmdmntReq;
+			
+			CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'checking for the duplication') INTO rc;
+			
+			SET Environment.dbQueryCount = '14';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			-----Checking Duplicate Message based on Message id-------
+			IF Environment.MD.ID.MND_GP_HDR_ID IS NOT NULL THEN
+				
+				SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns = ns1;
+				SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns:ns2 = ns2;
+				
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr = '';
+				DECLARE chref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr;
+				SET chref.ns1:MsgId =Environment.msgID;
+				SET chref.ns1:CreDtTm = CURRENT_GMTTIMESTAMP;
+				-- WHILE (i<=nooftxns) DO
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls[i] = '';
+				DECLARE trref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls[i];
+				SET trref.ns1:OrgnlMsgInf.ns1:MsgId = envref.ns:UndrlygAmdmntDtls[i].ns:Mndt.ns.MndtId;
+				SET trref.ns1:OrgnlMsgInf.ns1:MsgNmId = 'MNDTAMEND';
+				SET trref.ns1:AccptncRslt.ns1:Accptd = 'False';
+				SET trref.ns1:AccptncRslt.ns1:RjctRsn.ns1:Prtry = '-1';
+				SET trref.ns1:AccptncRslt.ns1:AddtlRjctRsnInf = 'Duplicate Mandate Found';
+				SET trref.ns1:OrgnlMndt.ns1:OrgnlMndtId = envref.ns:UndrlygAmdmntDtls.ns:Mndt.ns:MndtReqId;
+				-- SET i = i+1;
+				-- END WHILE;
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'Duplication MessageID found and sent response to CBO') INTO rc;
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', '###### END ######') INTO rc;
+				PROPAGATE TO TERMINAL 'out';
+				RETURN FALSE;
+
+			ELSE
+			
+				SET Environment.Variables.msgid = BANKPREFIX ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYYMMddHHmmsssss');
+			
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'DB call for Updating the Details of mandate') INTO rc;
+				
+				DECLARE orgref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:MndtAmdmntReq.ns:UndrlygAmdmntDtls;
+				
+				
+				SET Environment.dbQueryCount = '15';
+				SET Environment.orgref = orgref;
+				SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				ELSE
+					SET OutputRoot.XMLNSC = NULL;
+				END IF;
+
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'Preparing Resposne to CBO ') INTO rc;
+				--Sending Response to CBO
+
+			--	PROPAGATE TO TERMINAL 'out';
+				--Sending response to CBO in case of sucess or failure
+
+			--	DECLARE msgid CHARACTER;
+			--	SET msgid = BANKPREFIX ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYYMMddHHmmsssss');
+
+
+				SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns = ns1;
+				SET OutputRoot.XMLNSC.ns1:Document.(XMLNSC.NamespaceDecl)xmlns:ns2 = ns2;
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr = '';
+				DECLARE chref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:GrpHdr;
+
+
+				SET chref.ns1:MsgId = Environment.Variables.msgid;
+				SET chref.ns1:CreDtTm = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+				-- SET Environment.MND_GP_HDR_MSGID = '';
+
+				SET OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls = '';
+				DECLARE cbref REFERENCE TO OutputRoot.XMLNSC.ns1:Document.ns1:MndtAccptncRpt.ns1:UndrlygAccptncDtls;
+
+				SET cbref.ns1:OrgnlMsgInf.ns1:MsgId = Environment.msgid;
+				SET cbref.ns1:OrgnlMsgInf.ns1:MsgNmId = 'MNDTAMEND';
+				SET cbref.ns1:AccptncRslt.ns1:Accptd = 'True';
+				SET cbref.ns1:OrgnlMndt.ns1:OrgnlMndtId = envref.ns:UndrlygAmdmntDtls.ns:Mndt.ns:MndtReqId;
+				PROPAGATE TO TERMINAL 'out';
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', 'Resposne sent to CBO ,MsgId :' || Environment.Variables.msgid) INTO rc;
+				CALL writeToLogFile(flowName, 'MMSIN_INFO', 'INFO', '####### END #######') INTO rc;
+				
+				RETURN FALSE;
+		END IF;
+	ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'MMS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+
+END;
+CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+IN LOGGER_NAME CHARACTER,
+IN LEVEL CHARACTER,
+IN TEXT CHARACTER )
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";

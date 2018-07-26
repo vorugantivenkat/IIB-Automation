@@ -1,0 +1,231 @@
+
+BROKER SCHEMA com.oab.DirectCreditInward
+PATH com.oab.reasoncodemapper;
+
+--PATH com.oab.DirectCreditOutward;
+CREATE COMPUTE MODULE Inward_DC_TXN_success
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE DC_GRP_TABLE EXTERNAL CHARACTER;
+	DECLARE ACH_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	DECLARE SCHEMA_NAME EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORK_STATION EXTERNAL CHARACTER;
+	DECLARE CHANNEL_RESERVED EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE DBStatus,DBDescription,pmt_txn_id,pmt_etoe_id,gpheaderpk,inter_sett_amt,cdtr_acct_iban,insertStatusQuery CHARACTER;
+	DECLARE DC_TXN_TABLE EXTERNAL CHARACTER;
+	DECLARE insertRes ROW;
+	DECLARE rc,CBS,bool BOOLEAN;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		RETURN bool;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE VerifyTxnID() RETURNS BOOLEAN BEGIN
+		--==========| If Txn is duplicate then it is inserted to DCI_TXN_INFO table with reason as duplicate |============--
+
+		DECLARE bodyInstdBICFI CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrCdtTrf.ns:CdtTrfTxInf.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE bodyDbtrBICFI CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrCdtTrf.ns:CdtTrfTxInf.ns:DbtrAgt.ns:FinInstnId.ns:BICFI;
+		DECLARE bodyCdtrBICFI CHARACTER InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrCdtTrf.ns:CdtTrfTxInf.ns:CdtrAgt.ns:FinInstnId.ns:BICFI;
+		--=========| Checking mandatory fields at txn level |==========--
+		-- IF lENGTH(bodyInstdBICFI) > 0 THEN
+		IF LENGTH(bodyDbtrBICFI) > 0 THEN
+			IF LENGTH(bodyCdtrBICFI) > 0 THEN
+				RETURN TRUE;
+			ELSE
+				CALL writeToLogFile(flowName, 'dci_info', 'INFO','Transaction details are missing. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.pmt_instr_id||' and status as DCI_TXN_INFO_MISSING') INTO rc;
+				SET Environment.Txn.FailRsn = 'Transaction Info not valid';
+				SET Environment.Txn.Add = 'Mandatory field "CdtrAgt/FinInstnId/BICFI" is missing';
+				SET Environment.DBStatus = 'DCI_TXN_INFO_MISSING';
+				SET Environment.DBDescription = 'Transaction info not valid';
+				CALL insertTxn() INTO bool;
+				-- Inserting into DC_DD_STATUS_INFO table
+				PROPAGATE TO TERMINAL 'out1';
+				RETURN FALSE;
+			END IF;
+		ELSE
+			CALL writeToLogFile(flowName, 'dci_info', 'INFO','Transaction details are missing. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.pmt_instr_id||' and status as DCI_TXN_INFO_MISSING') INTO rc;
+			SET Environment.Txn.FailRsn = 'Transaction Info not valid';
+			SET Environment.Txn.Add = 'Mandatory field "DbtrAgt/FinInstnId/BICFI" is missing';
+			SET Environment.DBStatus = 'DCI_TXN_INFO_MISSING';
+			SET Environment.DBDescription = 'Transaction info not valid';
+			CALL insertTxn() INTO bool;
+			PROPAGATE TO TERMINAL 'out1';
+			RETURN FALSE;
+		END IF;
+		/* ELSE
+		CALL writeToLogFile(flowName, 'dci_info', 'INFO','Transaction details are missing. Inserting transaction to TXN table with END_TO_END_ID - '||Environment.pmt_instr_id||' and status as DCI_TXN_INFO_MISSING') INTO rc;
+		SET Environment.Txn.FailRsn = 'Transaction Info not valid';
+		SET Environment.Txn.Add = 'Mandatory field "InstdAgt/FinInstnId/BICFI" is missing';
+		SET DBStatus = 'DCI_TXN_INFO_MISSING';
+		SET DBDescription = 'Transaction info not valid';
+		CALL insertTxn();
+		-- Inserting into DC_DD_STATUS_INFO table
+		CALL writeToLogFile(flowName, 'dci_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - '||Environment.pmt_instr_id||' and status as DCI_TXN_INFO_MISSING') INTO rc;
+		SET insertStatusQuery = 'INSERT INTO '||SCHEMA_NAME||'.'||STATUS_TABLE_NAME||'(
+		TXN_END_TO_END_ID,
+		STATUS,
+		STATUS_UPDATED_TIMESTAMP,
+		TXN_TYPE
+		) VALUES (?,?,?,?)';
+		SET insertRes.result[]= PASSTHRU(insertStatusQuery TO Database.{DSN} VALUES(Environment.pmt_instr_id,'DCI_TXN_INFO_MISSING',CURRENT_TIMESTAMP,'DCI'));
+		PROPAGATE TO TERMINAL 'out1';
+		RETURN FALSE;*/
+		-- END IF;
+
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC = InputRoot.XMLNSC;
+			DECLARE bodyref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrCdtTrf.ns:CdtTrfTxInf;
+			SET Environment.pmt_etoe_id = bodyref.ns:PmtId.ns:EndToEndId;
+			SET Environment.pmt_txn_id = bodyref.ns:PmtId.ns:TxId;
+			SET Environment.purposeOfTransfer = bodyref.ns:Purp.ns:Prtry;
+			--==========| Calling VerifyTxnID procedure to check duplicate Txn and mandatory fields |============--
+			SET CBS = VerifyTxnID();
+			--==========| If Txn is valid the further processing is done |==============--
+			IF CBS = TRUE THEN
+				CALL writeToLogFile(flowName, 'dci_info', 'INFO','Inserting transaction to TXN table with END_TO_END_ID - '||Environment.pmt_etoe_id||' and status as DCI_RCVD') INTO rc;
+				SET Environment.DBStatus = 'DCI_RCVD';
+				SET Environment.DBDescription = 'Transaction received from CBO';
+				CALL insertTxn() INTO bool;
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.CBS_TRAN_REF = '101' ||CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMddHHmmssSSS') || Environment.pmt_etoe_id;
+--				SET Environment.dbQueryCount = '5';
+--				
+--				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+--				IF Environment.Exception = 'True' THEN
+--					RETURN FALSE;
+--			
+--				END IF;
+				/*calling a function to get purpose desc based on input purposecode*/
+				SET Environment.purpCode_Desc = Environment.purp_prtry || MappPurposeCodeWithDescription(Environment.purp_prtry);
+				DECLARE space1 NAMESPACE 'http://www.oab.com';
+				SET OutputRoot.XMLNSC.space1:Request.(XMLNSC.NamespaceDecl)xmlns:urn = space1;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channel = CHANNEL;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:user = USER;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:workstation = WORK_STATION;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionDate = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionTime = CAST(CURRENT_TIME as CHARACTER FORMAT 'HH:mm:ss');
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference = Environment.CBS_TRAN_REF;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Header.space1:channelReserved = CHANNEL_RESERVED;
+				
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.purposeOfTransfer ||'_DCI_CBS_CRDT_OC_SENT';
+
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:account = Environment.value.DC_STLMNT_ACC;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:amount = Environment.inter_sett_amt;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:currency = CURRENCY;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:valueDate = CAST(Environment.settle_date AS CHARACTER FORMAT 'yyyy-MM-dd');
+
+				/*User Ref and Narratives for Debitor*/
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:userReference=Environment.MsgID;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[1]= Environment.dbtr_name;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[2]=Environment.dbtr_acct_bicfi;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[3]=Environment.purpCode_Desc;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:debit.space1:narratives.space1:narrative[4]=Environment.pmt_txn_id;
+
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:account = Environment.cdtr_acct_othr_id;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:amount = Environment.inter_sett_amt;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:currency = CURRENCY;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:valueDate = CAST(Environment.settle_date AS CHARACTER FORMAT 'yyyy-MM-dd');
+
+				/*User Ref and Narratives for Creditor*/
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:userReference=Environment.MsgID;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[1]= Environment.dbtr_name;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[2]=Environment.dbtr_acct_bicfi;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[3]=Environment.purpCode_Desc;
+				SET OutputRoot.XMLNSC.space1:Request.space1:Data.space1:DoubleEntryFinancialTransaction.space1:credit.space1:narratives.space1:narrative[4]=Environment.pmt_txn_id;
+				
+				
+				
+				DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+				SET Environment.CbsReqMessage = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);			
+				SET Environment.dbQueryCount = '5';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+
+				END IF;	
+
+				--SET Environment.CBS_TRAN_REF = OutputRoot.XMLNSC.space1:Request.space1:Header.transactionReference;
+				CALL writeToLogFile(flowName, 'dci_info', 'INFO','Updating status as DCI_CBS_CRDT_OC_SENT in TXN table for END_TO_END_ID - '||Environment.pmt_etoe_id) INTO rc;
+				
+				--===========| Updating STATUS in DCI_TXN_INFO table |=============--
+				-- Inserting into DC_DD_STATUS_INFO table
+				PROPAGATE TO TERMINAL 'out' DELETE NONE;
+
+			END IF;
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'DCI_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+
+	CREATE PROCEDURE insertTxn() RETURNS BOOLEAN BEGIN
+		DECLARE bodyref REFERENCE TO InputRoot.XMLNSC.ns:Document.ns:FIToFICstmrCdtTrf.ns:CdtTrfTxInf;
+		SET Environment.pmt_instr_id = bodyref.ns:PmtId.ns:InstrId;
+		SET Environment.inter_sett_amt = CAST(bodyref.ns:IntrBkSttlmAmt AS DECIMAL);
+		SET Environment.stlmnt_prty = bodyref.ns:SttlmPrty;
+		SET Environment.chrg_br = bodyref.ns:ChrgBr;
+		SET Environment.inst_agnt_BICFI = bodyref.ns:InstdAgt.ns:FinInstnId.ns:BICFI;
+		--DECLARE inst_agnt_MMBID CHARACTER bodyref.ns:InstdAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+		SET Environment.inst_agnt_brnch_id = bodyref.ns:InstdAgt.ns:BrnchId.ns:Id;
+		SET Environment.dbtr_name = bodyref.ns:Dbtr.ns:Nm;
+		SET Environment.dbtr_acct_iban = bodyref.ns:DbtrAcct.ns:Id.ns:IBAN;
+		SET Environment.dbtr_acct_othr_id = bodyref.ns:DbtrAcct.ns:Id.ns:Othr.ns:Id;
+		SET Environment.dbtr_acct_bicfi = bodyref.ns:DbtrAgt.ns:FinInstnId.ns:BICFI;
+		--DECLARE dbtr_acct_mmbid CHARACTER bodyref.ns:DbtrAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+		SET Environment.dbtr_acct_bnchid = bodyref.ns:DbtrAgt.ns:BrnchId.ns:Id;
+		SET Environment.cdtr_name = bodyref.ns:Cdtr.ns:Nm;
+		SET Environment.cdtr_acct_iban = bodyref.ns:CdtrAcct.ns:Id.ns:IBAN;
+		
+		SET Environment.cdtr_acct_othr_id = TRANSLATE(bodyref.ns:CdtrAcct.ns:Id.ns:Othr.ns:Id,' -/\_');
+		IF SUBSTRING(Environment.cdtr_acct_othr_id FROM 1 FOR 4) = '3143' THEN
+			SET Environment.cdtr_acct_othr_id = OVERLAY (Environment.cdtr_acct_othr_id PLACING '3118' FROM 1 FOR 4);
+		END IF;
+		
+		SET Environment.cdtr_acct_bicfi = bodyref.ns:CdtrAgt.ns:FinInstnId.ns:BICFI;
+		--DECLARE cdtr_acct_mmbid CHARACTER bodyref.ns:CdtrAgt.ns:FinInstnId.ns:ClrSysMmbId.ns:MmbId;
+		SET Environment.cdtr_acct_bnchid = bodyref.ns:CdtrAgt.ns:BrnchId.ns:Id;
+		SET Environment.purp_prtry = bodyref.ns:Purp.ns:Prtry;
+
+		SET Environment.dbQueryCount = '4';
+		
+		CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+							END IF;
+	END;
+END MODULE;

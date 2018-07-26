@@ -1,0 +1,44 @@
+BROKER SCHEMA com.oab.cbofinalstatus
+
+
+CREATE COMPUTE MODULE ACH_ProcessFinalStatuReports_ProcessFinalTxnStatus
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		CALL ProcessFinalTxnStatus();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+	CREATE PROCEDURE ProcessFinalTxnStatus() BEGIN
+		
+		/*Decoding the finalstatus request mesage to xml message and routing to respective application to update the 
+		final status */
+		
+		DECLARE INREF REFERENCE TO  InputRoot.XMLNSC;
+		DECLARE OriginalTxt CHARACTER INREF.*:request.*:content;
+		DECLARE XMLString CHARACTER;
+		
+		SET XMLString = DecodeAndConverttoXML(OriginalTxt);
+		
+		
+		
+	END;
+END MODULE;
+CREATE PROCEDURE DecodeAndConverttoXML ( IN EncodedContent CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.decode.GzipUtil.unzip";

@@ -1,0 +1,121 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		/* Initiating Log4J */
+
+		DECLARE rc BOOLEAN;
+		DECLARE flowName CHARACTER MessageFlowLabel;
+
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' --- Final_Response_From_CBO_For_ACH_All_Inwards Application Flow starts---------------') INTO rc;
+
+
+		DECLARE j INTEGER 1;
+		DECLARE bodyRef INTEGER;
+		DECLARE MSGTYPE CHARACTER;
+		DECLARE MSG_TYPE CHARACTER FIELDNAME(InputRoot.XMLNSC.*:*.[3]);		
+		/* Updating CBO_GRP_STATUS or CBO_TXN_STATUS or DESCRIPTION coloumns in DCI or DDI or RVI or RTI Transaction Table if original message id or original transaction id found
+		in DCI_TXN_INFO or DDI_TXN_INFO or REVI_TXN_INFO or PRI_TXN_INFO respectively*/
+
+		IF MSG_TYPE = 'FIToFIPmtStsRpt' THEN
+
+			CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' --- Received 002.001.06 message from CBO---------------') INTO rc;
+
+			SET Environment.msgID = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+			SET Environment.grpStatus = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:GrpSts;
+
+			CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' ---OriginalMsgID:'||Environment.msgID|| ' OriginalGrpStatus:'||Environment.grpStatus||' For 002.001.06 message---------------') INTO rc;
+
+
+			IF EXISTS(InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[]) THEN
+				SET bodyRef = CARDINALITY(InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[]);
+				WHILE j <= bodyRef DO
+					SET Environment.txn_id = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[j].*:OrgnlTxId;
+					SET Environment.status = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[j].*:TxSts;
+					-- SET Environment.endtoendid = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts.*:OrgnlEndToEndId;
+
+					CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' ---Received OriginalTxnID:'||Environment.txn_id|| ' Txntatus:'||Environment.status||' For 002.001.06 message---------------') INTO rc;
+
+
+					IF Environment.status = 'RJCT' THEN
+						SET Environment.reason =InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[j].*:StsRsnInf.*:AddtlInf;
+						SET Environment.reasoncode =InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:TxInfAndSts[j].*:StsRsnInf.*:Rsn.*:Prtry;
+						UPDATE Database.{SCH_NAME}.{DCI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason, CBO_TXN_STATUS = Environment.status|| ' '|| Environment.reasoncode,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.TXN_ID =Environment.txn_id AND B.MSG_ID=Environment.msgID ;
+						UPDATE Database.{SCH_NAME}.{DDI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,CBO_TXN_STATUS = Environment.status|| ' '|| Environment.reasoncode,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.TXN_ID =Environment.txn_id AND B.MSG_ID=Environment.msgID;
+						UPDATE Database.{SCH_NAME}.{REVI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,CBO_TXN_STATUS = Environment.status|| ' '|| Environment.reasoncode,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.TXN_ID = Environment.txn_id AND B.MSG_ID=Environment.msgID;
+						UPDATE Database.{SCH_NAME}.{RETI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,CBO_TXN_STATUS = Environment.status|| ' '|| Environment.reasoncode,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.TXN_ID = Environment.txn_id AND B.MSG_ID=Environment.msgID;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{DCI_TXN_TABLE} AS B SET CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE B.TXN_ID =Environment.txn_id AND B.MSG_ID=Environment.msgID;
+						UPDATE Database.{SCH_NAME}.{DDI_TXN_TABLE} AS B SET CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE B.TXN_ID =Environment.txn_id AND B.MSG_ID=Environment.msgID;
+						UPDATE Database.{SCH_NAME}.{REVI_TXN_TABLE} AS B SET CBO_TXN_STATUS =Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE B.TXN_ID = Environment.txn_id AND B.MSG_ID=Environment.msgID;
+						UPDATE Database.{SCH_NAME}.{RETI_TXN_TABLE} AS B SET CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE B.TXN_ID = Environment.txn_id AND B.MSG_ID=Environment.msgID;
+					END IF;
+
+					SET j = j + 1;
+				END WHILE;
+			ELSE
+
+				SET Environment.reason =InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:StsRsnInf.*:AddtlInf;
+				SET Environment.reasoncode =InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:OrgnlGrpInfAndSts.*:StsRsnInf.*:Rsn.*:Prtry;
+				UPDATE Database.{SCH_NAME}.{DCI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason, CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.MSG_ID=Environment.msgID;
+				UPDATE Database.{SCH_NAME}.{DDI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.MSG_ID=Environment.msgID;
+				UPDATE Database.{SCH_NAME}.{REVI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason, CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.MSG_ID=Environment.msgID;
+				UPDATE Database.{SCH_NAME}.{RETI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason, CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.MSG_ID=Environment.msgID;
+
+			END IF;			
+			/* Updating CBO_GRP_STATUS or CBO_TXN_STATUS or DESCRIPTION coloumns in Cancellation Inward Tranaction Table, if original msgid or original transaction id found in CANI_TXN_INFO table*/
+		ELSE
+
+			CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' --- Received 029.001.05 message from CBO---------------') INTO rc;
+
+			SET Environment.grpStatus = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:GrpCxlSts;
+			SET Environment.msgID = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:OrgnlMsgId;
+
+			CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' ---Received OriginalMsgID:'||Environment.msgID|| ' OriginalGrpStatus:'||Environment.grpStatus||' For 029.001.05 message---------------') INTO rc;
+
+			IF EXISTS(InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[]) THEN
+				SET bodyRef = CARDINALITY(InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[]);
+
+				WHILE j <= bodyRef DO
+					SET Environment.txn_id = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[j].*:OrgnlTxId;
+					SET Environment.status = InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[j].*:TxCxlSts;
+
+					CALL writeToLogFile(flowName, 'CBO_FINAL_RESPONSE_INWARD_ACH', 'INFO',' ---Received OriginalTxnID:'||Environment.txn_id|| ' Txntatus:'||Environment.status||' For 029.001.05 message---------------') INTO rc;
+
+					IF Environment.status = 'RJCR' THEN -- OR PDCR
+						SET Environment.reason =InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[j].*:CxlStsRsnInf.*:Rsn.*:Prtry;
+						SET Environment.reasoncode =InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:TxInfAndSts[j].*:CxlStsRsnInf.*:AddtlInf;
+						UPDATE Database.{SCH_NAME}.{CANI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,CBO_TXN_STATUS = Environment.status|| ' '|| Environment.reasoncode, DESCRIPTION = 'Transaction was Failed with Reason:' ||Environment.reason,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.TXN_ID = Environment.txn_id AND B.ASSIGN_ID=Environment.msgID;
+					ELSE
+						UPDATE Database.{SCH_NAME}.{CANI_TXN_TABLE} AS B SET CBO_TXN_STATUS = Environment.status,CBO_GRP_STATUS = Environment.grpStatus WHERE B.TXN_ID = Environment.txn_id AND B.ASSIGN_ID=Environment.msgID;
+					END IF;
+
+					SET j=j+1;
+				END WHILE;
+			ELSE
+				SET Environment.reason =InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:CxlStsRsnInf.*:Rsn.*:Prtry;
+				SET Environment.reasoncode =InputRoot.XMLNSC.*:Document.*:RsltnOfInvstgtn.*:CxlDtls.*:OrgnlGrpInfAndSts.*:CxlStsRsnInf.*:AddtlInf;
+				UPDATE Database.{SCH_NAME}.{CANI_TXN_TABLE} AS B SET DESCRIPTION= 'Transaction was Failed with Reason'||':' ||Environment.reason,DESCRIPTION = 'Transaction was Failed with Reason:' ||Environment.reason,CBO_GRP_STATUS = Environment.grpStatus|| ' '|| Environment.reasoncode WHERE B.ASSIGN_ID=Environment.msgID;
+			END IF;
+
+		END IF;
+	END;

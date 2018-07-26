@@ -1,0 +1,4 @@
+CREATE PROCEDURE DecodeAndConverttoXML ( IN EncodedContent CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.decode.sign.getDigitalsign";

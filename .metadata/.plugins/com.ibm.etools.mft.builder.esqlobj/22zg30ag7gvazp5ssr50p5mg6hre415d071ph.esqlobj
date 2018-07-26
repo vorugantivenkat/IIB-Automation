@@ -1,0 +1,4 @@
+CREATE PROCEDURE verifySign ( IN orginalTxt CHARACTER,IN signtTxt CHARACTER,IN keyStore CHARACTER,IN keystorePass CHARACTER)
+RETURNS BOOLEAN
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.digitalsign.sign.verifySign";

@@ -1,0 +1,26 @@
+<WpsAddEmployer>
+	<AddOperation>
+		<EmployerId>123456</EmployerId>
+		<EmployerIdType>CR</EmployerIdType>
+		<EmployerName>testEmployer</EmployerName>
+		<EmployerType>Private</EmployerType>
+		<EmployerBusinessType>IT Company</EmployerBusinessType>
+		<EmployerBranchesCount>1</EmployerBranchesCount>
+		<EmployerGrade>A</EmployerGrade>
+		<EmployerEmail>a@b.com</EmployerEmail>
+		<EmployerAddress>Muscat</EmployerAddress>
+		<EmployerPhoneNumber>0096899887766</EmployerPhoneNumber>
+		<EmployerPoBox>2010</EmployerPoBox>
+		<EmployerPostalCode>121</EmployerPostalCode>
+		<EmployerSignatory1>signo1</EmployerSignatory1>
+		<EmployerSignatory2>signo2</EmployerSignatory2>
+		<EmployerSignatory3>signo3</EmployerSignatory3>
+		<PayerId>123456</PayerId>
+		<PayerIdType>CR</PayerIdType>
+		<PayerName>testEployeer</PayerName>
+		<PayerBankShortName>OAB</PayerBankShortName>
+		<PayerAccount>3101060496500</PayerAccount>
+		<PayerBranch>3101</PayerBranch>
+	</AddOperation>
+</WpsAddEmployer>
+

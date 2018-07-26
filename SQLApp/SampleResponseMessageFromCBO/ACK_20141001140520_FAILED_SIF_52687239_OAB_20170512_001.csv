@@ -1,0 +1,4 @@
+Original file name, Status, Reason Code, Reason Name, Errors List
+SIF_SALR789_OAB_20170711_001,FAILED,111,Invalid File,
+Header,32,Payer CR is not numeric,,
+Record,SIF04102016AIB20161004001-000004,87,Net Salary is negative,

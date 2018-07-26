@@ -1,0 +1,4 @@
+CREATE PROCEDURE DigitalSignatureOABSign ( IN msgContent CHARACTER,IN keystoreFile CHARACTER,IN keystorePass CHARACTER)
+RETURNS CHARACTER
+LANGUAGE JAVA
+EXTERNAL NAME "com.oab.digitalsign.sign.getDigitalsign";

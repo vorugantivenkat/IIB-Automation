@@ -1,0 +1,440 @@
+BROKER SCHEMA com.oab.debit.outward
+DECLARE ns4 NAMESPACE 'urn:iso:std:iso:20022:tech:xsd:pacs.003.001.05';
+DECLARE ns5 NAMESPACE 'http://www.Progressoft.com/ACH';
+DECLARE msgSeq SHARED INTEGER;
+DECLARE msgId SHARED CHARACTER;
+
+
+CREATE COMPUTE MODULE DirectDebit_Outward_Main
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	DECLARE num INTEGER;
+	DECLARE flowName CHARACTER MessageFlowLabel;
+	DECLARE unqiueCode,retry CHARACTER;
+	DECLARE pattern CHARACTER '#,##0.00';
+	DECLARE headerRef REFERENCE TO InputRoot.XMLNSC.AchDirectDebit;
+	--DECLARE bodyRef REFERENCE TO InputRoot.XMLNSC.AchDirectDebit.Transaction[>];
+	DECLARE envHeadRef,envtxnRef REFERENCE TO Environment.XMLNSC;
+	DECLARE seqCount INTEGER 1;
+
+
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE returnVal BOOLEAN;
+		SET returnVal = HeaderInsertion();
+		
+		RETURN returnVal;
+	END;
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+	CREATE PROCEDURE HeaderInsertion ( ) RETURNS BOOLEAN
+	BEGIN
+
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			SET Environment.Properties = InputRoot.Properties;
+			SET Environment.XMLNSC.inData = InputRoot.XMLNSC;
+			SET Environment.variables.count = 3;
+
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			--DECLARE configValues ROW;
+			-- SET configValues.values[] = SELECT R.DC_CONFIG_ID,R.STML_MTHD,R.CLRSYS_PRPRTRY,R.INSTAGT_FN_BICFI,R.CHRG_BEARER,R.SCHMA_NM_PRPRTRY,R.DBTR_ACCNO_TYPE,
+			-- R.DBTRAGT_FN_BICFI,R.CDTR_ACCNO_TYPE,R.SUPP_PLCNAME,R.DC_STLMNT_ACC,R.DD_STLMNT_ACC,R.ACH_DC_IFSC,R.BANK_PREFIX,R.PMTINFO_CTPURP_PRTRY,R.MAX_NO_OF_TXNS,R.MAX_TOTAL_AMOUNT FROM Database.{SCH_NAME}.{DDO_TABLE3} AS R;
+			SET Environment.dbQueryCount = '1';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			IF InputRoot.XMLNSC.AchDirectDebit.(XMLNSC.Attribute)OptionalIdentifier IS NOT NULL THEN
+				SET Environment.identifier = InputRoot.XMLNSC.AchDirectDebit.(XMLNSC.Attribute)OptionalIdentifier;
+			ELSEIF InputRoot.XMLNSC.AchDirectDebit.OptionalIdentifier IS NOT NULL THEN
+				SET Environment.identifier = InputRoot.XMLNSC.AchDirectDebit.OptionalIdentifier;
+			ELSE
+				SET Environment.identifier = '';
+			END IF;
+
+			DECLARE chl CHARACTER headerRef.Channel;
+			DECLARE bchRef CHARACTER headerRef.BatchReference;
+			CALL writeToLogFile(flowName, 'ddo_info', 'INFO',' ------------------------') INTO rc;
+			CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Batch message received with ref - ' || bchRef) INTO rc;
+			SET Environment.chlBchRef = chl || bchRef;
+			/* ===============================================================================================================
+			Checking for Duplicate Batch Message, if unique message then inserting in db table(DDO_GROUP_HEADER_INFO)
+			=============================================================================================================== */
+			SET Environment.dbQueryCount = '2';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+			SET retry = InputRoot.MQRFH2.usr.Retry;
+
+			IF Environment.DB.ID.CHL_BATCH_REF IS NOT NULL AND retry = 'True' THEN
+				CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Retry Flow message') INTO rc;
+
+			ELSEIF Environment.DB.ID.CHL_BATCH_REF IS NOT NULL THEN
+				CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Duplicate Batch message') INTO rc;
+				--GETTING THE REPLY TO QUEUE MANAGER NAME AND REPLY TO QUEUE NAME FROM INCOMING MESSAGE.
+				SET OutputRoot.MQMD.ReplyToQMgr = InputRoot.MQMD.ReplyToQMgr;
+				SET OutputRoot.MQMD.ReplyToQ = InputRoot.MQMD.ReplyToQ;
+				--BUILDING THE FAILURE MESSAGE TO OAB
+				DECLARE exepDesc CHARACTER ;
+				DECLARE achRef REFERENCE TO OutputRoot.XMLNSC;
+				CREATE LASTCHILD OF OutputRoot.XMLNSC AS achRef NAME 'AchDirectDebit';
+				SET achRef.ResponseCode = 'ACH001' || 'FAILED';
+				SET achRef.ResponseString = 'Duplicate channal+batch refernce found,entire batch rejected';
+				PROPAGATE TO TERMINAL 'out1';
+				CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Batch message rejected') INTO rc;
+				CALL writeToLogFile(flowName, 'ddo_info', 'INFO',' ------------------------') INTO rc;
+				RETURN FALSE;
+			ELSE
+				---------------header insertion ---------------------
+				CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Inserting batch message to header table with DDO_RCVD status') INTO rc;
+				SET Environment.groupcurrdate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd''T''HH:mm:ss.sss+hh:mm');
+				SET Environment.dbQueryCount = '3';
+				SET Environment.XMLNSC.Header = headerRef;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET Environment.XMLNSC.Header = NULL;
+			END IF;
+			SET Environment.Msg.TXNS[] = InputRoot.XMLNSC.AchDirectDebit.Transaction[];
+			DECLARE bool BOOLEAN;
+			CALL CopyEntireMessage() INTO bool;
+			RETURN bool;
+
+		ELSE
+			IF Environment.variables.count >= 1 THEN
+				--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+				--SET OutputRoot.XMLNSC = InputRoot.XMLNSC;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				-- SET Environment.variables.count = Environment.variables.count - 1;
+				-- SET OutputExceptionList = InputExceptionList;
+				-- PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'DDO_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+				RETURN FALSE;
+			END IF;
+		END IF;
+
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+		/* =======================================================================================
+		Inserting Transaction info in DB table(DDO_TXN_INFO)
+		======================================================================================= */
+		DECLARE envRef REFERENCE TO Environment.Msg[>];
+		DECLARE noOfTxn INTEGER CARDINALITY(Environment.Msg.TXNS[]); --no need
+		DECLARE CH,GH,DD ROW;
+		DECLARE g INTEGER 1;
+		DECLARE currDate,previousDate CHARACTER;
+		--DECLARE amt FLOAT 0.0;
+		DECLARE i INTEGER;
+		DECLARE fk CHARACTER;
+		DECLARE codeLength INTEGER 3;
+		DECLARE bool BOOLEAN;
+
+		CALL getTxns() INTO bool;
+		IF bool = TRUE THEN
+			SET currDate = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYYMMdd');
+
+			SET Environment.dbQueryCount = '4';
+
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+
+			IF Environment.recCount =1 AND msgSeq > 0 THEN
+				SET msgSeq = msgSeq + 1;
+			ELSE
+				SET Environment.dbQueryCount = '5';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+				SET previousDate = SUBSTRING(Environment.DD.V.MSG_RCV_TIMESTAMP FROM 1 FOR 8);
+				IF LENGTH(msgId) > 0 THEN
+					IF seqCount = 1 THEN
+						IF previousDate = currDate THEN
+							SET msgSeq = msgSeq + 1;
+						ELSE
+							SET msgSeq = 1;
+							SET seqCount = seqCount + 1;
+						END IF;
+					ELSE
+						SET msgSeq = msgSeq + 1;
+					END IF;
+				ELSE -- if there is no previous BatchID value in shared variable
+					DECLARE DB ROW;
+					SET Environment.dbQueryCount = '6';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+					IF CARDINALITY(Environment.DB.V[]) > 0 AND previousDate = currDate THEN
+						SET Environment.dbQueryCount = '7';
+						CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+						IF Environment.Exception = 'True' THEN
+							RETURN FALSE;
+						END IF;
+
+						DECLARE maxIdSeq,maxIdChar CHARACTER;
+						SET maxIdChar = CAST(Environment.REF.NM.MSG_ID AS CHARACTER);
+						SET maxIdSeq = SUBSTRING(maxIdChar FROM 11 FOR 3);
+						DECLARE newSeq INTEGER;
+						SET newSeq = CAST(maxIdSeq as INTEGER);
+						SET msgSeq = newSeq + 1;
+					ELSE -- if not there then starting with 1
+						SET msgSeq = 1;
+						SET seqCount = seqCount + 1;
+					END IF;
+				END IF;
+			END IF;
+			DECLARE l CHARACTER;
+
+
+			SET l = CAST(msgSeq AS CHARACTER);
+			SET unqiueCode = random(codeLength);
+			SET msgId = Environment.config.data.BANK_PREFIX || '1' || 'I' || unqiueCode || CAST(RIGHT('0000'||l,4) AS CHARACTER);
+			SET Environment.msgId = msgId;
+
+			SET Environment.dbQueryCount = '8';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+
+
+			SET Environment.fk = Environment.GH.ID.DDO_GRP_HEADER_ID;
+			DECLARE count INTEGER 1;
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns = ns4;
+			SET OutputRoot.XMLNSC.ns4:Document.(XMLNSC.NamespaceDecl)xmlns:ns5 = ns5;
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:GrpHdr = '';
+			DECLARE isoGrpHeader REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:GrpHdr;
+			SET isoGrpHeader.ns4:MsgId = Environment.msgId;
+			SET isoGrpHeader.ns4:CreDtTm = CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'YYYY-MM-dd''T''HH:mm:ss.sss+hh:mm');
+			SET isoGrpHeader.ns4:NbOfTxs = Environment.Number;
+			SET isoGrpHeader.ns4:TtlIntrBkSttlmAmt = CAST(Environment.Amount AS CHARACTER FORMAT pattern);
+			SET isoGrpHeader.ns4:TtlIntrBkSttlmAmt.(XMLNSC.Attribute)Ccy = headerRef.Currency;
+			SET isoGrpHeader.ns4:IntrBkSttlmDt = CAST(CURRENT_DATE as CHARACTER FORMAT 'yyyy-MM-dd');
+			SET isoGrpHeader.ns4:SttlmInf.ns4:SttlmMtd = Environment.config.data.STML_MTHD;
+			SET isoGrpHeader.ns4:SttlmInf.ns4:ClrSys.ns4:Prtry = 'ACH';
+			SET isoGrpHeader.ns4:PmtTpInf.ns4:LclInstrm.ns4:Prtry = 'POS'; -- need to be clarified by cbo
+			SET isoGrpHeader.ns4:PmtTpInf.ns4:CtgyPurp.ns4:Prtry = '2';
+			SET isoGrpHeader.ns4:InstgAgt.ns4:FinInstnId.ns4:BICFI = 'OMABOMRU';
+			--SET isoGrpHeader.ns4:InstgAgt.ns4:BrnchId.ns4:Id = '';
+			SET isoGrpHeader.ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = envRef.TXNS[1].PayerBank;
+			--SET isoGrpHeader.ns4:InstdAgt.ns4:BrnchId.ns4:Id = '';
+			DECLARE P INTEGER 1;
+			WHILE P <= Environment.Number DO
+
+				DECLARE dataRef REFERENCE TO envRef.TXNS[1];
+				-- CREATE LASTCHILD OF Environment.XMLNSC AS envtxnRef NAME 'dataRef';
+				-- SET envtxnRef = dataRef;
+				SET Environment.XMLNSC.dataRef = dataRef;
+				DECLARE intrBkSttlmAmt DECIMAL 0.00;
+				SET intrBkSttlmAmt = CAST(envRef.TXNS[1].Amount AS DECIMAL);
+				SET Environment.endToEndId = Environment.chlBchRef || dataRef.TransactionReference;
+				SET Environment.dbQueryCount = '11';
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+				IF Environment.Exception = 'True' THEN
+					RETURN FALSE;
+				END IF;
+
+
+				IF Environment.DB.STATUS = 'DDO_SENT_TO_CBO' THEN
+
+
+				ELSE
+					--DECLARE mandateFirstCollectionDate DATE CAST(Environment.XMLNSC.dataRef.MandateFirstCollectionDate AS DATE FORMAT 'YYYY-MM-DD' );
+					SET Environment.mandatePaymentCollectionDate = CAST(Environment.XMLNSC.dataRef.MandatepaymentCollectionDate AS DATE FORMAT 'yyyy-MM-dd' );
+					SET Environment.txn_id = Environment.msgId || CAST(RIGHT('000'||CAST(P AS CHARACTER),3) AS CHARACTER);
+					CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Inserting transaction to TXN table with END_TO_END_ID - ' || Environment.endToEndId || ' and status as DDO_RCVD') INTO rc;
+
+
+					SET Environment.dbQueryCount = '9';
+
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					SET Environment.XMLNSC.dataRef = NULL;
+					IF Environment.Exception = 'True' THEN
+						RETURN FALSE;
+					END IF;
+
+
+
+
+
+
+					CALL writeToLogFile(flowName, 'ddo_info', 'INFO','Inserting transaction to STATUS table with END_TO_END_ID - ' || Environment.endToEndId || ' and status as DDO_RCVD') INTO rc;
+					SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:DrctDbtTxInf = '';
+					--CREATE LASTCHILD OF OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt NAME 'ns4:DrctDbtTxInf';
+					DECLARE isoBody REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:PmtId.ns4:InstrId = envRef.TXNS[1].UserReference;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:PmtId.ns4:EndToEndId = Environment.endToEndId;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:PmtId.ns4:TxId = Environment.txn_id;
+
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:IntrBkSttlmAmt = CAST(intrBkSttlmAmt AS CHARACTER FORMAT pattern);
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:IntrBkSttlmAmt.(XMLNSC.Attribute)Ccy ='OMR';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SttlmPrty = 'NORM';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:ChrgBr = Environment.config.data.CHRG_BEARER;
+
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:DrctDbtTx.ns4:MndtRltdInf.ns4:MndtId = envRef.TXNS[1].MandateReference;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:DrctDbtTx.ns4:MndtRltdInf.ns4:FrstColltnDt = envRef.TXNS[1].MandateFirstCollectionDate;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:InstdAgt.ns4:FinInstnId.ns4:BICFI = Environment.config.data.INSTAGT_FN_BICFI;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:InstdAgt.ns4:BrnchId.ns4:Id = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Cdtr.ns4:Nm = headerRef.OrderingCustomerName;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Cdtr.ns4:Id.ns4:PrvtId.ns4:Othr.ns4:Id = headerRef.OrderingCustomerId;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Cdtr.ns4:Id.ns4:PrvtId.ns4:Othr.ns4:SchmeNm.ns4:Prtry = Environment.config.data.SCHMA_NM_PRPRTRY;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:CdtrAcct.ns4:Id.ns4:IBAN = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:CdtrAcct.ns4:Id.ns4:Othr.ns4:Id = headerRef.OrderingCustomerAccount;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:CdtrAgt.ns4:FinInstnId.ns4:BICFI = 'OMABOMRU';
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:CdtrAgt.ns4:BrnchId.ns4:Id = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Dbtr.ns4:Nm = envRef.TXNS[1].PayerName;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Dbtr.ns4:Id.ns4:PrvtId.ns4:Othr.ns4:Id = envRef.TXNS[1].PayerId;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Dbtr.ns4:Id.ns4:PrvtId.ns4:Othr.ns4:SchmeNm.ns4:Prtry = Environment.config.data.SCHMA_NM_PRPRTRY; 
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:DbtrAcct.ns4:Id.ns4:IBAN = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:DbtrAcct.ns4:Id.ns4:Othr.ns4:Id = envRef.TXNS[1].PayerAccount;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:DbtrAgt.ns4:FinInstnId.ns4:BICFI = envRef.TXNS[1].PayerBank;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:DbtrAgt.ns4:BrnchId.ns4:Id = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:Purp.ns4:Prtry = envRef.TXNS[1].PurposeOfTransfer;
+					--SET isoBody.ns4:DrctDbtTxInf[P].ns4:RmtInf.ns4:Ustrd = '';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData = '';
+
+					DECLARE supRef REFERENCE TO isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData;
+
+					CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns4 NAME 'Envlp';
+					CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns5 NAME 'supplementaryData';
+					CREATE LASTCHILD OF supRef AS supRef NAMESPACE ns5 NAME 'Items';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData.ns4:Envlp.ns5:supplementaryData.ns5:Items.ns5:Item[1] = envRef.TXNS[1].MandateFirstCollectionDate;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData.ns4:Envlp.ns5:supplementaryData.ns5:Items.ns5:Item[1].(XMLNSC.Attribute)key = 'paymentCollectionDate';
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData.ns4:Envlp.ns5:supplementaryData.ns5:Items.ns5:Item[2] = P;
+					SET isoBody.ns4:DrctDbtTxInf[P].ns4:SplmtryData.ns4:Envlp.ns5:supplementaryData.ns5:Items.ns5:Item[2].(XMLNSC.Attribute)key = 'paymentSequence';
+
+
+					CALL writeToLogFile(flowName, 'ddo_info', 'INFO',' Sent  CBO with END_TO_END ID-' || Environment.endToEndId ||'and set STATUS AS DDO_SENT_TO_CBO') INTO rc;
+
+
+
+				END IF;
+				SET envRef.TXNS[1] = NULL;
+				SET P = P+1;
+			END WHILE;
+			--CREATE LASTCHILD OF OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt AS sufRef NAMESPACE ns4 NAME 'SplmtryData';
+			SET OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:SplmtryData = '';
+			DECLARE subRef REFERENCE TO OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:SplmtryData;
+
+			CREATE LASTCHILD OF subRef AS subRef NAMESPACE ns4 NAME 'Envlp';
+			CREATE LASTCHILD OF subRef AS subRef NAMESPACE ns5 NAME 'supplementaryData';
+			CREATE LASTCHILD OF subRef AS subRef NAMESPACE ns5 NAME 'Items';
+			SET subRef.ns5:Item = '2';
+			SET subRef.ns5:Item.(XMLNSC.Attribute)key = 'batchSource';
+
+
+			SET Environment.dbQueryCount = '10';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			IF Environment.Exception = 'True' THEN
+				RETURN FALSE;
+			END IF;
+			-- SET Environment.outMsg = OutputRoot.XMLNSC;
+			-- DECLARE reff REFERENCE TO Environment.outMsg.Document.*:FIToFICstmrDrctDbt.*:DrctDbtTxInf[>];
+
+			IF EXISTS(OutputRoot.XMLNSC.ns4:Document.ns4:FIToFICstmrDrctDbt.ns4:DrctDbtTxInf[]) THEN
+				PROPAGATE TO TERMINAL 'out';
+			END IF;
+
+			DECLARE boole BOOLEAN;
+			CALL CopyEntireMessage() INTO boole;
+
+		END IF;
+
+	END;
+	CREATE PROCEDURE getTxns() RETURNS BOOLEAN BEGIN
+		SET num = CARDINALITY(Environment.Msg.TXNS[]);
+		DECLARE orgRef REFERENCE TO Environment.Msg.TXNS[>];
+
+		DECLARE totalSettlementAmt DECIMAL 0.00;
+		WHILE LASTMOVE(orgRef) DO
+
+			DECLARE amt DECIMAL CAST(orgRef.Amount AS DECIMAL);
+			SET totalSettlementAmt = totalSettlementAmt + amt;
+			MOVE orgRef NEXTSIBLING;
+		END WHILE;
+		IF num <> 0 AND num <= Environment.config.data.MAX_NO_OF_TXNS AND totalSettlementAmt <= Environment.config.data.MAX_TOTAL_AMOUNT THEN
+			SET Environment.Number = num;
+			SET Environment.Amount = totalSettlementAmt;
+			RETURN TRUE;
+		ELSEIF totalSettlementAmt >= CAST(Environment.config.data.MAX_TOTAL_AMOUNT AS INTEGER) OR num >= Environment.config.data.MAX_NO_OF_TXNS THEN
+			DECLARE K INTEGER 1;
+			DECLARE L DECIMAL 0.00;
+			DECLARE M DECIMAL 0.00;
+			WHILE K <= num DO
+				DECLARE P DECIMAL CAST(Environment.Msg.TXNS[K].Amount AS DECIMAL);
+				SET L = L + P ;
+				SET M = CAST(Environment.Msg.TXNS[K].Amount AS DECIMAL);
+				IF K <= Environment.config.data.MAX_NO_OF_TXNS THEN
+					IF L <= CAST(Environment.config.data.MAX_TOTAL_AMOUNT AS DECIMAL) THEN
+						SET K = K + 1;
+					ELSE
+						SET Environment.Amount = L - M;
+						SET Environment.Number = K - 1;
+						RETURN TRUE;
+					END IF;
+				ELSE
+					SET Environment.Amount = L - M;
+					SET Environment.Number = K - 1;
+					RETURN TRUE;
+				END IF;
+			END WHILE;
+--		ELSEIF num >= Environment.config.data.MAX_NO_OF_TXNS THEN
+--			DECLARE O INTEGER;
+--			SET O = num - Environment.config.data.MAX_NO_OF_TXNS;
+--			SET Environment.Number = num - O;
+--			SET Environment.Amount = totalSettlementAmt;
+--			RETURN TRUE;
+--		ELSE
+--			RETURN FALSE;
+		END IF;
+	END;
+	CREATE FUNCTION initLog4j( IN CONFIG_FILE_NAME CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.initLog4j";
+
+	CREATE FUNCTION writeToLogFile( IN COMPONENT_NAME CHARACTER,
+	IN LOGGER_NAME CHARACTER,
+	IN LEVEL CHARACTER,
+	IN TEXT CHARACTER )
+	RETURNS BOOLEAN
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.ibm.broker.IAM3.Log4jNode.log";
+	CREATE PROCEDURE random(IN Length INTEGER)
+	RETURNS CHARACTER
+	LANGUAGE JAVA
+	EXTERNAL NAME "com.oab.UnqiueNumber.randomAlphaNumeric";
+END MODULE;

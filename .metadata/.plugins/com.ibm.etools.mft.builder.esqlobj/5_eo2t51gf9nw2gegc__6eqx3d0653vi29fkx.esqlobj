@@ -1,0 +1,85 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+
+		IF Environment.dbQueryCount = '15' THEN
+			SET Environment.getGrpHdrId.Id[] = SELECT K.GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS K
+			WHERE K.MSG_ID = Environment.Variables.origin_Msg_Id;
+
+		ELSEIF Environment.dbQueryCount = '16' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS R SET STATUS = 'REVO_TECHVALIDATION_SUCCESS',CBO_STATUS = Environment.Variables.TxSts
+			WHERE R.MSG_ID = Environment.Variables.origin_Msg_Id AND R.TXN_ID = Environment.Variables.pmt_txn_id;
+
+		ELSEIF Environment.dbQueryCount = '17' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_GRP_INFO} AS A SET CBO_STATUS = Environment.Variables.groupStatus
+			WHERE A.GRP_HEADER_ID = Environment.getGrpHdrId.Id.GRP_HDR_ID_TXN_INFO_FK;
+
+		ELSEIF Environment.dbQueryCount = '18' THEN
+
+			SET Environment.getGrpHdrId.Id[] = SELECT K.GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS K
+			WHERE K.MSG_ID = Environment.Variables.origin_Msg_Id;
+
+		ELSEIF Environment.dbQueryCount = '19' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS R SET STATUS = 'REVO_ACCEPTEDSETTLEMENT_SUCCESS',CBO_STATUS = Environment.Variables.TxSts WHERE
+			R.MSG_ID = Environment.Variables.origin_Msg_Id AND R.TXN_ID =Environment.Variables.pmt_txn_id;
+
+		ELSEIF Environment.dbQueryCount = '20' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_GRP_INFO} AS A SET CBO_STATUS = Environment.Variables.groupStatus WHERE
+			A.GRP_HEADER_ID = Environment.getGrpHdrId.Id.GRP_HDR_ID_TXN_INFO_FK;
+
+		ELSEIF Environment.dbQueryCount = '21' THEN
+
+			SET Environment.getGrpHdrId.Id[] = SELECT K.GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS K
+			WHERE K.MSG_ID = Environment.Variables.origin_Msg_Id;
+
+		ELSEIF Environment.dbQueryCount = '22' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_GRP_INFO} AS A SET CBO_STATUS = Environment.Variables.groupStatus
+			WHERE A.GRP_HEADER_ID = Environment.getGrpHdrId.Id.GRP_HDR_ID_TXN_INFO_FK;
+
+		ELSEIF Environment.dbQueryCount = '23' THEN
+			SET Environment.getAccount.B[] = SELECT J.TXN_FOUND,J.TXN_REASON,J.OPTIONAL_ID,J.CREDITOR_ACC_NO,J.TXN_AMOUNT,J.ORIGIN_END_TO_END_ID FROM Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS J
+			WHERE J.MSG_ID = Environment.Variables.origin_Msg_Id;
+			
+			/*QUERIES FOR GETTING DATA FROM DCO & DDI */
+			SET Environment.DCO [] = SELECT A.ORDERING_CUSTOMER_NAME, A.BATCH_REFERENCE, B.BENEF_NAME 
+										FROM Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO} AS A, Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS B
+										WHERE 	B.END_TO_END_ID 	= Environment.getAccount.B.ORIGIN_END_TO_END_ID AND
+												A.DCO_GRP_HEADER_ID = B.DCO_GRP_HDR_ID_TXN_INFO_FK;
+
+--			SET Environment.DCO [] = SELECT A.ORDERING_CUSTOMER_NAME,A.BATCH_REFERENCE FROM Database.{SCHEMA_NAME}.{DCO_GROUP_HEADER_INFO} AS A WHERE A.DCO_GRP_HEADER_ID IN
+--			(SELECT B.DCO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{DCO_TXN_INFO} AS B WHERE B.END_TO_END_ID=Environment.getAccount.B.ORIGIN_END_TO_END_ID);
+
+		ELSEIF Environment.dbQueryCount = '24' THEN
+			SET Environment.DDI[]=SELECT P.DDI_GP_HDR_ID_TXN_FK,P.CDTR_NAME,P.CGTRAGT_FIN_ID_BICFI FROM Database.{SCHEMA_NAME}.{DDI_TXN_INFO} AS P WHERE P.PMT_ID_TXN_ID=Environment.getAccount.B.ORIGIN_END_TO_END_ID;
+			SET Environment.getAccount.confVal[] = SELECT A.DC_STLMNT_ACC,A.DD_STLMNT_ACC FROM Database.{SCHEMA_NAME}.{DC_CONFIG_VALUES} AS A;
+			SET Environment.DDI.MSGID[] = SELECT A.MSG_ID FROM Database.{SCHEMA_NAME}.{DDI_GP_HEADER_INFO} AS A WHERE A.DDI_GP_HEADER_ID = Environment.DDI.DDI_GP_HDR_ID_TXN_FK;
+
+		ELSEIF Environment.dbQueryCount = '25' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS R SET STATUS = Environment.Variables.STATUS,CBO_STATUS = Environment.Variables.TxSts,
+			DESCRIPTION ='Transaction to CBS for Crdit OC',CBS_TRAN_REF = Environment.Variables.cbsRef,CBS_REQUEST = Environment.cbsMsg
+			WHERE R.MSG_ID = Environment.Variables.origin_Msg_Id AND R.TXN_ID = Environment.Variables.pmt_txn_id;
+
+		ELSEIF Environment.dbQueryCount = '26' THEN
+
+			SET Environment.getGrpHdrId.Id[] = SELECT K.GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS K
+			WHERE K.MSG_ID = Environment.Variables.origin_Msg_Id;
+
+		ELSEIF Environment.dbQueryCount = '27' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_GRP_INFO} AS A SET CBO_STATUS = Environment.Variables.groupStatus
+			WHERE A.GRP_HEADER_ID = Environment.getGrpHdrId.Id.GRP_HDR_ID_TXN_INFO_FK;
+
+		ELSEIF Environment.dbQueryCount = '28' THEN
+
+			UPDATE Database.{SCHEMA_NAME}.{REVO_TXN_INFO} AS R SET STATUS = 'REVO_CBO_FAILED',CBO_STATUS = Environment.Variables.TxSts
+			WHERE R.MSG_ID = Environment.Variables.origin_Msg_Id AND R.TXN_ID =Environment.Variables.pmt_txn_id;
+
+		END IF;
+		RETURN TRUE;
+	END;
+

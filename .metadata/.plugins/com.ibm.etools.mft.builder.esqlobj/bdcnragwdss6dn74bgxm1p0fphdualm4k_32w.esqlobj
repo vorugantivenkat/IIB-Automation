@@ -1,0 +1,41 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		 CALL CopyMessageHeaders();
+		 CALL CopyEntireMessage();
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		
+		-- Routing to Database Retry Flows -- 
+		SET OutputRoot.MQMD.Expiry = 15;
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[1].queueName = 'CANO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[2].queueName = 'CANI_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[3].queueName = 'DCI_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[4].queueName = 'DCO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[5].queueName = 'DDO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[6].queueName = 'DDI_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[7].queueName = 'RETO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[8].queueName = 'RETI_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[9].queueName = 'REVO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[10].queueName = 'REVI_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[11].queueName = 'MMS_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[12].queueName = 'WPS_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[13].queueName = 'RETO_REVO_CANO_RETRY_TRIG_Q';
+		SET OutputLocalEnvironment.Destination.MQ.DestinationData[14].queueName = 'CBS_RETRY_Q';
+		
+		
+		
+		
+		
+	END;

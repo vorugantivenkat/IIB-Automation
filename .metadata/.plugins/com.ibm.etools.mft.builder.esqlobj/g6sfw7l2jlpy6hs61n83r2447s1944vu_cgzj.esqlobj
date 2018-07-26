@@ -1,0 +1,14 @@
+CREATE PROCEDURE DBInsertion(IN LOG4JPATH CHARACTER,IN InputRoot REFERENCE, IN InputExceptionList REFERENCE,IN Environment REFERENCE,
+IN OutputRoot REFERENCE)BEGIN
+IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+	SET Environment.variables.count = 3;
+	PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+ELSE
+	IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+		--DECLARE SleepFlow BOOLEAN SLEEP(5*1000);
+		SET Environment.variables.count = Environment.variables.count -1;
+		PROPAGATE TO TERMINAL 'out2' DELETE NONE;
+	END IF;
+
+END IF;
+END;

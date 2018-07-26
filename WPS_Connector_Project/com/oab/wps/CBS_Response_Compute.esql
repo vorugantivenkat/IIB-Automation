@@ -1,0 +1,219 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+Author : Ashoke
+Subsequent Modifications by : Atul
+Module Name : WPS
+Flow Name : WPS_Response_From_CBS
+Purpose : validate account info of header table from database and send record info to CBS
+Dependency Module : Handler_CBO,Handler_OAB,Simulator_CBS_DoubleEntryPosting
+Dependency Database : YES,WPS_SIF_HEADER_INFO,WPS_SIF_RECORD_INFO
+Dependency XSD(Request Message) : NO
+Dependency XSD(Response Message) : NO
+Dependency CBS : Yes, Simulator_CBS_DoubleEntryPosting
+Description :
+1. Get response from CBO, if replyStatus is "FIN" then construct message for CBS call to validate account info of beneficiery.
+2. if account info is active then construct message for CBS.
+3. if account info is inactive then update status code and exception description in database.
+4. if replyStatus is "err" then update status code and exception description in database.
+*/
+
+
+BROKER SCHEMA com.oab.wps
+DECLARE urn NAMESPACE 'http://www.oab.com';
+CREATE COMPUTE MODULE CBS_Response_Compute
+	DECLARE WPS_SIF_HEADER_INFO EXTERNAL CHARACTER;
+	DECLARE WPS_SIF_RECORD_INFO EXTERNAL CHARACTER;
+	DECLARE WPS_ADD_OPS_INFO EXTERNAL CHARACTER;
+	DECLARE DC_CONFIG_VALUES EXTERNAL CHARACTER;
+	DECLARE USER EXTERNAL CHARACTER;
+	DECLARE WORKSTATION EXTERNAL CHARACTER;
+	DECLARE CHANNELRESERVED EXTERNAL CHARACTER;
+	DECLARE CHANNEL EXTERNAL CHARACTER;
+	DECLARE CURRENCY EXTERNAL CHARACTER;
+	DECLARE PAYER_BIC EXTERNAL CHARACTER;
+	DECLARE LOG4J_CONF_FILE EXTERNAL CHARACTER;
+	DECLARE rc BOOLEAN;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		CALL initLog4j(LOG4J_CONF_FILE) INTO rc;
+		IF ( rc = FALSE ) THEN
+			DECLARE msg CHARACTER ;
+			SET msg = 'Log4J Initialization failed.';
+		END IF;
+		DECLARE bool BOOLEAN;
+		SET bool = CopyEntireMessage();
+		RETURN bool;
+	END;
+	CREATE PROCEDURE CopyEntireMessage()RETURNS BOOLEAN BEGIN
+		IF FIELDNAME(InputExceptionList.[1]) IS NULL THEN
+			DECLARE srcMsgBlob BLOB ASBITSTREAM(InputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+			SET Environment.srcMsg = CAST(srcMsgBlob AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+			SET Environment.Properties = InputRoot.Properties;
+--			SET OutputLocalEnvironment.Destination.File.Name = 'CBS_RESPONSE_' || CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyyyMMddHHmmssSSS')||'.xml';
+--			SET OutputRoot.XMLNSC =InputRoot.XMLNSC;
+--			PROPAGATE TO TERMINAL 'out1' DELETE NONE;
+--			SET OutputRoot.XMLNSC = NULL;
+			DECLARE status,txRefId,txRefType,SifFileName,headerBankCode,recodeBankCode,recordId,cbsPayRef,failRsn,faultCode CHARACTER;
+			SET Environment.status = InputRoot.XMLNSC.*:Reply.*:Header.*:replyStatus;
+			SET Environment.txRefId = InputRoot.XMLNSC.*:Reply.*:Header.*:transactionReference;
+			SET Environment.cbsPayRef = InputRoot.XMLNSC.*:Reply.*:Data.*:FinancialTransaction.*:reference;
+			SET Environment.failRsn = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultString;
+			SET Environment.faultCode = InputRoot.XMLNSC.*:Reply.*:Fault.*:faultCode;
+			-- SET Environment.txRefType = SUBSTRING(txRefId FROM 1 FOR 3);
+			DECLARE ref ROW;
+			DECLARE i INTEGER 1;
+			SET Environment.dbQueryCount = '22';
+			CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+			DECLARE flowName CHARACTER MessageFlowLabel;
+
+
+			IF Environment.txRefId LIKE '24H%' THEN
+				IF Environment.status = 'FIN' THEN
+					SET Environment.dbQueryCount = '23';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','Receive success response from CBS') INTO rc;
+
+					WHILE CARDINALITY(Environment.records[]) >= i DO
+--						DECLARE EMPLOYEEBANKSHORTNAME CHARACTER SUBSTRING( Environment.records[i].EMPLOYEE_BANK_CODE FROM 1 FOR 4) ;
+						IF PAYER_BIC = Environment.records[i].EMPLOYEE_BANK_CODE THEN
+							SET Environment.count = i;
+							SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24E'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS')||CAST(i AS CHARACTER);
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.header.PAYMENT_TYPE||'_'||'CBS_EMP_CREDIT_REQ_SENT';
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.records[Environment.count].EMPLOYEE_ACC_NO;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = Environment.records[Environment.count].NET_SALARY;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+							--SET recTxId = OutputRoot.XMLNSC.nsdp:Request.nsdp:Header.nsdp:transactionReference;
+							SET Environment.var.recTxId = Environment.records[Environment.count].RECORD_ID;
+							SET Environment.var.TXN_REF_ID = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+							DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+							SET Environment.CbsReqMessage.message = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+							CALL writeToLogFile(flowName, 'wps_info', 'INFO','creating SEP for on us transaction and update record for txn_ref_id - '||Environment.var.TXN_REF_ID||' with the status as amount is credited to employee account ') INTO rc;
+							SET Environment.dbQueryCount = '24';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+							PROPAGATE TO TERMINAL 'out';
+						ELSE
+							SET Environment.count = i;
+							SET OutputRoot.XMLNSC.urn:Request.(XMLNSC.NamespaceDecl)xmlns:urn = urn;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channel = CHANNEL;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:user = USER;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:workstation = WORKSTATION;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionDate = CAST(CURRENT_GMTDATE AS CHARACTER FORMAT 'yyyy-MM-dd');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionTime = CAST(CURRENT_TIME AS CHARACTER FORMAT 'HH:mm:ss');
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference = '24S'||CAST(CURRENT_TIMESTAMP AS CHARACTER FORMAT 'yyMMddHHmmssSSS')||CAST(i AS CHARACTER);
+							SET OutputRoot.XMLNSC.urn:Request.urn:Header.urn:channelReserved = CHANNELRESERVED;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.(XMLNSC.Attribute)optionIdentifier = Environment.header.PAYMENT_TYPE||'_'||'CBS_STLEACC_CREDIT_REQ_SENT';
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:account = Environment.config.DC_STLMNT_ACC;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:amount = Environment.records[Environment.count].NET_SALARY;
+							SET OutputRoot.XMLNSC.urn:Request.urn:Data.urn:SingleEntryFinancialTransaction.urn:currency = CURRENCY;
+							--SET recTxId = OutputRoot.XMLNSC.nsdp:Request.nsdp:Header.nsdp:transactionReference;
+							SET Environment.var.recTxId = ref.records[Environment.count].RECORD_ID;
+							SET Environment.var.TXN_REF_ID = OutputRoot.XMLNSC.urn:Request.urn:Header.urn:transactionReference;
+							DECLARE cbsReqMessage BLOB ASBITSTREAM(OutputRoot.XMLNSC,InputRoot.Properties.Encoding,InputRoot.Properties.CodedCharSetId);
+							SET Environment.CbsReqMessage.message = CAST(cbsReqMessage AS CHARACTER CCSID InputRoot.Properties.CodedCharSetId);
+							SET Environment.dbQueryCount = '25';
+							CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+							IF Environment.Exception = 'True' THEN
+								RETURN FALSE;
+							END IF;
+							CALL writeToLogFile(flowName, 'wps_info', 'INFO','creating SEP for non on us transaction and update record for txn_ref_id - '||Environment.var.TXN_REF_ID||' with the status as amount is credited to sattelment acoount') INTO rc;
+							PROPAGATE TO TERMINAL 'out';
+						END IF;
+
+						SET i = i + 1;
+					END WHILE;
+
+				ELSE
+					SET Environment.dbQueryCount = '26';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+
+				END IF;
+			END IF;
+			-----------------------transaction response from CBS------------------------
+			IF SUBSTRING(Environment.txRefId FROM 1 FOR 3) = '24E' THEN
+				IF Environment.status = 'FIN' THEN
+					SET Environment.dbQueryCount = '27';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving success response from CBS for transaction reference - '|| Environment.txRefId||' and update status as CBS_EMP_CREDIT_SUCCESS') INTO rc;
+				ELSE
+					SET Environment.dbQueryCount = '28';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving failure response from CBS for transaction reference - '|| txRefId||' and update status as CBS_EMP_CREDIT_FAILURE') INTO rc;
+				END IF;
+
+			END IF;
+
+
+
+
+			IF SUBSTRING(Environment.txRefId FROM 1 FOR 3) = '24S' THEN
+				IF Environment.status = 'FIN' THEN
+					SET Environment.dbQueryCount = '29';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving success response from CBS for transaction reference - '|| Environment.txRefId||' and update status as CBS_STLEACC_CREDIT_SUCCESS') INTO rc;
+				ELSE
+					--need to rollback the amount to payer account.
+					SET Environment.dbQueryCount = '30';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving failure response from CBS for transaction reference - '|| Environment.txRefId||' and update status as CBS_STLEACC_CREDIT_FAILURE') INTO rc;
+				END IF;
+
+			END IF;
+
+
+			IF SUBSTRING(Environment.txRefId FROM 1 FOR 3) = '24R' THEN
+				IF Environment.status = 'FIN' THEN
+					SET Environment.dbQueryCount = '27A';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving success response from CBS for transaction reference - '|| Environment.txRefId||' and update status as CBS_EMP_CREDIT_SUCCESS') INTO rc;
+				ELSE
+					SET Environment.dbQueryCount = '28A';
+					CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+					CALL writeToLogFile(flowName, 'wps_info', 'INFO','receiving failure response from CBS for transaction reference - '|| txRefId||' and update status as CBS_EMP_CREDIT_FAILURE') INTO rc;
+				END IF;
+
+			END IF;
+			RETURN FALSE;
+		ELSE
+			IF FIELDNAME(InputExceptionList.[1]) IS NOT NULL AND Environment.variables.count >= 1 THEN
+				SET OutputExceptionList = InputExceptionList;
+				CALL com.oab.exceptionhandler.DBInsertion(LOG4J_CONF_FILE, InputRoot, InputExceptionList, Environment, OutputRoot);
+			ELSE
+				SET OutputRoot.Properties = Environment.Properties;
+				CREATE LASTCHILD OF OutputRoot DOMAIN 'XMLNSC' PARSE(Environment.srcMsg,Environment.Properties.Encoding,Environment.Properties.CodedCharSetId);
+				SET OutputExceptionList = InputExceptionList;
+				SET Environment.RetryQueue = 'WPS_RETRY_Q';
+				PROPAGATE TO TERMINAL 'out3' DELETE NONE;
+				SET Environment.Exception = 'True';
+			END IF;
+		END IF;
+	END;
+
+END MODULE;

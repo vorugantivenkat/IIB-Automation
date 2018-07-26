@@ -1,0 +1,71 @@
+/*EATE FUNCTION Main() RETURNS BOOLE*/
+	BEGIN
+		CALL CopyMessageHeaders();
+		DECLARE boolVal BOOLEAN;
+		SET boolVal = CopyEntireMessage();
+		RETURN boolVal;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() RETURNS BOOLEAN BEGIN
+
+		DECLARE msgId,Signature,Req_type CHARACTER;
+		DECLARE rootref REFERENCE TO OutputRoot.XMLNSC;
+
+		SET Req_type = FIELDNAME(InputRoot.XMLNSC.*:*.[3]);
+		--SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:CdtTrfTxInf.*:PmtId.*:EndToEndId;
+		-- DECLARE DATTIM CHARACTER CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyMMDDHHmmssSSS') ;
+		DECLARE msg_con BLOB ASBITSTREAM(InputRoot.XMLNSC ENCODING 541 CCSID 1208);
+		DECLARE msg_char CHARACTER CAST(msg_con AS CHARACTER CCSID 1208);
+
+		CREATE FIRSTCHILD OF OutputRoot.XMLNSC TYPE XMLNSC.XmlDeclaration NAME 'XmlDeclaration';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Version = '1.0';
+		SET OutputRoot.XMLNSC.(XMLNSC.XmlDeclaration)*.(XMLNSC.Attribute)Encoding = 'UTF-8';
+		CREATE LASTCHILD OF OutputRoot.XMLNSC AS rootref NAMESPACE ps NAME 'envelope';
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:ps = ps;
+		SET rootref.(XMLNSC.NamespaceDecl)xmlns:xsi = xsi;
+
+		IF Req_type LIKE 'FIToFICstmrCdtTrf' THEN
+
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrCdtTrf.*:CdtTrfTxInf.*:PmtId.*:EndToEndId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'PACS.008';
+			SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1]  = 'jndi://jms_MobileOutward';
+			
+		ELSEIF Req_type LIKE 'FIToFICstmrDrctDbt' THEN
+
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFICstmrDrctDbt.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'PACS.003';
+		SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1]  = 'jndi://jms_MobileOutward';
+
+		ELSE
+			SET msgId = InputRoot.XMLNSC.*:Document.*:FIToFIPmtStsRpt.*:GrpHdr.*:MsgId;
+			SET rootref.id = msgId;
+			SET rootref.type = 'PACS.002';
+			SET OutputLocalEnvironment.Destination.JMSDestinationList.DestinationData[1]  = 'jndi://jms_ReplyOutward';
+		END IF;
+		--SET rootref.id = msgId;
+			SET rootref.format = 'MX';
+
+			SET rootref.date = CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+			DECLARE msgContentDate CHARACTER msg_char || CAST(CURRENT_TIMESTAMP as CHARACTER FORMAT 'yyyy-MM-dd''T''HH:mm:ss');
+			--SET msgContentDate = REPLACE(msgContentDate ,'"','\"');
+
+			SET Signature= DigitalSignatureOABSign(msgContentDate,KEYPATH,KeyStore_pwd);
+
+			SET rootref.signature = Signature;
+			SET rootref.(XMLNSC.CDataField)content = msg_char;
+
+		RETURN TRUE;
+
+	END;

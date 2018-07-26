@@ -1,0 +1,58 @@
+
+
+
+
+
+
+BROKER SCHEMA com.oab.debit.outward
+
+
+CREATE DATABASE MODULE DirectDebit_Outward_ResponseFrom_CBO_Database	
+	
+
+
+	DECLARE DDO_TABLE1 EXTERNAL CHARACTER;
+	DECLARE DDO_TABLE2 EXTERNAL CHARACTER;
+	DECLARE DDO_TABLE3 EXTERNAL CHARACTER;
+--	DECLARE STATUS_TABLE EXTERNAL CHARACTER '';
+	DECLARE SCH_NAME EXTERNAL CHARACTER;
+	DECLARE DSN EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		IF Environment.dbQueryCount = '13' THEN
+			SET Environment.config.data[] = SELECT t.DD_STLMNT_ACC FROM Database.{SCH_NAME}.{DDO_TABLE3} AS t ;
+		ELSEIF Environment.dbQueryCount = '14' THEN
+			SET Environment.hd[] = SELECT A.DDO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCH_NAME}.{DDO_TABLE2} AS A WHERE A.MSG_ID = Environment.msgId;
+			SET Environment.hedRef.data[] = SELECT t.CURRENCY,t.CHANNEL,t.ORDERING_CUSTOMER_ACCOUNT,t.OPT_ID FROM Database.{SCH_NAME}.{DDO_TABLE1} AS t WHERE t.DDO_GRP_HEADER_ID = Environment.hd.DDO_GRP_HDR_ID_TXN_INFO_FK;
+		ELSEIF Environment.dbQueryCount = '15' THEN
+			SET Environment.txInfo.data[] = SELECT t.AMOUNT ,t.PURP_OF_TRANSFER,t.END_TO_END_ID FROM Database.{SCH_NAME}.{DDO_TABLE2} AS t WHERE t.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '16' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS R SET CBS_TRAN_REF = Environment.cbsTranRef,CBS_REQUEST_MESSAGE = Environment.cbsMsg,CBO_STATUS = Environment.TxSts, STATUS = 'DDO_SENT_CBS_CRDT_OC' WHERE R.TXN_ID = Environment.OrgnlTxId;
+
+		ELSEIF Environment.dbQueryCount = '17' THEN
+			SET Environment.grpSts.DB[] = SELECT A.DDO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCH_NAME}.{DDO_TABLE2} AS A WHERE A.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '18' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE1} AS R SET CBO_STATUS = Environment.grpStatus,DESCRIPTION = 'Response from CBO Side was TECHVALIDATION_SUCCESS' WHERE R.DDO_GRP_HEADER_ID = Environment.grpSts.DB.DDO_GRP_HDR_ID_TXN_INFO_FK;
+		ELSEIF Environment.dbQueryCount = '19' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS R SET STATUS = 'DDO_TECHVALIDATION_SUCCESS',CBO_STATUS = Environment.TxSts,DESCRIPTION = 'Transaction Validation Success at CBO' WHERE R.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '20' THEN
+			SET Environment.grpSts.DB[] = SELECT A.DDO_GRP_HDR_ID_TXN_INFO_FK FROM Database.{SCH_NAME}.{DDO_TABLE2} AS A WHERE A.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '21' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE1} AS R SET CBO_STATUS = Environment.grpStatus,DESCRIPTION = 'Response from CBO Side was AcceptedSettlement_Success' WHERE R.DDO_GRP_HEADER_ID = Environment.grpSts.DB.DDO_GRP_HDR_ID_TXN_INFO_FK;
+		ELSEIF Environment.dbQueryCount = '22' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS R SET STATUS = 'DDO_ACCEPTEDSETTLEMENT_SUCCESS',CBO_STATUS = Environment.TxSts,DESCRIPTION = 'Transaction was Accept Settlement Success at CBO ' WHERE R.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '23' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS R SET CBS_TRAN_REF = Environment.cbsTranRef,CBS_REQUEST_MESSAGE = Environment.cbsMsg, STATUS = 'DDO_SENT_CBS_DBT_OC',CBO_STATUS = Environment.TxSts WHERE R.TXN_ID = Environment.OrgnlTxId;
+
+		ELSEIF Environment.dbQueryCount = '18C' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS R SET STATUS = 'DDO_CBO_FAILED',CBO_STATUS = Environment.grpStatus || ' '|| Environment.reasoncode ,DESCRIPTION = 'Transaction was Failed with Reason:' || Environment.reason WHERE R.MSG_ID = Environment.msgId;
+		ELSEIF Environment.dbQueryCount = '18D' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS B SET STATUS = 'DDO_CBO_FAILED_PT',DESCRIPTION = 'Transaction was failed at CBO and Identifier PassThru was set for Transaction',CBO_STATUS = Environment.TxSts WHERE B.TXN_ID = Environment.OrgnlTxId;
+		ELSEIF Environment.dbQueryCount = '18E' THEN
+			UPDATE Database.{SCH_NAME}.{DDO_TABLE2} AS B SET STATUS = 'DDO_SUCCESS_PT',CBO_STATUS = Environment.TxSts WHERE B.TXN_ID = Environment.OrgnlTxId;
+		END IF;
+		RETURN TRUE;
+	END;
+
+END MODULE;
